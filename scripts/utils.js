@@ -1,0 +1,411 @@
+const { ethers } = require('hardhat');
+// const { ethers } = require('ethers');
+const fs = require('fs-extra');
+const path = require('path');
+const clc = require('cli-color');
+
+
+function saveContractAddress(instanceName, address) {
+    addressFilePath = path.resolve(__dirname, '../addresses.json');
+
+    let addressData = {};
+    if (fs.existsSync(addressFilePath)) {
+        addressData = JSON.parse(fs.readFileSync(addressFilePath, 'utf8'));
+    }
+    addressData[instanceName] = address;
+    fs.writeFileSync(addressFilePath, JSON.stringify(addressData, null, 2));
+}
+
+async function deploy(contractName, instanceName, args, artifact = null, silent = false, save = true) {
+    let contr;
+
+    if (artifact) {
+        const signer = (await ethers.getSigners())[0];
+        const Factory = new ethers.ContractFactory(
+            artifact.abi,
+            artifact.bytecode,
+            signer,
+        );
+        contr = await Factory.deploy(...args);
+    }
+    else {
+        contr = await ethers.deployContract(contractName, args);
+    }
+
+    await contr.waitForDeployment();
+
+    if (!silent) {
+        console.log(clc.green(`[${contractName} : ${instanceName}] Deployment successful:`, await contr.getAddress()));
+    }
+    if (save) {
+        saveContractAddress(instanceName, await contr.getAddress())
+    }
+
+    return contr
+}
+
+
+async function useContract(contractName, contractAddress) {
+    const signer = (await ethers.getSigners())[0];
+    const artifact = require(`../artifacts/contracts/interfaces/${contractName}.sol/${contractName}.json`);
+    return new ethers.Contract(contractAddress, artifact.abi, signer);
+}
+
+
+async function getContract(contractName, instanceName, artifact = null) {
+    const contractAddress = loadContractAddress(instanceName);
+    
+    let lock
+
+    if (artifact == null){
+        const factory = await ethers.getContractFactory(contractName);
+        lock = factory.attach(contractAddress);
+    }
+    else {
+        const factory = new ethers.ContractFactory(
+            artifact.abi,
+            artifact.bytecode,
+            (await ethers.getSigners())[0]
+        );
+        lock = factory.attach(contractAddress)
+    }
+
+    return lock;
+}
+
+
+function loadContractAddress(instanceName) {
+    const addressFilePath = path.resolve(__dirname, '../addresses.json');
+    const addressData = JSON.parse(fs.readFileSync(addressFilePath, 'utf8'));
+    const contractAddress = addressData[instanceName];
+
+    return contractAddress;
+}
+
+function printEvents(receipt, contract) {
+    const events = receipt.logs.map((log) => {
+        try {
+            return contract.interface.parseLog(log);
+        } catch (error) {
+            // If the log is not from this contract, it will throw an error
+            return null;
+        }
+    }).filter(log => log !== null);
+
+    events.forEach((event) => {
+        console.log(`Event ${event.name} with args:`, event.args);
+    });
+}
+
+
+function balanceFormat(tokenAmount, digits, precision = 4) {
+    const humanReadable = tokenAmount / (BigInt(10) ** BigInt(digits)) // Assumes 18 decimals
+    const roundedValue = Number.parseFloat(humanReadable).toFixed(precision);
+    return roundedValue;
+}
+
+async function getTokenContract(tokenAddress) {
+    const erc20Abi = [
+        {
+            "inputs": [
+            {
+                "internalType": "address",
+                "name": "owner",
+                "type": "address"
+            }
+            ],
+            "name": "balanceOf",
+            "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+            ],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs":[],
+            "name":"decimals",
+            "outputs":[{"internalType":"uint8","name":"","type":"uint8"}],
+            "stateMutability":"view",
+            "type":"function"
+        }
+    ];
+
+    return new ethers.Contract(tokenAddress, erc20Abi, (await ethers.getSigners())[0])
+}
+
+function hexStringToByteArray(hexString) {
+    hexString = hexString.startsWith('0x') ? hexString.slice(2) : hexString;
+    if (hexString.length % 2 !== 0) {
+        throw new Error('Hex string must have an even number of characters');
+    }
+
+    const byteArray = [];
+    for (let i = 0; i < hexString.length; i += 2) {
+        const byte = parseInt(hexString.substr(i, 2), 16);
+        byteArray.push(byte);
+    }
+
+    return byteArray;
+}
+
+
+function commutativeKeccak256(a, b) {
+    return BigInt(a) < BigInt(b) ? efficientKeccak256(a, b) : efficientKeccak256(b, a);
+}
+
+
+function efficientKeccak256(a, b) {
+    a = a.startsWith('0x') ? a.slice(2) : a;
+    b = b.startsWith('0x') ? b.slice(2) : b;
+
+    a = a.padStart(64, '0');
+    b = b.padStart(64, '0');
+    const concatenated = a + b;
+
+    return ethers.keccak256('0x' + concatenated);
+}
+
+
+function sleep(s) {
+    return new Promise(resolve => setTimeout(resolve, 1000*s))
+}
+
+
+function getSelectorsFromABI(abi) {
+    const selectors = {
+        errors: {},
+        events: {}
+    };
+
+    abi.forEach(item => {
+        if (item.type === 'error' || item.type === 'event') {
+            const signature = `${item.name}(${item.inputs.map(input => input.type).join(',')})`;
+            const selector = ethers.id(signature).slice(0, 10);
+
+            if (item.type === 'error') {
+                selectors.errors[item.name] = selector;
+            } else {
+                selectors.events[item.name] = selector;
+            }
+        }
+    });
+
+    return selectors;
+}
+
+
+function printSelectorsFromABI(abiFiles) {
+    abiFiles.forEach(file => {
+        const fileName = path.basename(file, '.json');
+        const fileContent = fs.readFileSync(file, 'utf8');
+        const jsonContent = JSON.parse(fileContent);
+        const abi = jsonContent.abi;
+    
+        const selectors = getSelectorsFromABI(abi);
+    
+        console.log(`\nContract: ${fileName} ==================`);
+        console.log('Errors:');
+        Object.entries(selectors.errors).forEach(([name, selector]) => {
+            console.log(`  ${selector}: ${name}`);
+        });
+        console.log('Events:');
+        Object.entries(selectors.events).forEach(([name, selector]) => {
+            console.log(`  ${selector}: ${name}`);
+        });
+    });
+}
+
+async function waitForNextBlock(provider = null) {
+    if (provider == null) {
+        provider = ethers.provider;
+    }
+
+    // current block
+    const currentBlockNumber = await provider.getBlockNumber();
+
+    // resolve promise when a new block is mined
+    return new Promise((resolve) => {
+        provider.on('block', (blockNumber) => {
+            if (blockNumber > currentBlockNumber) {
+                provider.removeAllListeners('block');
+                resolve(blockNumber);
+            }
+        });
+    });
+}
+
+async function mineBlocks(numBlocks) {
+    for (let i = 0; i < numBlocks; i++) {
+        await ethers.provider.send("evm_mine");
+    }
+}
+
+async function waitForNextEpoch(currentEpoch=null, forceNext=false, delaySec=1, maxIters=30) {
+    const crossChainLayerContract = await useContract('ICrossChainLayer', process.env.EVM_CCL_ADDRESS);
+    if (currentEpoch == null) {
+        const result = await crossChainLayerContract.getCurrentEpoch();
+        currentEpoch = result[0];
+    }
+
+    var iter = 0;
+
+    // resolve promise when a new epoch reached
+    return new Promise((resolve, reject) => {
+        const checkEpoch = async () => {
+            try {
+                const result = await crossChainLayerContract.getCurrentEpoch();
+                const newEpoch = result[0];
+                const isConsensus = result[1];
+                if (!isConsensus && !forceNext) {
+                    resolve(newEpoch);
+                }
+
+                if (iter >= maxIters) {
+                    resolve(newEpoch)
+                    throw new Error('Try number exceeded');
+                }
+
+                if (newEpoch > currentEpoch) {
+                    resolve(newEpoch);
+                } else {
+                    iter += 1;
+                    await mineBlocks(10);
+                    setTimeout(checkEpoch, delaySec*1000);
+                }
+                } catch (error) {
+                    reject(error);
+                }
+            };
+
+        checkEpoch();
+      });
+}
+
+
+async function sendSimpleMessage(message) {
+    // setup
+    const crossChainLayerContract = await useContract('ICrossChainLayer', process.env.EVM_CCL_ADDRESS);
+    const groupContract = await useContract('IGroup', process.env.EVM_TESTGROUP_ADDRESS);
+    const treeUtilsContract = await useContract('IMerkleTreeUtils', process.env.EVM_MERKLETREEUTILS_ADDRESS);
+
+    // fill message
+    if (message['queryId'] == null) {
+        message['queryId'] = 0;
+    }
+    if (message['timestamp'] == null) {
+        message['timestamp'] = Math.floor(Date.now() / 1000);
+    }
+
+    // clear epoch
+    await waitForNextEpoch(currentEpoch=null, forceNext=true);
+
+    // set proper Merkle root
+    const messageHash = await treeUtilsContract.hashInMessage(message);
+    await groupContract.vote(messageHash);
+
+    // execute message
+    return await crossChainLayerContract.receiveMessage(message, [], 0);
+}
+
+
+async function depositToken(tokenSymbol, amount, recipientAddress) {
+    // setup
+    const tokenFactoryAddress = process.env.EVM_CCLTOKENMANAGER_ADDRESS;
+    const tokenAddress = await loadContractAddress(tokenSymbol);
+
+    // create and send CCL message
+
+    const message = {
+        target: tokenFactoryAddress,
+        methodName: 'deposit(address,uint256,address)',
+        arguments: new ethers.AbiCoder().encode(
+            ['address', 'uint256', 'address'],
+            [tokenAddress, amount, recipientAddress]
+        ),
+        caller: 'EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk',
+        mint: [
+            {tokenAddress: tokenAddress, amount: amount}
+        ],
+        unlock: [],
+    };
+
+    return await sendSimpleMessage(message);
+}
+
+
+async function deployToken(
+    tokenName, tokenSymbol, tokenDecimals, tokenL1Address, tokenL1AdditionalAddress, 
+    silent=true
+) {
+    // setup
+    const settingsAddress = process.env.EVM_SETTINGS_ADDRESS;
+    const tokenFactoryAddress = process.env.EVM_CCLTOKENMANAGER_ADDRESS;
+    const tokenFactoryContract = await useContract('ICrossChainLayerTokenManager', tokenFactoryAddress);
+    const tokenUtilsAddress = process.env.EVM_TOKENUTILS_ADDRESS;
+    const tokenUtilsContract = await useContract('ITokenUtils', tokenUtilsAddress);
+
+    // create and send CCL message
+
+    const message = {
+        queryId: 123,
+        timestamp: Math.floor(Math.random() * 2**32),
+        target: tokenFactoryAddress,
+        methodName: 'createToken(string,string,uint8,string,string)',
+        arguments: new ethers.AbiCoder().encode(
+            ['string', 'string', 'uint8', 'string', 'string'],
+            [tokenName, tokenSymbol, tokenDecimals, tokenL1Address, tokenL1AdditionalAddress]
+        ),
+        caller: 'EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk',
+        mint: [],
+        unlock: [],
+    };
+
+    await sendSimpleMessage(message);
+
+    // check deployment
+    const tokenAddress = await tokenUtilsContract.computeAddress(
+        tokenName, tokenSymbol, tokenDecimals, tokenL1Address, tokenL1AdditionalAddress, 
+        settingsAddress, tokenFactoryAddress);
+    const tokenInfo = await tokenFactoryContract.getTokenInfo(tokenAddress);
+    const totalTokens = await tokenFactoryContract.totalTokens();
+
+    if (!tokenInfo[0]) {
+        throw new Error('Token was not created or the wrong address is calculated');
+    }
+
+    // save token address
+    saveContractAddress(tokenSymbol, tokenAddress);
+
+    if (!silent) {
+        console.log(`Token ${tokenSymbol} deployed successfully: ${tokenAddress}, info: ${tokenInfo}`);
+        console.log('Total tokens:', totalTokens);
+    }
+
+    return tokenAddress;
+}
+
+
+module.exports = {
+    balanceFormat,
+    printEvents,
+    useContract,
+    getContract,
+    getTokenContract,
+    loadContractAddress,
+    hexStringToByteArray,
+    commutativeKeccak256,
+    saveContractAddress,
+    deploy,
+    sleep,
+    getSelectorsFromABI,
+    printSelectorsFromABI,
+    waitForNextBlock,
+    waitForNextEpoch,
+    sendSimpleMessage,
+    deployToken,
+    depositToken,
+};

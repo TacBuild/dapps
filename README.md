@@ -1,93 +1,143 @@
-# dapps
+# L1-EVM Project Documentation
 
+## Overview
 
+This project aims to act as a EVM-side Layer 2 (L2) support to integrate and run decentralized applications (dApps) natively in a fully EVM-compatible infrastructure. It facilitates seamless interaction between the main TON network (Layer 1) and the Layer 2 EVM network, enabling efficient execution of dApps with lower gas fees and faster transaction speeds.
 
-## Getting started
+## Project Structure
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+The project is organized into several directories, each serving a distinct purpose. Here is a detailed breakdown of the project structure:
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+### `contracts/`
 
-## Add your files
+This directory contains all the Solidity contracts that form the core of the project.
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+#### `interfaces/`
 
-```
-cd existing_repo
-git remote add origin https://gitlab.com/bemolabs/l2/smart-contracts/dapps.git
-git branch -M master
-git push -uf origin master
-```
+This subdirectory contains interface contracts that define the standard functions and structures used across the project.
 
-## Integrate with your tools
+- `IAppProxy.sol`
+  - Interface for the App Proxy contract.
+- `ICrossChainLayer.sol`
+  - Interface for the main CrossChainLayer contract.
 
-- [ ] [Set up project integrations](https://gitlab.com/bemolabs/l2/smart-contracts/dapps/-/settings/integrations)
+#### `L2/`
 
-## Collaborate with your team
+This subdirectory contains the core contracts for the Layer 2 operations, libraries and utility methods.
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+- `AppProxy.sol`
+  - A base class for any dApp Proxy contract.
+- `CallLib.sol`
+  - Library to perform an efficient low level calls.
+- `CrossChainLayer.sol`
+  - Implementation of the CrossChainLayer contract. A contract for managing cross-chain messages and tokens.
+- `CrossChainLayerToken.sol`
+  - Implementation of the CrossChainLayerToken contract. A contract for all L2 tokens.
+- `Errors.sol`
+  - Contains custom error definitions.
+- `Events.sol`
+  - Contains event definitions.
+- `Structs.sol`
+  - Defines the structs used in various contracts.
+- `MerkleTreeLib.sol`
+  - Library for utility functions for working with Merkle trees and messages.
+- `MerkleTreeUtils.sol`
+  - Utility contract for working with Merkle trees and messages.
 
-## Test and Deploy
+#### `proxies/`
 
-Use the built-in continuous integration in GitLab.
+This subdirectory contains the proxy contracts to all elegible dApps. Proxies serve as an intermediate between native dApp contracts and L2. It contains a proxy to native UniswapV2 contracts (UniswapV2Router02) for the demonstration purposes.
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+### `scripts/`
 
-***
+Contains scripts for deploying, testing, and interacting with the smart contracts.
 
-# Editing this README
+### `tests/`
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+Contains test scripts to ensure the functionality and reliability of the smart contracts.
+It also includes an end-to-end examples to the demo apps (see `tests/examples/`).
 
-## Suggestions for a good README
+Tests can be run with the command
+   ```
+   npm run tests
+   ```
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+Please be sure to run a test node, build and deploy all the contracts before run any tests (see below for details).
 
-## Name
-Choose a self-explaining name for your project.
+### `config.js`
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+Configuration file for the project.
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+## Contracts Overview
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+### `AppProxy.sol`
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+Proxy contracts serve as an intermediary between the dApps and the cross-chain layer, ensuring that messages are properly routed and executed.
+The `AppProxy` contract is a base contract for application proxies. It inherits from Ownable and implements the IAppProxy interface. This contract is designed to manage an application address and interact with a cross-chain layer.
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+### `CrossChainLayer.sol`
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+The `CrossChainLayer` contract serves as the core of the L2 bridge, managing the execution of messages, communications with the dApps via proxies, and managing cross-chain tokens. It provides functionality to handle cross-chain interactions, including minting, unlocking, and burning tokens, as well as processing messages based on Merkle proofs. It ensures that only authorized sequencers and application proxies can perform specific actions.
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+#### Key Features
+- **Sequencer Management**: Add and block sequencers to control who can process cross-chain messages.
+- **Application Proxy Management**: Add and block application proxies to authorize specific applications to interact with the contract.
+- **Merkle Root Management**: Update the Merkle root used for validating cross-chain messages.
+- **Message Processing (Execution)**: Execute messages on the L2 side if a valid Merkle proof is provided.
+- **Callback Handling**: Process callbacks from decentralized applications (dApps) and handle token burning and locking.
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+### `CrossChainLayerToken.sol`
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+The `CrossChainLayerToken` contract for all L2 tokens.
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+### `CallLib.sol`
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+Library to perform an efficient low level calls.
 
-## License
-For open source projects, say how it is licensed.
+### `Errors.sol`
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+Defines custom errors used throughout the contracts to provide more meaningful error messages and facilitate debugging.
+
+### `Events.sol`
+
+Defines events that are emitted by the contracts to signal state changes and important actions.
+
+### `Structs.sol`
+
+Defines the structs used in various contracts.
+
+### `MerkleTreeLib.sol`
+
+This library contains utility functions for working with messages, such as hashing messages and calculating Merkle roots.
+
+### `MerkleTreeUtils.sol`
+
+Provides utility functions for working with Merkle trees, which are used to ensure the integrity of data.
+
+## Setup and Deployment
+
+1. **Install Dependencies:**
+   ```
+   npm install
+   ```
+
+2. **Raise up a test hardhat node:**
+   ```
+   npx hardhat node
+   ```
+
+3. **Compile and deploy contracts:**
+   ```
+   npm run run-uniswap-example
+   ```
+
+4. **Run tests:**
+  To run unit tests with a single command execute 
+   ```
+   npm run deploy-and-tests
+   ```
+  To run UniswapV2 examples execute the following command
+   ```
+   node tests/examples/UniswapV2.*.js
+   ```
+  where UniswapV2.*.js - any of the scripts inside `tests/examples` folder.

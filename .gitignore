@@ -1,0 +1,13 @@
+# artifacts
+build/
+artifacts/
+cache/
+addresses.json
+
+# libs
+node_modules/
+package-lock.json
+
+# local
+tests/local/
+.env

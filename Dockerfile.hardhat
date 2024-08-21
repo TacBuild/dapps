@@ -1,0 +1,11 @@
+FROM node:20.11.1-alpine
+
+WORKDIR /usr/src/app
+
+COPY package*.json ./
+
+RUN npm install
+
+COPY . .
+
+CMD npm run start-node-headless && sleep 5 && npm run test && sleep infinity
