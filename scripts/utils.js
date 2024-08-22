@@ -351,8 +351,6 @@ async function deployToken(
     // create and send CCL message
 
     const message = {
-        queryId: 123,
-        timestamp: Math.floor(Math.random() * 2**32),
         target: tokenFactoryAddress,
         methodName: 'createToken(string,string,uint8,string,string)',
         arguments: new ethers.AbiCoder().encode(
@@ -389,6 +387,19 @@ async function deployToken(
 }
 
 
+async function printContractBalance(name, contractAddress, tokenAddresses, tokens) {
+    console.log(`${name} balances:`);
+
+    for (const tokenName of tokens) {
+        const tokenAddress = tokenAddresses[tokenName];
+        const tokenContract = await getTokenContract(tokenAddress);
+        const tokenBalance = await tokenContract.balanceOf(contractAddress)
+        const tokenDigits = await tokenContract.decimals()
+        console.log(`  ${tokenName}:`.padEnd(13, ' '), balanceFormat(tokenBalance, tokenDigits));
+    }
+}
+
+
 module.exports = {
     balanceFormat,
     printEvents,
@@ -408,4 +419,5 @@ module.exports = {
     sendSimpleMessage,
     deployToken,
     depositToken,
+    printContractBalance,
 };
