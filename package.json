@@ -10,6 +10,7 @@
     "uniswap-addliq": "npx hardhat run scripts/UniswapV2/addLiquidity.js",
     "uniswap-removeliq": "npx hardhat run scripts/UniswapV2/removeLiquidity.js",
     "uniswap-swap-exact": "npx hardhat run scripts/UniswapV2/swapExactTokensForTokens.js",
+    "uniswap-swap-tok": "npx hardhat run scripts/UniswapV2/swapTokensForExactTokens.js",
     "start-node": "npx hardhat node",
     "start-node-headless": "npx hardhat node &",
     "kill-node": "lsof -ti:8545 | xargs kill -9",
