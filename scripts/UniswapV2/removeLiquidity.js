@@ -1,40 +1,44 @@
 const { ethers } = require('hardhat')
 
 const {
-    useContract,
     printEvents,
+    useContract,
     getContract,
     loadContractAddress,
     sendSimpleMessage,
 }  = require('../utils.js');
 const { printBalances } = require('./utils.js');
 
+const factoryArtifact = require("@uniswap/v2-core/build/UniswapV2Factory.json");
+
 
 async function main() {
     const crossChainLayerContract = await useContract('ICrossChainLayer', process.env.EVM_CCL_ADDRESS);
     const appProxyContract = await getContract('UniswapV2Proxy', 'UniswapV2Proxy');
+    const factoryContract = await getContract('UniswapV2Factory', 'UniswapV2Factory', factoryArtifact);
 
     await printBalances('\nBalances before operation');
 
     const tokenA = loadContractAddress('TKA');
     const tokenB = loadContractAddress('TKB');
-    const amountADesired = 10000n * 10n**9n;
-    const amountBDesired = 20000n * 10n**9n;
-    const amountAMin = 5000n * 10n**9n;
-    const amountBMin = 10000n * 10n**9n;
+    const tokenLPAB = await factoryContract.getPair(tokenA, tokenB);
+    const liquidity = 50n * 10n**9n;
+    const amountAMin = 20n * 10n**9n;
+    const amountBMin = 40n * 10n**9n;
     const to = await appProxyContract.getAddress();
     const deadline = 19010987500n;
 
     const message = {
+        queryId: 123,
+        timestamp: Math.floor(Math.random() * 2**32),
         target: await appProxyContract.getAddress(),
-        methodName: 'addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256)',
+        methodName: 'removeLiquidity(address,address,uint256,uint256,uint256,address,uint256)',
         arguments: new ethers.AbiCoder().encode(
-            ['address', 'address', 'uint256', 'uint256', 'uint256', 'uint256', 'address', 'uint256'],
+            ['address', 'address', 'uint256', 'uint256', 'uint256', 'address', 'uint256'],
             [
                 tokenA, 
                 tokenB, 
-                amountADesired, 
-                amountBDesired, 
+                liquidity, 
                 amountAMin, 
                 amountBMin, 
                 to, 
@@ -42,11 +46,10 @@ async function main() {
             ]
         ),
         caller: 'EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk',
-        mint: [
-            {tokenAddress: tokenA, amount: amountADesired},
-            {tokenAddress: tokenB, amount: amountBDesired},
+        mint: [],
+        unlock: [
+            {tokenAddress: tokenLPAB, amount: liquidity},
         ],
-        unlock: [],
     };
 
     const tx = await sendSimpleMessage(message);

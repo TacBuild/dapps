@@ -8,6 +8,7 @@
     "deploy-test-tokens": "npx hardhat run scripts/common/deployTestTokens.js",
     "uniswap-deploy": "npx hardhat run scripts/UniswapV2/deploy.js",
     "uniswap-addliq": "npx hardhat run scripts/UniswapV2/addLiquidity.js",
+    "uniswap-removeliq": "npx hardhat run scripts/UniswapV2/removeLiquidity.js",
     "uniswap-swapExact": "npx hardhat test tests/examples/UniswapV2.swapExactTokensForTokens.js",
     "start-node": "npx hardhat node",
     "start-node-headless": "npx hardhat node &",
