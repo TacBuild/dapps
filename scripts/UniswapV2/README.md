@@ -35,7 +35,7 @@ Blockscout https://tac-dev-blockscout.eu-north-2.gateway.fm <br>
 Bridge https://tac-dev-bridge.eu-north-2.gateway.fm <br>
 Faucet https://tac-dev-faucet.eu-north-2.gateway.fm <br>
 
-Signer account: `0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266` -
+Signer account: `0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266`
 
 Signer private Key: `0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80`
 
@@ -58,7 +58,7 @@ All operations can be monitored in the block explorer (see links above).
 
 ### Adding Liquidity
 
-To add liquidity to the TKA-TKB bpair, execute the command:
+To add liquidity to the TKA-TKB pair, execute the command:
 
 ```
 npm run uniswap-addliq
