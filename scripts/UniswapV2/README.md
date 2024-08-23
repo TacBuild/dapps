@@ -8,13 +8,15 @@ This is a demonstration of the Cross-Chain Layer L2 part of the UniswapV2 dApp, 
 
 ## Addresses
 
+CCL & dApp:
+
 `0x5FC8d32690cc91D4c39d9d3abcBD16989F875707` - Cross-Chain Layer (CCL)
 
 `0x1429859428C0aBc9C2C47C8Ee9FBaf82cFA0F20f` - UniswapV2Proxy - main Proxy contract between CCL and Uniswap dAPP
 
 `0xcbEAF3BDe82155F56486Fb5a1072cb8baAf547cc` - UniswapV2Router02 - Uniswap dApp entry point
 
-`0xFD471836031dc5108809D173A067e8486B9047A3` - UniswapV2Factory - factory to deploy pairs
+`0xFD471836031dc5108809D173A067e8486B9047A3` - UniswapV2Factory - factory to deploy token pairs
 
 Auxiliary test tokens:
 
