@@ -85,6 +85,8 @@ function loadContractAddress(instanceName) {
 }
 
 function printEvents(receipt, contract) {
+    console.log('\n------------------- Events -------------------\n')
+
     const events = receipt.logs.map((log) => {
         try {
             return contract.interface.parseLog(log);
@@ -99,12 +101,6 @@ function printEvents(receipt, contract) {
     });
 }
 
-
-function balanceFormat(tokenAmount, digits, precision = 4) {
-    const humanReadable = tokenAmount / (BigInt(10) ** BigInt(digits)) // Assumes 18 decimals
-    const roundedValue = Number.parseFloat(humanReadable).toFixed(precision);
-    return roundedValue;
-}
 
 async function getTokenContract(tokenAddress) {
     const erc20Abi = [
@@ -446,6 +442,13 @@ async function deployToken(
     }
 
     return tokenAddress;
+}
+
+
+function balanceFormat(tokenAmount, digits, precision = 6) {
+    const humanReadable = BigInt(10) ** BigInt(precision) * tokenAmount / (BigInt(10) ** BigInt(digits))
+    const roundedValue = (Number.parseFloat(humanReadable) / (10**precision)).toFixed(precision);
+    return roundedValue;
 }
 
 

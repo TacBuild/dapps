@@ -70,14 +70,24 @@ As a result, you will see an increase in token balances on the pair contract:
 
 ```
 Balances before operation:
+
+CrossChainLayer balances:
+  TKA:        0.000000
+  TKB:        0.000000
+  LP-TKA-TKB: 0.000000
 TKA-TKB Pair balances:
-  TKA:        10000.0000
-  TKB:        20000.0000
-  LP-TKA-TKB: 0.0000
+  TKA:        10000.000000
+  TKB:        20000.000000
+  LP-TKA-TKB: 0.000155
 
 ...
 
 Balances after operation:
+
+CrossChainLayer balances:
+  TKA:        0.000000
+  TKB:        0.000000
+  LP-TKA-TKB: 0.000155
 TKA-TKB Pair balances:
   TKA:        20000.0000
   TKB:        40000.0000
@@ -96,6 +106,11 @@ As a result, you will see a decrease in token balances on the pair contract:
 
 ```
 Balances before operation:
+
+CrossChainLayer balances:
+  TKA:        0.000000
+  TKB:        0.000000
+  LP-TKA-TKB: 0.000155
 TKA-TKB Pair balances:
   TKA:        20000.0000
   TKB:        40000.0000
@@ -104,6 +119,11 @@ TKA-TKB Pair balances:
 ...
 
 Balances after operation:
+
+CrossChainLayer balances:
+  TKA:        0.000000
+  TKB:        0.000000
+  LP-TKA-TKB: 0.000131
 TKA-TKB Pair balances:
   TKA:        19964.0000
   TKB:        39929.0000
@@ -122,6 +142,7 @@ As a result, you will see a change in token balances on the pair contract:
 
 ```
 Balances before operation:
+
 TKA-TKB Pair balances:
   TKA:        19964.0000
   TKB:        39929.0000
@@ -130,6 +151,7 @@ TKA-TKB Pair balances:
 ...
 
 Balances after operation:
+
 TKA-TKB Pair balances:
   TKA:        19974.0000
   TKB:        39909.0000

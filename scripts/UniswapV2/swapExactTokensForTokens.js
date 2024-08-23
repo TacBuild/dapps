@@ -46,12 +46,11 @@ async function main(showEvents=false) {
         unlock: [],
     };
 
-    await sendSimpleMessage(message);
+    const receipt = await sendSimpleMessage(message);
 
     await printBalances('\nBalances after operation');
 
     if (showEvents) {
-        console.log('\n------------------- Events -------------------\n')
         printEvents(receipt, crossChainLayerContract);
     }
 }
