@@ -1,9 +1,10 @@
 const { deploy, loadContractAddress } = require('../utils.js');
 
+const factoryArtifact = require('@uniswap/v2-core/build/UniswapV2Factory.json');
+const routerArtifact = require('@uniswap/v2-periphery/build/UniswapV2Router02.json');
+
 
 async function main() {
-    const factoryArtifact = require('@uniswap/v2-core/build/UniswapV2Factory.json');
-    const routerArtifact = require('@uniswap/v2-periphery/build/UniswapV2Router02.json');
     const settingsAddress = process.env.EVM_SETTINGS_ADDRESS;
     const wethAddress = loadContractAddress('wETH');
     const tkaAddress = loadContractAddress('TKA');
