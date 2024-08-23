@@ -26,7 +26,7 @@ module.exports = {
 	    url:  "http://127.0.0.1:8545",
     },
     polygon: {
-      url: "https://runnerpalm-rpc.eu-north-2.gateway.fm",
+      url: "https://tac-dev-rpc.eu-north-2.gateway.fm",
       accounts: [ACCOUNT]
     }
   },

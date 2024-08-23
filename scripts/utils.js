@@ -244,8 +244,43 @@ async function mineBlocks(numBlocks) {
     }
 }
 
-async function waitForNextEpoch(currentEpoch=null, forceNext=false, delaySec=1, maxIters=30) {
+
+async function sendEmptyTransaction(signer) {
+    const tx = await signer.sendTransaction({
+        to: '0x0000000000000000000000000000000000000000',
+        value: 0,
+        gasLimit: 100_000,
+    });
+    await tx.wait();
+    return tx;
+}
+
+async function waitForBlocks(numBlocks, signer, forceBlockCreation = true) {
+    const startBlock = await ethers.provider.getBlockNumber();
+    const endBlock = startBlock + numBlocks;
+
+    return new Promise((resolve) => {
+        const checkBlock = async () => {
+            const currentBlock = await ethers.provider.getBlockNumber();
+            if (currentBlock >= endBlock) {
+                resolve(currentBlock);
+            } else {
+                if (forceBlockCreation) {
+                    await sendEmptyTransaction(signer);
+                }
+                setTimeout(checkBlock, 1000); // Check every second
+            }
+        };
+        checkBlock();
+    });
+}
+
+
+async function waitForNextEpoch(currentEpoch=null, forceNext=false, delaySec=1, maxIters=30, test=false) {
+    console.log('waiting for the next epoch...')
+
     const crossChainLayerContract = await useContract('ICrossChainLayer', process.env.EVM_CCL_ADDRESS);
+
     if (currentEpoch == null) {
         const result = await crossChainLayerContract.getCurrentEpoch();
         currentEpoch = result[0];
@@ -265,7 +300,7 @@ async function waitForNextEpoch(currentEpoch=null, forceNext=false, delaySec=1, 
                 }
 
                 if (iter >= maxIters) {
-                    resolve(newEpoch)
+                    resolve(newEpoch);
                     throw new Error('Try number exceeded');
                 }
 
@@ -273,20 +308,25 @@ async function waitForNextEpoch(currentEpoch=null, forceNext=false, delaySec=1, 
                     resolve(newEpoch);
                 } else {
                     iter += 1;
-                    await mineBlocks(10);
-                    setTimeout(checkEpoch, delaySec*1000);
+                    if (test) {
+                        await mineBlocks(10);
+                    } else {
+                        const signer = (await ethers.getSigners())[0];
+                        await waitForBlocks(10, signer);
+                    }
+                    setTimeout(checkEpoch, delaySec * 1000);
                 }
-                } catch (error) {
-                    reject(error);
-                }
-            };
+            } catch (error) {
+                reject(error);
+            }
+        };
 
         checkEpoch();
-      });
+    });
 }
 
 
-async function sendSimpleMessage(message) {
+async function sendSimpleMessage(message, verbose=false) {
     // setup
     const crossChainLayerContract = await useContract('ICrossChainLayer', process.env.EVM_CCL_ADDRESS);
     const groupContract = await useContract('IGroup', process.env.EVM_TESTGROUP_ADDRESS);
@@ -305,10 +345,24 @@ async function sendSimpleMessage(message) {
 
     // set proper Merkle root
     const messageHash = await treeUtilsContract.hashInMessage(message);
-    await groupContract.vote(messageHash);
+    const tx = await groupContract.vote(messageHash);
+    await tx.wait();
+
+    if (verbose) {
+        console.log('settings new Merkle root:', messageHash);
+        console.log('group:')
+        console.log(await groupContract.getCurrentEpoch());
+        console.log(await groupContract.getValue());
+        console.log(await groupContract.totalVoters());
+        console.log('CCL:')
+        console.log(await crossChainLayerContract.getCurrentEpoch());
+        console.log(await crossChainLayerContract.getValue());
+        console.log(await crossChainLayerContract.totalVoters());
+    }
 
     // execute message
-    return await crossChainLayerContract.receiveMessage(message, [], 0);
+    const resTx = await crossChainLayerContract.receiveMessage(message, [], 0);
+    return await resTx.wait();
 }
 
 
@@ -339,7 +393,7 @@ async function depositToken(tokenSymbol, amount, recipientAddress) {
 
 async function deployToken(
     tokenName, tokenSymbol, tokenDecimals, tokenL1Address, tokenL1AdditionalAddress, 
-    silent=true
+    verbose=false
 ) {
     // setup
     const settingsAddress = process.env.EVM_SETTINGS_ADDRESS;
@@ -362,7 +416,7 @@ async function deployToken(
         unlock: [],
     };
 
-    await sendSimpleMessage(message);
+    await sendSimpleMessage(message, verbose=true);
 
     // check deployment
     const tokenAddress = await tokenUtilsContract.computeAddress(
@@ -371,6 +425,12 @@ async function deployToken(
     const tokenInfo = await tokenFactoryContract.getTokenInfo(tokenAddress);
     const totalTokens = await tokenFactoryContract.totalTokens();
 
+    if (verbose) {
+        console.log(tokenAddress);
+        console.log(tokenInfo);
+        console.log(totalTokens);
+    }
+
     if (!tokenInfo[0]) {
         throw new Error('Token was not created or the wrong address is calculated');
     }
@@ -378,7 +438,7 @@ async function deployToken(
     // save token address
     saveContractAddress(tokenSymbol, tokenAddress);
 
-    if (!silent) {
+    if (verbose) {
         console.log(`Token ${tokenSymbol} deployed successfully: ${tokenAddress}, info: ${tokenInfo}`);
         console.log('Total tokens:', totalTokens);
     }
