@@ -2,8 +2,8 @@ const { ethers } = require('hardhat')
 
 const {
     useContract,
-    printEvents,
     getContract,
+    printEvents,
     loadContractAddress,
     sendSimpleMessage,
 }  = require('../utils.js');
@@ -12,8 +12,8 @@ const { printBalances } = require('./utils.js');
 
 async function main(showEvents=false) {
     const crossChainLayerContract = await useContract('ICrossChainLayer', process.env.EVM_CCL_ADDRESS);
-    const appProxyContract = await getContract('UniswapV2Proxy', 'UniswapV2Proxy');
-
+    const appProxyContract = await getContract('UniswapV2Proxy', 'UniswapV2Proxy', null, process.env.UNISWAPV2_PROXY_ADDRESS);
+    
     await printBalances('\nBalances before operation');
 
     const tokenA = loadContractAddress('TKA');

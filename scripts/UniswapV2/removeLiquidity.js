@@ -14,9 +14,9 @@ const factoryArtifact = require("@uniswap/v2-core/build/UniswapV2Factory.json");
 
 async function main(showEvents=false) {
     const crossChainLayerContract = await useContract('ICrossChainLayer', process.env.EVM_CCL_ADDRESS);
-    const appProxyContract = await getContract('UniswapV2Proxy', 'UniswapV2Proxy');
-    const factoryContract = await getContract('UniswapV2Factory', 'UniswapV2Factory', factoryArtifact);
-
+    const appProxyContract = await getContract('UniswapV2Proxy', 'UniswapV2Proxy', null, process.env.UNISWAPV2_PROXY_ADDRESS);
+    const factoryContract = await getContract('UniswapV2Factory', 'UniswapV2Factory', factoryArtifact,  process.env.UNISWAPV2_FACTORY_ADDRESS);
+    
     await printBalances('\nBalances before operation');
 
     const tokenA = loadContractAddress('TKA');

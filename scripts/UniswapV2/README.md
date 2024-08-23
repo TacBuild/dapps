@@ -4,25 +4,27 @@
 
 This is a demonstration of the Cross-Chain Layer L2 part of the UniswapV2 dApp, including examples of the main functions for working with the Uniswap DEX: adding and removing liquidity, as well as swaps with a specified input (swap exact tokens for tokens) and swaps with a specified output (swap tokens for exact tokens). The contracts of the DEX are deployed on a test Polygon node. Contract addresses and block explorer are given below.
 
+**!** Before running the examples please create .env file in the project root by copying .env.polygon (with no changes).
+
 ## Addresses
 
-`0x770f1a50450347cD107726b32CaE7a155d96CD84` - Cross-Chain Layer (CCL)
+`0x5FC8d32690cc91D4c39d9d3abcBD16989F875707` - Cross-Chain Layer (CCL)
 
-`0x37A4Baba35679150caabc74780fd18E009886c0F` - UniswapV2Proxy - main Proxy contract between CCL and Uniswap dAPP
+`0x1429859428C0aBc9C2C47C8Ee9FBaf82cFA0F20f` - UniswapV2Proxy - main Proxy contract between CCL and Uniswap dAPP
 
-`0x4EF8CDFAa84a31a7A8349a7303fF4198AF61e38D` - UniswapV2Router02 - Uniswap dApp entry point
+`0xcbEAF3BDe82155F56486Fb5a1072cb8baAf547cc` - UniswapV2Router02 - Uniswap dApp entry point
 
-`0x809d550fca64d94Bd9F66E60752A544199cfAC3D` - UniswapV2Factory - factory to deploy pairs
+`0xFD471836031dc5108809D173A067e8486B9047A3` - UniswapV2Factory - factory to deploy pairs
 
 Auxiliary test tokens:
 
-`0x43011da9C720c763a57d7Bcff06C99887A9b50af` - wETH
+`0xc45d871f37FB8A9646026f037d12C035fD03CCc2` - wETH
 
-`0xDF44c429F8978485b0827ca229b620981f215eB2` - TKA
+`0x8122E8B694E803AA8b469ee2A1103b6fD6259538` - TKA
 
-`0x6Ceb0d8dFD626E724FdE25B4D5f9ab62c955FAc1` - TKB
+`0x2467dDaCB831668d66a9e1D124d7cDd250586C8f` - TKB
 
-`0x55D40c2276F1Cb26FA215344fB44404dA348451f` - TKC
+`0x2fbF99f58D3F1336035ee2F8E322Ac62a59C9877` - TKC
 
 ## Node
 
@@ -51,6 +53,8 @@ The execution scheme for any message (for example, token swapping) is as follows
 To directly demonstrate the functionality described above, you can add or remove liquidity to pairs of pre-deployed tokens TKA, TKB, etc., or perform their swap with a specified input or output, as described below. You can also add new tokens manually and perform all the described operations with them.
 
 All operations can be monitored in the block explorer (see links above).
+
+**!** Before running the examples please ensure you have .env file in the project root as described above.
 
 ### Adding Liquidity
 

@@ -52,9 +52,11 @@ async function useContract(contractName, contractAddress) {
 }
 
 
-async function getContract(contractName, instanceName, artifact = null) {
-    const contractAddress = loadContractAddress(instanceName);
-    
+async function getContract(contractName, instanceName, artifact = null, contractAddress = null) {
+    if (contractAddress == null) {
+        contractAddress = loadContractAddress(instanceName);
+    }
+
     let lock
 
     if (artifact == null){

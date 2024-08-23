@@ -13,7 +13,7 @@ async function printBalances(name) {
     const tokenTKAAddress = loadContractAddress('TKA');
     const tokenTKBAddress = loadContractAddress('TKB');
     const tokenWETHAddress = loadContractAddress('WETH');
-    const factoryContract = await getContract('UniswapV2Factory', 'UniswapV2Factory', factoryArtifact);
+    const factoryContract = await getContract('UniswapV2Factory', 'UniswapV2Factory', factoryArtifact,  process.env.UNISWAPV2_FACTORY_ADDRESS);
     const tokenLPABAddress = await factoryContract.getPair(tokenTKAAddress, tokenTKBAddress)
 
     const tokenAddresses = {
@@ -31,13 +31,13 @@ async function printBalances(name) {
         ['TKA', 'TKB', 'LP-TKA-TKB']
     )
 
-    const appProxyContract = await getContract('UniswapV2Proxy', 'UniswapV2Proxy');
+    const appProxyContract = await getContract('UniswapV2Proxy', 'UniswapV2Proxy', null, process.env.UNISWAPV2_PROXY_ADDRESS);
     await printContractBalance(
         'UniswapV2Proxy', await appProxyContract.getAddress(), tokenAddresses,
         ['TKA', 'TKB', 'LP-TKA-TKB']
     )
 
-    const appContract = await getContract('UniswapV2Router02', 'UniswapV2Router02', routerArtifact);
+    const appContract = await getContract('UniswapV2Router02', 'UniswapV2Router02', routerArtifact, process.env.UNISWAPV2_ROUTER02_ADDRESS);
     await printContractBalance(
         'UniswapV2Router02', await appContract.getAddress(), tokenAddresses,
         ['TKA', 'TKB', 'LP-TKA-TKB']
