@@ -28,10 +28,10 @@ async function main() {
     for (const tokenPair of tokenPairs) {
         const pairAddress = await uniswapV2Factory.getPair(tokenPair[0], tokenPair[1])
         if (pairAddress == 0x0000000000000000000000000000000000000000) {
-            await uniswapV2Factory.createPair(tokenPair[0], tokenPair[1])
+            const tx = await uniswapV2Factory.createPair(tokenPair[0], tokenPair[1]);
+            await tx.wait();
         }
     }
-
 }
 
 

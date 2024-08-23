@@ -10,7 +10,7 @@ const {
 const { printBalances } = require('./utils.js');
 
 
-async function main() {
+async function main(showEvents=false) {
     const crossChainLayerContract = await useContract('ICrossChainLayer', process.env.EVM_CCL_ADDRESS);
     const appProxyContract = await getContract('UniswapV2Proxy', 'UniswapV2Proxy');
 
@@ -43,13 +43,14 @@ async function main() {
         unlock: [],
     };
 
-    const tx = await sendSimpleMessage(message);
-    const receipt = await tx.wait()
+    await sendSimpleMessage(message);
 
     await printBalances('\nBalances after operation');
 
-    console.log('\n------------------- Events -------------------\n')
-    printEvents(receipt, crossChainLayerContract);
+    if (showEvents) {
+        console.log('\n------------------- Events -------------------\n')
+        printEvents(receipt, crossChainLayerContract);
+    }
 };
 
 
