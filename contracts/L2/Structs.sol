@@ -17,8 +17,6 @@ struct TokenAmount {
  * @dev Extended L1 token info
  */
 struct TokenInfo {
-    bool exists;
-    bool active;
     string name;
     string symbol;
     uint8 decimals;

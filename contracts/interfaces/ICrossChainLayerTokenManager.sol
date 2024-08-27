@@ -10,10 +10,10 @@ import { TokenInfo, TokenAmount } from "contracts/L2/Structs.sol";
  */
 interface ICrossChainLayerTokenManager {
     /**
-     * @dev Returns current status of Cross-Chain Layer token.
-     * @param tokenAddress Token address.
+     * @dev Returns the address Cross-Chain Layer token by its index.
+     * @param tokenIndex Token index.
      */
-    function getTokenInfo(address tokenAddress) external view returns (TokenInfo memory);
+    function getTokenAddress(uint64 tokenIndex) external view returns (address);
 
     /**
      * @dev Returns total L1 token deployed on L2.

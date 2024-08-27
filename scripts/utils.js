@@ -103,7 +103,7 @@ function printEvents(receipt, contract) {
 
 
 async function getTokenContract(tokenAddress) {
-    const erc20Abi = [
+    const erc20CCLAbi = [
         {
             "inputs": [
             {
@@ -129,10 +129,55 @@ async function getTokenContract(tokenAddress) {
             "outputs":[{"internalType":"uint8","name":"","type":"uint8"}],
             "stateMutability":"view",
             "type":"function"
-        }
+        },
+        {
+            "inputs": [],
+            "name": "getInfo",
+            "outputs": [
+              {
+                "components": [
+                  {
+                    "internalType": "string",
+                    "name": "name",
+                    "type": "string"
+                  },
+                  {
+                    "internalType": "string",
+                    "name": "symbol",
+                    "type": "string"
+                  },
+                  {
+                    "internalType": "uint8",
+                    "name": "decimals",
+                    "type": "uint8"
+                  },
+                  {
+                    "internalType": "string",
+                    "name": "l1Address",
+                    "type": "string"
+                  },
+                  {
+                    "internalType": "string",
+                    "name": "l1AdditionalAddress",
+                    "type": "string"
+                  },
+                  {
+                    "internalType": "address",
+                    "name": "l2Address",
+                    "type": "address"
+                  }
+                ],
+                "internalType": "struct TokenInfo",
+                "name": "",
+                "type": "tuple"
+              }
+            ],
+            "stateMutability": "view",
+            "type": "function"
+        },
     ];
 
-    return new ethers.Contract(tokenAddress, erc20Abi, (await ethers.getSigners())[0])
+    return new ethers.Contract(tokenAddress, erc20CCLAbi, (await ethers.getSigners())[0])
 }
 
 function hexStringToByteArray(hexString) {
@@ -395,6 +440,7 @@ async function deployToken(
 ) {
     // setup
     const settingsAddress = process.env.EVM_SETTINGS_ADDRESS;
+    const settingsContract = await useContract('ISettings', settingsAddress);
     const tokenFactoryAddress = process.env.EVM_CCLTOKENMANAGER_ADDRESS;
     const tokenFactoryContract = await useContract('ICrossChainLayerTokenManager', tokenFactoryAddress);
     const tokenUtilsAddress = process.env.EVM_TOKENUTILS_ADDRESS;
@@ -416,12 +462,18 @@ async function deployToken(
 
     await sendSimpleMessage(message, verbose=true);
 
-    // check deployment
-    const tokenAddress = await tokenUtilsContract.computeAddress(
-        tokenName, tokenSymbol, tokenDecimals, tokenL1Address, tokenL1AdditionalAddress, 
-        settingsAddress, tokenFactoryAddress);
-    const tokenInfo = await tokenFactoryContract.getTokenInfo(tokenAddress);
+     // check deployment
+     const tokenAddress = await tokenUtilsContract.computeAddress(
+        tokenName, tokenSymbol, tokenDecimals, tokenL1Address, tokenL1AdditionalAddress,
+        await settingsContract.getAddress(), await tokenFactoryContract.getAddress());
+    const tokenContract = await getTokenContract(tokenAddress);
+    const tokenInfo = await tokenContract.getInfo();
     const totalTokens = await tokenFactoryContract.totalTokens();
+    const tokenAddressFromFactory = await tokenFactoryContract.getTokenAddress(Number(totalTokens) - 1);
+
+    if (tokenAddressFromFactory != tokenAddress) {
+        throw new Error('Token was not created or the wrong address is calculated');
+    }
 
     if (verbose) {
         console.log(tokenAddress);
