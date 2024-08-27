@@ -10,23 +10,23 @@ This is a demonstration of the Cross-Chain Layer L2 part of the UniswapV2 dApp, 
 
 CCL & dApp:
 
-`0x5FC8d32690cc91D4c39d9d3abcBD16989F875707` - Cross-Chain Layer (CCL)
+`0xeAd789bd8Ce8b9E94F5D0FCa99F8787c7e758817` - Cross-Chain Layer (CCL)
 
-`0x1429859428C0aBc9C2C47C8Ee9FBaf82cFA0F20f` - UniswapV2Proxy - main Proxy contract between CCL and Uniswap dAPP
+`0xeC827421505972a2AE9C320302d3573B42363C26` - UniswapV2Proxy - main Proxy contract between CCL and Uniswap dAPP
 
-`0xcbEAF3BDe82155F56486Fb5a1072cb8baAf547cc` - UniswapV2Router02 - Uniswap dApp entry point
+`0x6b39b761b1b64C8C095BF0e3Bb0c6a74705b4788` - UniswapV2Router02 - Uniswap dApp entry point
 
-`0xFD471836031dc5108809D173A067e8486B9047A3` - UniswapV2Factory - factory to deploy token pairs
+`0xb007167714e2940013EC3bb551584130B7497E22` - UniswapV2Factory - factory to deploy token pairs
 
 Auxiliary test tokens:
 
-`0xc45d871f37FB8A9646026f037d12C035fD03CCc2` - wETH
+`0x85d12185240d418c97Bf9df684a87011c1ec6adf` - wETH
 
-`0x8122E8B694E803AA8b469ee2A1103b6fD6259538` - TKA
+`0x5a0F014001dbc714E76E3Bcfe8c5170Ff9e35F7c` - TKA
 
-`0x2467dDaCB831668d66a9e1D124d7cDd250586C8f` - TKB
+`0x6b7DCd9ca325CF694447A5f2074BC3aD757e8991` - TKB
 
-`0x2fbF99f58D3F1336035ee2F8E322Ac62a59C9877` - TKC
+`0x22D51c93820f7DEe10D9D6F13cDbab52260b029C` - TKC
 
 ## Node
 
