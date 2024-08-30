@@ -23,10 +23,10 @@ contract CurveLiteProxy is AppProxy {
     /**
      * @dev Constructor function to initialize the contract with initial state.
      * @param appAddress_ Application address.
-     * @param crossChainLayerAddress The Cross-Chain layer address.
+     * @param settingsAddress The Cross-Chain layer address.
      */
     
-    constructor(address appAddress_, address crossChainLayerAddress) AppProxy(appAddress_, crossChainLayerAddress) {
+    constructor(address appAddress_, address settingsAddress) AppProxy(appAddress_, settingsAddress) {
         _router = CurveLiteRouter(appAddress_);
     }
 
@@ -42,7 +42,7 @@ contract CurveLiteProxy is AppProxy {
         uint256[4][5] calldata swapParams,
         uint256 amount,
         uint256 minDy
-    ) public onlyCrossChainLayer {
+    ) public {
         require(msg.sender != address(0), "Invalid receiver address");
 
         // Grant token approval
