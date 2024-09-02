@@ -10,47 +10,288 @@ const {
 const { printBalances } = require('./utils.js');
 
 
+const twocryptoImplementationAbi = [{
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "name": "add_liquidity",
+    "inputs": [
+        {
+            "name": "amounts",
+            "type": "uint256[2]"
+        },
+        {
+            "name": "min_mint_amount",
+            "type": "uint256"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "",
+            "type": "uint256"
+        }
+    ]
+},
+{
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "name": "add_liquidity",
+    "inputs": [
+        {
+            "name": "amounts",
+            "type": "uint256[2]"
+        },
+        {
+            "name": "min_mint_amount",
+            "type": "uint256"
+        },
+        {
+            "name": "receiver",
+            "type": "address"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "",
+            "type": "uint256"
+        }
+    ]
+},
+{
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "name": "remove_liquidity",
+    "inputs": [
+        {
+            "name": "_amount",
+            "type": "uint256"
+        },
+        {
+            "name": "min_amounts",
+            "type": "uint256[2]"
+        },
+        {
+            "name": "receiver",
+            "type": "address"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "",
+            "type": "uint256[2]"
+        }
+    ]
+},
+{
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "name": "remove_liquidity",
+    "inputs": [
+        {
+            "name": "_amount",
+            "type": "uint256"
+        },
+        {
+            "name": "min_amounts",
+            "type": "uint256[2]"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "",
+            "type": "uint256[2]"
+        }
+    ]
+},
+{
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "name": "remove_liquidity_one_coin",
+    "inputs": [
+        {
+            "name": "token_amount",
+            "type": "uint256"
+        },
+        {
+            "name": "i",
+            "type": "uint256"
+        },
+        {
+            "name": "min_amount",
+            "type": "uint256"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "",
+            "type": "uint256"
+        }
+    ]
+},
+{
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "name": "remove_liquidity_one_coin",
+    "inputs": [
+        {
+            "name": "token_amount",
+            "type": "uint256"
+        },
+        {
+            "name": "i",
+            "type": "uint256"
+        },
+        {
+            "name": "min_amount",
+            "type": "uint256"
+        },
+        {
+            "name": "receiver",
+            "type": "address"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "",
+            "type": "uint256"
+        }
+    ]
+},{
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "name": "exchange",
+    "inputs": [
+        {
+            "name": "i",
+            "type": "uint256"
+        },
+        {
+            "name": "j",
+            "type": "uint256"
+        },
+        {
+            "name": "dx",
+            "type": "uint256"
+        },
+        {
+            "name": "min_dy",
+            "type": "uint256"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "",
+            "type": "uint256"
+        }
+    ]
+},
+{
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "name": "exchange",
+    "inputs": [
+        {
+            "name": "i",
+            "type": "uint256"
+        },
+        {
+            "name": "j",
+            "type": "uint256"
+        },
+        {
+            "name": "dx",
+            "type": "uint256"
+        },
+        {
+            "name": "min_dy",
+            "type": "uint256"
+        },
+        {
+            "name": "receiver",
+            "type": "address"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "",
+            "type": "uint256"
+        }
+    ]
+},
+{
+    "stateMutability": "view",
+    "type": "function",
+    "name": "balances",
+    "inputs": [
+        {
+            "name": "arg0",
+            "type": "uint256"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "",
+            "type": "uint256"
+        }
+    ]
+},
+{
+    "stateMutability": "view",
+    "type": "function",
+    "name": "balanceOf",
+    "inputs": [
+        {
+            "name": "arg0",
+            "type": "address"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "",
+            "type": "uint256"
+        }
+    ]
+}]
+
+
 async function main(showEvents=false) {
     const crossChainLayerContract = await useContract('ICrossChainLayer', process.env.EVM_CCL_ADDRESS);
-    const appProxyContract = await getContract('CurveLiteProxy', 'CurveLiteProxy', null, process.env.CURVE_LITE_PROXY_ADDRESS);
+    const appProxyContract = await getContract('CurveLiteTwocryptoswapProxy', 'CurveLiteTwocryptoswapProxy', null, process.env.CURVE_LITE_TWOCRYPTOSWAP_PROXY_ADDRESS);
+    const poolAddress = '0xBD362ee863428e117b9E08B46aC195Aa4e536a45'
+
+
+    await printBalances('\nBalances before operation', poolAddress);
 
     const tokenA = loadContractAddress('TKA');
     const tokenB = loadContractAddress('TKB');
-    const pool = '0xBD362ee863428e117b9E08B46aC195Aa4e536a45';
-    // const pool_type = 20 ;// pool_type: 10 - stable-ng, 20 - twocrypto-ng, 30 - tricrypto-ng, 4 - llamma
-    // const swap_params = [[0,1,4,20],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]];
-    // 4 - addliq, 1 - swap, 6 - remove
-    const to = appProxyContract.getAddress();
-    const amount = 0;
-    const min_dy = 0
+    const amountA = 10n**8n;
+    const amountB = 10n**8n;
 
-    const deadline = 19010987500n;
-
-    const NA = '0x0000000000000000000000000000000000000000'
-
+    const to = await appProxyContract.getAddress();
+    
 
     const message = {
-        target: to,
-        methodName: 'exchange(address[11], uint256[4][5], uint256, uint256)',
+        target: await appProxyContract.getAddress(),
+        methodName: 'addLiquidity(address,uint256[2],uint256)',
         arguments: new ethers.AbiCoder().encode(
-            ['address[11]', 'uint256[4][5]', 'uint256', 'uint256'],
+            ['address', 'uint256[2]', 'uint256'],
             [
-                [tokenA,pool,tokenB,NA,NA,NA,NA,NA,NA,NA,NA], 
-                [[0,1,4,20],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],
-                amount, 
-                min_dy,
+                poolAddress, 
+                [amountA,amountB], 
+                0
             ]
         ),
         caller: 'EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk',
         mint: [
-            {tokenAddress: tokenA, amount: amount},
-            {tokenAddress: tokenB, amount: amount},
+            {tokenAddress: tokenA, amount: amountA},
+            {tokenAddress: tokenB, amount: amountB},
         ],
         unlock: [],
     };
 
+
     const receipt = await sendSimpleMessage(message);
 
+    await printBalances('\nBalances after operation', poolAddress);
 
     if (showEvents) {
         printEvents(receipt, crossChainLayerContract);
