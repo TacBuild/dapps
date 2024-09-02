@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 
-import { TransferHelper } from 'contracts/Helpers/TransferHelper.sol';
+import { TransferHelper } from 'contracts/helpers/TransferHelper.sol';
 
 import { AppProxy } from "contracts/L2/AppProxy.sol";
 import { OutMessage, TokenAmount } from "contracts/L2/Structs.sol";
@@ -37,7 +37,6 @@ contract CurveLiteTwocryptoswapProxy is AppProxy {
     constructor(address settingsAddress) AppProxy(address(0), settingsAddress) {
     }
 
-
     /**
      * @dev A proxy to addLiquidity
      */
@@ -49,7 +48,6 @@ contract CurveLiteTwocryptoswapProxy is AppProxy {
         address tokenA  = ITwocryptoswapPool(pool).coins(0);
         address tokenB  = ITwocryptoswapPool(pool).coins(1);
 
-
         // grant token approvals
         TransferHelper.safeApprove(tokenA, pool, amounts[0]);
         TransferHelper.safeApprove(tokenB, pool, amounts[1]);
@@ -57,10 +55,10 @@ contract CurveLiteTwocryptoswapProxy is AppProxy {
         uint liquidity = ITwocryptoswapPool(pool).add_liquidity(
             [amounts[0],amounts[1]],
             minMintAmount
-            );
+        );
 
         // tokens to L2->L1 transfer (burn)
-        TokenAmount[] memory tokensToBurn = new TokenAmount[](2);
+        TokenAmount[] memory tokensToBurn = new TokenAmount[](0);
 
         // tokens to L2->L1 transfer (lock)
         address tokenLiquidity = pool;

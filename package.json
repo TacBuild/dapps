@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "compile": "npx hardhat compile",
     "deploy-weth": "npx hardhat run scripts/common/deployWETHToken.js",
     "deploy-test-tokens": "npx hardhat run scripts/common/deployTestTokens.js",
     "uniswap-deploy": "npx hardhat run scripts/UniswapV2/deploy.js",
@@ -11,6 +12,8 @@
     "uniswap-remliq": "npx hardhat run scripts/UniswapV2/removeLiquidity.js",
     "uniswap-swapexact": "npx hardhat run scripts/UniswapV2/swapExactTokensForTokens.js",
     "uniswap-swaptok": "npx hardhat run scripts/UniswapV2/swapTokensForExactTokens.js",
+    "curve-lite-deploy": "npx hardhat run scripts/CurveLite/deployProxy.js",
+    "curve-lite-addliq": "npx hardhat run scripts/CurveLite/addLiquidityTwocrypto.js",
     "start-node": "npx hardhat node",
     "start-node-headless": "npx hardhat node &",
     "kill-node": "lsof -ti:8545 | xargs kill -9",
