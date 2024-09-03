@@ -42,7 +42,39 @@ async function printBalances(name, poolAddress) {
     )
 }
 
+async function getPoolFinderContract(factoryAddress) {
+    const poolFinderAbi = [{
+        "stateMutability": "view",
+        "type": "function",
+        "name": "find_pool_for_coins",
+        "inputs": [
+            {
+                "name": "_from",
+                "type": "address"
+            },
+            {
+                "name": "_to",
+                "type": "address"
+            },
+            {
+                "name": "i",
+                "type": "uint256"
+            }
+        ],
+        "outputs": [
+            {
+                "name": "",
+                "type": "address"
+            }
+        ]
+    }
+    ];
+
+    return new ethers.Contract(factoryAddress, poolFinderAbi, (await ethers.getSigners())[0])
+}
+
 
 module.exports = {
     printBalances,
+    getPoolFinderContract
 };

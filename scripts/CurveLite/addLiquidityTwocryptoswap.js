@@ -7,18 +7,46 @@ const {
     loadContractAddress,
     sendSimpleMessage,
 }  = require('../utils.js');
-const { printBalances } = require('./utils.js');
+const { printBalances, getPoolFinderContract } = require('./utils.js');
+
+const twocryptoFactoryAbi = [{
+    "stateMutability": "view",
+    "type": "function",
+    "name": "find_pool_for_coins",
+    "inputs": [
+        {
+            "name": "_from",
+            "type": "address"
+        },
+        {
+            "name": "_to",
+            "type": "address"
+        },
+        {
+            "name": "i",
+            "type": "uint256"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "",
+            "type": "address"
+        }
+    ]
+}]
 
 
 async function main(showEvents=false) {
     const crossChainLayerContract = await useContract('ICrossChainLayer', process.env.EVM_CCL_ADDRESS);
     const appProxyContract = await getContract('CurveLiteTwocryptoswapProxy', 'CurveLiteTwocryptoswapProxy', null, process.env.CURVE_LITE_TWOCRYPTOSWAP_PROXY_ADDRESS);
-    const poolAddress = '0xBD362ee863428e117b9E08B46aC195Aa4e536a45'  // TODO - get from Curve API !!!
-
-    await printBalances('\nBalances before operation', poolAddress);
-
+    const poolFinder = await getPoolFinderContract(process.env.CURVE_LITE_TWOCRYPTOSWAP_FACTORY_ADDRESS)
+    
     const tokenA = loadContractAddress('TKA');
     const tokenB = loadContractAddress('TKB');
+    const poolAddress = await poolFinder.find_pool_for_coins(tokenA,tokenB,0)
+
+    await printBalances('\nBalances before operation', poolAddress);
+    
     const amountA = 10n**8n;
     const amountB = 10n**8n;
 
