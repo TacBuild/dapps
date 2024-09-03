@@ -9,32 +9,6 @@ const {
 }  = require('../utils.js');
 const { printBalances, getPoolFinderContract } = require('./utils.js');
 
-const twocryptoFactoryAbi = [{
-    "stateMutability": "view",
-    "type": "function",
-    "name": "find_pool_for_coins",
-    "inputs": [
-        {
-            "name": "_from",
-            "type": "address"
-        },
-        {
-            "name": "_to",
-            "type": "address"
-        },
-        {
-            "name": "i",
-            "type": "uint256"
-        }
-    ],
-    "outputs": [
-        {
-            "name": "",
-            "type": "address"
-        }
-    ]
-}]
-
 
 async function main(showEvents=false) {
     const crossChainLayerContract = await useContract('ICrossChainLayer', process.env.EVM_CCL_ADDRESS);
