@@ -6,6 +6,31 @@ pragma solidity ^0.8.25;
  * @dev An interface for managing consensus with epoch-based voting.
  */
 interface IStakeVault {
+
+    // Events
+
+    /**
+     * @dev Sequencer stake updated event
+     * @param sequencerAddress Sequencer address
+     * @param stake Stake amount
+     */
+    event StakeUpdated(address indexed sequencerAddress, uint256 stake);
+
+    /**
+     * @dev Cross-Chain Layer address changed event
+     * @param crossChainLayerAddress New address of the Cross-Chain Layer contract
+     */
+    event CrossChainLayerUpdated(address indexed crossChainLayerAddress);
+
+    // Errors
+
+    /**
+     * @dev No active sequencers error
+     */
+    error NoActiveSequencers();
+
+    // Intarface
+
     /**
      * @dev Update sequencer stake.
      * @param sequencer Sequencer address.

@@ -10,6 +10,14 @@ import { TokenInfo, TokenAmount } from "contracts/L2/Structs.sol";
  */
 interface ICrossChainLayerTokenManager {
     /**
+    * @dev New CrossChainLayerToken contract was deployed
+    * @param tokenAddress Token address
+    * @param name Token name
+    * @param symbol Token symbol
+    */
+    event TokenCreated(address tokenAddress, string name, string symbol);
+
+    /**
      * @dev Returns the address Cross-Chain Layer token by its index.
      * @param tokenIndex Token index.
      */

@@ -183,8 +183,8 @@ contract CurveLiteTwocryptoswapProxy is AppProxy {
         );
 
         // tokens to L2->L1 transfer (burn)
-        TokenAmount[] memory tokensToBurn = new TokenAmount[](0);
-        
+        TokenAmount[] memory tokensToBurn = new TokenAmount[](1);
+        tokensToBurn[0] = TokenAmount(tokenOut, amountOut);
 
         // tokens to L2->L1 transfer (lock)
         TokenAmount[] memory tokensToLock = new TokenAmount[](0);

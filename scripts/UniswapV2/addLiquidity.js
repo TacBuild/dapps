@@ -26,7 +26,8 @@ async function main(showEvents=false) {
     const deadline = 19010987500n;
 
     const message = {
-        target: await appProxyContract.getAddress(),
+        queryId: 5,
+        target: to,
         methodName: 'addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256)',
         arguments: new ethers.AbiCoder().encode(
             ['address', 'address', 'uint256', 'uint256', 'uint256', 'uint256', 'address', 'uint256'],
@@ -54,7 +55,7 @@ async function main(showEvents=false) {
     await printBalances('\nBalances after operation');
 
     if (showEvents) {
-        printEvents(receipt, crossChainLayerContract);
+        await printEvents(receipt, crossChainLayerContract);
     }
 }
 

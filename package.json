@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "compile": "npx hardhat compile",
-    "deploy-weth": "npx hardhat run scripts/common/deployWETHToken.js",
+    "deploy-weth-token": "npx hardhat run scripts/common/deployWETHToken.js",
     "deploy-test-tokens": "npx hardhat run scripts/common/deployTestTokens.js",
     "uniswap-deploy": "npx hardhat run scripts/UniswapV2/deploy.js",
     "uniswap-addliq": "npx hardhat run scripts/UniswapV2/addLiquidity.js",

@@ -26,8 +26,7 @@ async function main(showEvents=false) {
 
     const message = {
         queryId: 123,
-        timestamp: Math.floor(Math.random() * 2**32),
-        target: await appProxyContract.getAddress(),
+        target: to,
         methodName: 'swapExactTokensForTokens(uint256,uint256,address[],address,uint256)',
         arguments: new ethers.AbiCoder().encode(
             ['uint256', 'uint256', 'address[]', 'address', 'uint256'],
@@ -51,9 +50,9 @@ async function main(showEvents=false) {
     await printBalances('\nBalances after operation');
 
     if (showEvents) {
-        printEvents(receipt, crossChainLayerContract);
+        await printEvents(receipt, crossChainLayerContract);
     }
 }
 
 
-main();
+main(true);

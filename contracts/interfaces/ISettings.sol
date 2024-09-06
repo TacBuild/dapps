@@ -8,6 +8,12 @@ pragma solidity ^0.8.25;
  */
 interface ISettings {
     /**
+     * @dev Cross-Chain Layer configuration setting changed event
+     * @param variable Name of the variable updated
+     */
+    event SettingsUpdated(bytes32 indexed variable);
+
+    /**
      * @dev Update a uint64 setting.
      * @param key The setting key.
      * @param value The new value.

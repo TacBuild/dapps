@@ -83,11 +83,21 @@ function loadContractAddress(instanceName) {
     return contractAddress;
 }
 
-function printEvents(receipt, contract) {
+async function printEvents(receipt, contract) {
     console.log('\n------------------- Events -------------------\n')
+
+    address = await contract.getAddress();
 
     const events = receipt.logs.map((log) => {
         try {
+            if (log.address.toLowerCase() !== address.toLowerCase()) {
+                return null
+            }
+
+            console.log('-------------------------');
+            console.log('  Event:', log.topics[0]);
+            console.log('  Args1:', log.topics.slice(1));
+            console.log('  Args2:', log.data);
             return contract.interface.parseLog(log);
         } catch (error) {
             // If the log is not from this contract, it will throw an error
