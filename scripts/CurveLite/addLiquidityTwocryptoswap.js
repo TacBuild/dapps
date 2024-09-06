@@ -15,8 +15,9 @@ async function main(showEvents=false) {
     const appProxyContract = await getContract('CurveLiteTwocryptoswapProxy', 'CurveLiteTwocryptoswapProxy', null, process.env.CURVE_LITE_TWOCRYPTOSWAP_PROXY_ADDRESS);
     const poolFinder = await getPoolFinderContract(process.env.CURVE_LITE_TWOCRYPTOSWAP_FACTORY_ADDRESS)
     
-    const tokenA = loadContractAddress('TKA');
-    const tokenB = loadContractAddress('TKB');
+    const tokenA = process.env.EVM_TKA_ADDRESS;
+    const tokenB = process.env.EVM_TKB_ADDRESS;
+    
     const poolAddress = await poolFinder.find_pool_for_coins(tokenA,tokenB,0)
 
     await printBalances('\nBalances before operation', poolAddress);

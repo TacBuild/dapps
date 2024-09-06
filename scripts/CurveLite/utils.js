@@ -76,5 +76,5 @@ async function getPoolFinderContract(factoryAddress) {
 
 module.exports = {
     printBalances,
-    getPoolFinderContract
-};
+    getPoolFinderContract,
+    };
