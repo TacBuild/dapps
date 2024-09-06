@@ -25,7 +25,6 @@ async function main(showEvents=false) {
     const deadline = 19010987500n;
 
     const message = {
-        queryId: 123,
         target: to,
         methodName: 'swapExactTokensForTokens(uint256,uint256,address[],address,uint256)',
         arguments: new ethers.AbiCoder().encode(
