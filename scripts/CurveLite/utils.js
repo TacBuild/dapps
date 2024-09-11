@@ -10,8 +10,8 @@ const routerArtifact = require("@uniswap/v2-periphery/build/IUniswapV2Router02")
 
 
 async function printBalances(name, poolAddress) {
-    const tokenTKAAddress = loadContractAddress('TKA');
-    const tokenTKBAddress = loadContractAddress('TKB');
+    const tokenTKAAddress = process.env.EVM_TKA_ADDRESS;
+    const tokenTKBAddress = process.env.EVM_TKB_ADDRESS;
     const tokenLPABAddress = poolAddress;
 
     const tokenAddresses = {
@@ -39,6 +39,41 @@ async function printBalances(name, poolAddress) {
     await printContractBalance(
         'TKA-TKB Pair', pairContractAddress, tokenAddresses,
         ['TKA', 'TKB', 'LP-TKA-TKB']
+    )
+}
+
+async function printBalancesTKATKBTKC(name, poolAddress) {
+    const tokenTKAAddress = process.env.EVM_TKA_ADDRESS;
+    const tokenTKBAddress = process.env.EVM_TKB_ADDRESS;
+    const tokenTKCAddress = process.env.EVM_TKC_ADDRESS;
+    const tokenLPABAddress = poolAddress;
+
+    const tokenAddresses = {
+        'TKA': tokenTKAAddress,
+        'TKB': tokenTKBAddress,
+        'TKC': tokenTKCAddress,
+        'LP-TKA-TKB-TKC': tokenLPABAddress,
+    };
+   
+    console.log(`----------------- ${name}:`);
+
+    const cclContract = await useContract('ICrossChainLayer', process.env.EVM_CCL_ADDRESS);
+    await printContractBalance(
+        'CrossChainLayer', await cclContract.getAddress(), tokenAddresses,
+        ['TKA', 'TKB', 'TKC', 'LP-TKA-TKB-TKC']
+    )
+
+    const appProxyContract = await getContract('CurveLiteTwocryptoswapProxy', 'CurveLiteTwocryptoswapProxy', null, process.env.CURVE_LITE_TWOCRYPTOSWAP_PROXY_ADDRESS);
+    await printContractBalance(
+        'CurveLiteTwocryptoswapProxy', await appProxyContract.getAddress(), tokenAddresses,
+        ['TKA', 'TKB', 'TKC', 'LP-TKA-TKB-TKC']
+    )
+
+
+    const pairContractAddress = tokenLPABAddress;
+    await printContractBalance(
+        'TKA-TKB-TKC Pool', pairContractAddress, tokenAddresses,
+        ['TKA', 'TKB', 'TKC', 'LP-TKA-TKB-TKC']
     )
 }
 
@@ -74,7 +109,9 @@ async function getPoolFinderContract(factoryAddress) {
 }
 
 
+
 module.exports = {
     printBalances,
     getPoolFinderContract,
+    printBalancesTKATKBTKC
     };

@@ -7,7 +7,7 @@ const {
     loadContractAddress,
     sendSimpleMessage,
 }  = require('../utils.js');
-const { printBalances, getPoolFinderContract } = require('./utils.js');
+const { printBalancesTKATKBTKC, getPoolFinderContract } = require('./utils.js');
 
 
 async function main(showEvents=false) {
@@ -21,7 +21,7 @@ async function main(showEvents=false) {
 
     const poolAddress = await poolFinder.find_pool_for_coins(tokenA,tokenB,0)
 
-    await printBalances('\nBalances before operation', poolAddress);
+    await printBalancesTKATKBTKC('\nBalances before operation', poolAddress);
     
     const amount = 10n**8n;
 
@@ -45,7 +45,7 @@ async function main(showEvents=false) {
 
     const receipt = await sendSimpleMessage(message);
 
-    await printBalances('\nBalances after operation', poolAddress);
+    await printBalancesTKATKBTKC('\nBalances after operation', poolAddress);
 
     if (showEvents) {
         printEvents(receipt, crossChainLayerContract);

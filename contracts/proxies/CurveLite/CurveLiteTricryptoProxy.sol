@@ -81,7 +81,7 @@ contract CurveLiteTricryptoswapProxy is AppProxy {
         // claim tokens addresses
         address tokenA = ITricryptoswapPool(pool).coins(0);
         address tokenB = ITricryptoswapPool(pool).coins(1);
-        address tokenC = ITricryptoswapPool(pool).coins(1);
+        address tokenC = ITricryptoswapPool(pool).coins(2);
         // grant token approvals
         TransferHelper.safeApprove(tokenA, pool, amounts[0]);
         TransferHelper.safeApprove(tokenB, pool, amounts[1]);

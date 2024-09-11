@@ -101,7 +101,7 @@ async function main() {
     const tokenC = process.env.EVM_TKC_ADDRESS;
     const weth   = process.env.EVM_WETH_ADDRESS;
 
-    console.log('TKATKBTKC', 'TKATKBTKC', [tokenA, tokenB, tokenC], weth, ...Object.values(poolPresetParams))
+    
 
     const gasPrice = ethers.parseUnits("50", "gwei");
     const tx = await factoryContract.deploy_pool('TKATKBTKC', 'TKATKBTKC', [tokenA, tokenB, tokenC], weth, ...Object.values(poolPresetParams), 
@@ -109,8 +109,9 @@ async function main() {
             gasLimit: 5000000,
             gasPrice: gasPrice
         })
-    tx.wait()
+    await tx.wait()
+
 }
 
 
-main(true);
+main();

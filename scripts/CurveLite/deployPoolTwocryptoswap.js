@@ -101,8 +101,8 @@ async function main() {
             gasLimit: 5000000,
             gasPrice: gasPrice
         })
-    tx.wait()
+    await tx.wait()
 }
 
 
-main(true);
+main();
