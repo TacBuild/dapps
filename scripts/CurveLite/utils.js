@@ -19,7 +19,7 @@ async function printBalances(name, poolAddress) {
         'TKB': tokenTKBAddress,
         'LP-TKA-TKB': tokenLPABAddress,
     };
-   
+
     console.log(`----------------- ${name}:`);
 
     const cclContract = await useContract('ICrossChainLayer', process.env.EVM_CCL_ADDRESS);
@@ -54,7 +54,7 @@ async function printBalancesTKATKBTKC(name, poolAddress) {
         'TKC': tokenTKCAddress,
         'LP-TKA-TKB-TKC': tokenLPABAddress,
     };
-   
+
     console.log(`----------------- ${name}:`);
 
     const cclContract = await useContract('ICrossChainLayer', process.env.EVM_CCL_ADDRESS);
@@ -105,13 +105,61 @@ async function getPoolFinderContract(factoryAddress) {
     }
     ];
 
-    return new ethers.Contract(factoryAddress, poolFinderAbi, (await ethers.getSigners())[0])
+    return new ethers.Contract(factoryAddress, poolFinderAbi, (await ethers.getSigners())[0]);
 }
 
+async function getImplementationContract(poolAddress) {
+    const implementationAbi = [{
+        "stateMutability": "view",
+        "type": "function",
+        "name": "get_dy",
+        "inputs": [
+            {
+                "name": "i",
+                "type": "uint256"
+            },
+            {
+                "name": "j",
+                "type": "uint256"
+            },
+            {
+                "name": "dx",
+                "type": "uint256"
+            }
+        ],
+        "outputs": [
+            {
+                "name": "",
+                "type": "uint256"
+            }
+        ]
+    },
+    {
+        "stateMutability": "view",
+        "type": "function",
+        "name": "coins",
+        "inputs": [
+            {
+                "name": "arg0",
+                "type": "uint256"
+            }
+        ],
+        "outputs": [
+            {
+                "name": "",
+                "type": "address"
+            }
+        ]
+    }
+    ];
+
+    return new ethers.Contract(poolAddress, implementationAbi, (await ethers.getSigners())[0]);
+}
 
 
 module.exports = {
     printBalances,
     getPoolFinderContract,
+    getImplementationContract,
     printBalancesTKATKBTKC
-    };
+};

@@ -6,7 +6,7 @@ const {
     printEvents,
     loadContractAddress,
     sendSimpleMessage,
-}  = require('../utils.js');
+} = require('../utils.js');
 const { printBalances, getPoolFinderContract } = require('./utils.js');
 
 const poolPresetParams = {
@@ -19,7 +19,7 @@ const poolPresetParams = {
     allowed_extra_profit: 10000000000n,
     adjustment_step: 5500000000000n,
     ma_exp_time: 866n,
-    initial_price: [10n**18n, 10n**18n]
+    initial_price: [10n ** 18n, 10n ** 18n]
 }
 
 const ABI = [{
@@ -94,22 +94,20 @@ const ABI = [{
 
 async function main() {
     const signer = (await ethers.getSigners())[0];
-    const factoryContract = new ethers.Contract(process.env.CURVE_LITE_TRICRYPTOSWAP_FACTORY_ADDRESS, ABI, signer)
-    
+    const factoryContract = new ethers.Contract(process.env.CURVE_LITE_TRICRYPTOSWAP_FACTORY_ADDRESS, ABI, signer);
     const tokenA = process.env.EVM_TKA_ADDRESS;
     const tokenB = process.env.EVM_TKB_ADDRESS;
     const tokenC = process.env.EVM_TKC_ADDRESS;
-    const weth   = process.env.EVM_WETH_ADDRESS;
-
-    
-
+    const weth = process.env.EVM_WETH_ADDRESS;
     const gasPrice = ethers.parseUnits("50", "gwei");
-    const tx = await factoryContract.deploy_pool('TKATKBTKC', 'TKATKBTKC', [tokenA, tokenB, tokenC], weth, ...Object.values(poolPresetParams), 
-        { 
+    
+    const tx = await factoryContract.deploy_pool('TKATKBTKC', 'TKATKBTKC', [tokenA, tokenB, tokenC], weth, ...Object.values(poolPresetParams),
+        {
             gasLimit: 5000000,
             gasPrice: gasPrice
-        })
-    await tx.wait()
+        });
+
+    await tx.wait();
 
 }
 
