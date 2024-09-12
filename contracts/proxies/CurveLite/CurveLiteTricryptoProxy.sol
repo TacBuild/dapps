@@ -25,7 +25,7 @@ interface ITricryptoswapPool {
      * @notice Removes liquidity to the pool
      * @param amount Amount of LP tokens to burn 
      * @param min_amounts Minimum amounts of tokens to withdraw
-     * @return uint256[2] Amount of pool tokens received by the receiver
+     * @return uint256[3] Amount of pool tokens received by the receiver
      */
     function remove_liquidity(
         uint256 amount,
