@@ -25,9 +25,9 @@ async function main(showEvents=false) {
     const deadline = 19010987500n;
 
     const message = {
-        queryId: 123,
-        timestamp: Math.floor(Math.random() * 2**32),
-        target: await appProxyContract.getAddress(),
+        queryId: 42,
+        timestamp: 1726050404,
+        target: to,
         methodName: 'swapExactTokensForTokens(uint256,uint256,address[],address,uint256)',
         arguments: new ethers.AbiCoder().encode(
             ['uint256', 'uint256', 'address[]', 'address', 'uint256'],
@@ -46,14 +46,14 @@ async function main(showEvents=false) {
         unlock: [],
     };
 
-    const receipt = await sendSimpleMessage(message);
+    const receipt = await sendSimpleMessage(message, verbose=true);
 
     await printBalances('\nBalances after operation');
 
     if (showEvents) {
-        printEvents(receipt, crossChainLayerContract);
+        await printEvents(receipt, crossChainLayerContract);
     }
 }
 
 
-main();
+main(true);

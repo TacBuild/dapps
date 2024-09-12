@@ -58,7 +58,7 @@ async function main(showEvents = false) {
     await printBalances('\nBalances after operation', poolAddress);
 
     if (showEvents) {
-        printEvents(receipt, crossChainLayerContract);
+        await printEvents(receipt, crossChainLayerContract);
     }
 }
 

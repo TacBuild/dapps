@@ -9,7 +9,79 @@ import { InMessage, OutMessage, TokenAmount } from "contracts/L2/Structs.sol";
  * @title ICrossChainLayer
  * @dev An interface for Cross-Chain Layer.
  */
-interface ICrossChainLayer is IConsensus {    
+interface ICrossChainLayer is IConsensus {  
+    
+/**
+ * @dev Native Cross-Chain Layer token received event
+ * @param fromAddress From address
+ * @param amount Token amount
+ */
+event NativeTokenReceived(address indexed fromAddress, uint256 amount);
+
+/**
+ * @dev Native Cross-Chain Layer token fallback event
+ * @param fromAddress From address
+ * @param amount Token amount
+ */
+event NativeTokenFallback(address indexed fromAddress, uint256 amount);
+
+    // Events
+
+    /**
+     * @dev Input (receive) message executed event
+     * @param queryId Query Id to track message
+     * @param callerAddress Caller address (L1 message initiator)
+     * @param targetAddress Target address (L2 recipient address)
+     * @param tokensMinted Token minted during message processing
+     * @param tokensUnlocked Token unlocked during message processing
+     */
+    event InMessageProcessed(
+        uint64 queryId, 
+        string callerAddress, 
+        address targetAddress, 
+        TokenAmount[] tokensMinted, 
+        TokenAmount[] tokensUnlocked
+    );
+
+    /**
+     * @dev Output (send) message executed event
+     * @param queryId Query Id to track message
+     * @param callerAddress Caller address (L2 message initiator)
+     * @param targetAddress Recipient address (L1 recipient address))
+     * @param tokensBurned Token burned during message processing
+     * @param tokensLocked Token locked during message processing
+     */
+    event OutMessageProcessed(
+        uint64 queryId, 
+        address callerAddress, 
+        string targetAddress, 
+        TokenAmount[] tokensBurned, 
+        TokenAmount[] tokensLocked
+    );
+
+    // Errors
+
+    /**
+     * @dev Invalid Merkle proof error
+     */
+    error InvalidMerkleProof();
+
+    /**
+     * @dev App proxy call failed arror
+     * @param targetAddress Address of target called
+     * @param methodCall Method call body
+     * @param response Return body of dApp error
+     */
+    error InMessageCallFailed(address targetAddress, bytes methodCall, bytes response);
+
+    /**
+     * @dev Message already processed error
+     * @param messageHash Message hash
+     */
+    error MessageAlreadyProcessed(bytes32 messageHash);
+
+    // Interface
+
     /**
      * @dev Accepts an L1->L2 message to process if the Merkle proof is valid.
      * @param message Message to process.

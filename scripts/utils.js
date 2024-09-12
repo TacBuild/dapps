@@ -83,11 +83,21 @@ function loadContractAddress(instanceName) {
     return contractAddress;
 }
 
-function printEvents(receipt, contract) {
+async function printEvents(receipt, contract) {
     console.log('\n------------------- Events -------------------\n')
+
+    address = await contract.getAddress();
 
     const events = receipt.logs.map((log) => {
         try {
+            if (log.address.toLowerCase() !== address.toLowerCase()) {
+                return null
+            }
+
+            console.log('-------------------------');
+            console.log('  Event:', log.topics[0]);
+            console.log('  Args1:', log.topics.slice(1));
+            console.log('  Args2:', log.data);
             return contract.interface.parseLog(log);
         } catch (error) {
             // If the log is not from this contract, it will throw an error
@@ -430,6 +440,11 @@ async function sendSimpleMessage(message, verbose=false) {
         message['timestamp'] = Math.floor(Date.now() / 1000);
     }
 
+    if (verbose) {
+        console.log('sending message:');
+        console.log(message);
+    }
+
     // clear epoch
     await waitForNextEpoch(currentEpoch=null, forceNext=true);
 
@@ -439,7 +454,7 @@ async function sendSimpleMessage(message, verbose=false) {
     await tx.wait();
 
     if (verbose) {
-        console.log('settings new Merkle root:', messageHash);
+        console.log('set new Merkle root:', messageHash);
         console.log('group:')
         console.log(await groupContract.getCurrentEpoch());
         console.log(await groupContract.getValue());
@@ -448,6 +463,8 @@ async function sendSimpleMessage(message, verbose=false) {
         console.log(await crossChainLayerContract.getCurrentEpoch());
         console.log(await crossChainLayerContract.getValue());
         console.log(await crossChainLayerContract.totalVoters());
+
+        console.log('message args:', message.arguments)
     }
 
     // execute message

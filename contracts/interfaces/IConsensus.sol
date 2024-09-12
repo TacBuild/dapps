@@ -9,6 +9,44 @@ import { EpochInfo } from "contracts/L2/Structs.sol";
  * @dev An interface for managing consensus with epoch-based voting.
  */
 interface IConsensus {
+
+    // Events
+
+    /**
+     * @dev Voter added as eligible event
+     * @param voterAddress Voter address
+     */
+    event VoterAdded(address indexed voterAddress);
+
+    /**
+     * @dev Voter blocked event
+     * @param voterAddress Voter address
+     */
+    event VoterBlocked(address indexed voterAddress);
+
+    /**
+     * @dev Consensus epoch started event
+     * @param epochNumber Epoch number
+     */
+    event ConsensusEpochStarted(uint64 indexed epochNumber);
+
+    /**
+     * @dev Consensus value was updated to a new value event
+     * @param newValue New consensus value value
+     */
+    event ConsensusValueUpdated(bytes32 indexed newValue);
+
+    // Errors
+
+    /**
+     * @dev Voter is already voted in the current epoch error
+     * @param voterAddress Voter address
+     * @param currentEpoch Current epoch
+     */
+    error AlreadyVoted(address voterAddress, uint256 currentEpoch);
+
+    // Intarface
+
     /**
      * @dev Vote for a new value.
      * @param newValue New value.
