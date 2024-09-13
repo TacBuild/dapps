@@ -4,7 +4,6 @@ const {
     useContract,
     getContract,
     printEvents,
-    loadContractAddress,
     sendSimpleMessage,
     getTokenContract,
 } = require('../utils.js');

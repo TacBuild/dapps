@@ -1,13 +1,5 @@
 const { ethers } = require('hardhat')
 
-const {
-    useContract,
-    getContract,
-    printEvents,
-    loadContractAddress,
-    sendSimpleMessage,
-} = require('../utils.js');
-const { printBalances, getPoolFinderContract } = require('./utils.js');
 
 const poolPresetParams = {
     implementation_id: 0,
@@ -88,21 +80,28 @@ const ABI = [{
     ]
 }]
 
-async function main() {
+async function main(tokenA, tokenB, name, symbol) {
     const signer = (await ethers.getSigners())[0];
     const factoryContract = new ethers.Contract(process.env.CURVE_LITE_TWOCRYPTOSWAP_FACTORY_ADDRESS, ABI, signer);
-    const tokenA = process.env.EVM_TKA_ADDRESS;
-    const tokenB = process.env.EVM_TKB_ADDRESS;
     const gasPrice = ethers.parseUnits("50", "gwei");
 
-    const tx = await factoryContract.deploy_pool('TKATKB', 'TKATKB', [tokenA, tokenB], ...Object.values(poolPresetParams),
+    const tx = await factoryContract.deploy_pool(name, symbol, [tokenA, tokenB], ...Object.values(poolPresetParams),
         {
             gasLimit: 5000000,
             gasPrice: gasPrice
         });
 
-    await tx.wait();
+    const receipt = await tx.wait();
+
+    console.log(receipt)
 }
 
 
-main();
+main(
+    // process.env.EVM_TKA_ADDRESS,
+    // process.env.EVM_TKB_ADDRESS,
+    '0x2CB284c531fB21A70E2c24EDe980239e643b7B5d',
+    '0x928d8Aa02a9Fd54ad3E203f7d79A03d1077c51F5',
+    'stTON-TAC',
+    'STTONTAC',
+);

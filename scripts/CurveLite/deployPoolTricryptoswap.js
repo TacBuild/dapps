@@ -1,14 +1,5 @@
 const { ethers } = require('hardhat')
 
-const {
-    useContract,
-    getContract,
-    printEvents,
-    loadContractAddress,
-    sendSimpleMessage,
-} = require('../utils.js');
-const { printBalances, getPoolFinderContract } = require('./utils.js');
-
 const poolPresetParams = {
     implementation_id: 0,
     A: 20000000n,

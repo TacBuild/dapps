@@ -10,14 +10,12 @@ const {
 const { printBalances } = require('./utils.js');
 
 
-async function main(showEvents=false) {
+async function main(tokenA, tokenB, showEvents=false) {
     const crossChainLayerContract = await useContract('ICrossChainLayer', process.env.EVM_CCL_ADDRESS);
     const appProxyContract = await getContract('UniswapV2Proxy', 'UniswapV2Proxy', null, process.env.UNISWAPV2_PROXY_ADDRESS);
     
     await printBalances('\nBalances before operation');
 
-    const tokenA = loadContractAddress('TKA');
-    const tokenB = loadContractAddress('TKB');
     const amountADesired = 10000n * 10n**9n;
     const amountBDesired = 20000n * 10n**9n;
     const amountAMin = 5000n * 10n**9n;
@@ -60,4 +58,10 @@ async function main(showEvents=false) {
 }
 
 
-main(true);
+main(
+    // process.env.EVM_TKA_ADDRESS,
+    // process.env.EVM_TKB_ADDRESS,
+    '0x2CB284c531fB21A70E2c24EDe980239e643b7B5d',
+    '0x928d8Aa02a9Fd54ad3E203f7d79A03d1077c51F5',
+    true,
+);
