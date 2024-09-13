@@ -4,27 +4,28 @@ const {
     useContract,
     getContract,
     printEvents,
-    loadContractAddress,
     sendSimpleMessage,
+    getTokenContract,
 } = require('../utils.js');
-const { printBalances, getPoolFinderContract } = require('./utils.js');
+const {
+    printBalances, 
+    getPoolFinderContract,
+    getImplementationContract,
+} = require('./utils.js');
 
 
-async function main(showEvents = false) {
+async function main(tokenA, tokenB, showEvents = false) {
     const crossChainLayerContract = await useContract('ICrossChainLayer', process.env.EVM_CCL_ADDRESS);
     const appProxyContract = await getContract('CurveLiteTwocryptoswapProxy', 'CurveLiteTwocryptoswapProxy', null, process.env.CURVE_LITE_TWOCRYPTOSWAP_PROXY_ADDRESS);
     const poolFinder = await getPoolFinderContract(process.env.CURVE_LITE_TWOCRYPTOSWAP_FACTORY_ADDRESS);
-
-    const tokenA = process.env.EVM_TKA_ADDRESS;
-    const tokenB = process.env.EVM_TKB_ADDRESS;
-
     const poolAddress = await poolFinder.find_pool_for_coins(tokenA, tokenB, 0)
-
     const poolImplementation = await getImplementationContract(poolAddress);
+
+    console.log('Pool address:', poolAddress);
 
     await printBalances('\nBalances before operation', poolAddress);
 
-    const amount = 10n ** 8n;
+    const amount = 23n * 10n ** 9n;
 
     console.log(
         `Predicted output:`,
@@ -48,12 +49,12 @@ async function main(showEvents = false) {
         ),
         caller: 'EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk',
         mint: [
-            { tokenAddress: tokenB, amount: amount },
+            { tokenAddress: tokenA, amount: amount },
         ],
         unlock: [],
     };
 
-    const receipt = await sendSimpleMessage(message);
+    const receipt = await sendSimpleMessage(message, verbose=true);
 
     await printBalances('\nBalances after operation', poolAddress);
 
@@ -63,4 +64,8 @@ async function main(showEvents = false) {
 }
 
 
-main(true);
+main(
+    process.env.EVM_TKA_ADDRESS,
+    process.env.EVM_TKB_ADDRESS,
+    true,
+);

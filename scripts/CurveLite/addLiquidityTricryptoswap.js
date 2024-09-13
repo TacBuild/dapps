@@ -4,7 +4,6 @@ const {
     useContract,
     getContract,
     printEvents,
-    loadContractAddress,
     sendSimpleMessage,
 } = require('../utils.js');
 const { printBalancesTKATKBTKC, getPoolFinderContract } = require('./utils.js');
