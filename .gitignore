@@ -11,5 +11,4 @@ package-lock.json
 # local
 tests/local/
 .env
-.env.local
-.env.polygon
+.env.*
