@@ -25,7 +25,8 @@ async function main(tokenA, tokenB, showEvents = false) {
 
     await printBalances('\nBalances before operation', poolAddress);
 
-    const amount = 23n * 10n ** 9n;
+    const amount = 1n * 10n ** 9n;
+    const minOutput = 0n;
 
     console.log(
         `Predicted output:`,
@@ -44,7 +45,7 @@ async function main(tokenA, tokenB, showEvents = false) {
                 0,
                 1,
                 amount,
-                0
+                minOutput
             ]
         ),
         caller: 'EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk',

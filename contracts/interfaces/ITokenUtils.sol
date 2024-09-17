@@ -15,7 +15,7 @@ interface ITokenUtils {
      * @param l1Address Correspondent L1 token address.
      * @param l1AdditionalAddress Correspondent L1 additional (jetton) token address.
      * @param settingsAddress Settings address.
-     * @param creatorAddress The address of token manager.
+     * @param creatorAddress The address of token collection.
      */
     function computeAddress(
         string memory name,

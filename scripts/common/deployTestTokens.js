@@ -1,11 +1,16 @@
 const { deployToken } = require('../utils.js');
 
 
-async function main() {
-    const tkaAddress = await deployToken('Token TKA', 'TKA', 9, 'EQATbyZLi_Lcze4W-iX-fxWfPJmRf4bPovwu4DZHOGNMjYer', 'EQDZ59MRm8y46JHTObphEg2Nc6dnc_3IHb8tVCIsE8URSd8h')
-    const tkbAddress = await deployToken('Token TKB', 'TKB', 9, 'EQCh0U6KMr43yco9Ih3oDGqJbWWhPejQ8NEM_vaWv9DwMYul', 'EQB7I1azzD4hPFP3pHEviNS4aYT7TjbIx0LRc09A1bnDhUB0')
-    const tkcAddress = await deployToken('Token TKC', 'TKC', 9, 'UQAkt8jdhSqv6UjhVZr6xO3DKARyaP3UcEl7X2q-RVzaxs6l', 'EQBSewllwBq0oOkEoSwv0OgG1qvMK63bQQ9kf2_T5OGhko6C')
+async function main(suffix) {
+    const tokenAAddress = await deployToken(
+        `stTON${suffix}`, `stTON${suffix}`, 9, 
+        'EQDJfaGp5pgN8oVGyCQI0AvUPMiuMyzaWq7Ckdf_wVZYm1IY', 'EQBLC-JnxWyZyz66FE6Rir9lE-iWO9SPmZUSktDKD7zdg9n8')
+    const tokenBAddress = await deployToken(
+        `TAC'${suffix}`, `TAC${suffix}`, 9, 
+        'EQC7-W1nM4DwUnI4_vGnQcLjgwYSw6hQixCdBF1XD_rmZAYZ', 'EQCeWS3VaTtT976zHT9nHw_7tCWeAdg-F9c24Pi6AjhPTBbF')
+
+    console.log(tokenAAddress, tokenBAddress);    
 }
 
 
-main();
+main('');

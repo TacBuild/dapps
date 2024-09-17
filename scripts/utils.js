@@ -475,13 +475,13 @@ async function sendSimpleMessage(message, verbose=false) {
 
 async function depositToken(tokenSymbol, amount, recipientAddress) {
     // setup
-    const tokenFactoryAddress = process.env.EVM_CCLTOKENMANAGER_ADDRESS;
+    const tokenCollectionAddress = process.env.EVM_CCLTOKENCOLLECTION_ADDRESS;
     const tokenAddress = await loadContractAddress(tokenSymbol);
 
     // create and send CCL message
 
     const message = {
-        target: tokenFactoryAddress,
+        target: tokenCollectionAddress,
         methodName: 'deposit(address,uint256,address)',
         arguments: new ethers.AbiCoder().encode(
             ['address', 'uint256', 'address'],
@@ -505,15 +505,15 @@ async function deployToken(
     // setup
     const settingsAddress = process.env.EVM_SETTINGS_ADDRESS;
     const settingsContract = await useContract('ISettings', settingsAddress);
-    const tokenFactoryAddress = process.env.EVM_CCLTOKENMANAGER_ADDRESS;
-    const tokenFactoryContract = await useContract('ICrossChainLayerTokenManager', tokenFactoryAddress);
+    const tokenCollectionAddress = process.env.EVM_CCLTOKENCOLLECTION_ADDRESS;
+    const tokenCollectionContract = await useContract('ICrossChainLayerTokenCollection', tokenCollectionAddress);
     const tokenUtilsAddress = process.env.EVM_TOKENUTILS_ADDRESS;
     const tokenUtilsContract = await useContract('ITokenUtils', tokenUtilsAddress);
 
     // create and send CCL message
 
     const message = {
-        target: tokenFactoryAddress,
+        target: tokenCollectionAddress,
         methodName: 'createToken(string,string,uint8,string,string)',
         arguments: new ethers.AbiCoder().encode(
             ['string', 'string', 'uint8', 'string', 'string'],
@@ -529,11 +529,11 @@ async function deployToken(
      // check deployment
      const tokenAddress = await tokenUtilsContract.computeAddress(
         tokenName, tokenSymbol, tokenDecimals, tokenL1Address, tokenL1AdditionalAddress,
-        await settingsContract.getAddress(), await tokenFactoryContract.getAddress());
+        await settingsContract.getAddress(), await tokenCollectionContract.getAddress());
     const tokenContract = await getTokenContract(tokenAddress);
     const tokenInfo = await tokenContract.getInfo();
-    const totalTokens = await tokenFactoryContract.totalTokens();
-    const tokenAddressFromFactory = await tokenFactoryContract.getTokenAddress(Number(totalTokens) - 1);
+    const totalTokens = await tokenCollectionContract.totalTokens();
+    const tokenAddressFromFactory = await tokenCollectionContract.getTokenAddress(Number(totalTokens) - 1);
 
     if (tokenAddressFromFactory != tokenAddress) {
         throw new Error('Token was not created or the wrong address is calculated');
