@@ -469,7 +469,11 @@ async function sendSimpleMessage(message, verbose=false) {
 
     // execute message
     const resTx = await crossChainLayerContract.receiveMessage(message, [], 0);
-    return await resTx.wait();
+    const receipt =  await resTx.wait();
+
+    console.log(`Transaction successful: ${receipt.transactionHash}`);
+
+    return receipt
 }
 
 
@@ -506,7 +510,7 @@ async function deployToken(
     const settingsAddress = process.env.EVM_SETTINGS_ADDRESS;
     const settingsContract = await useContract('ISettings', settingsAddress);
     const tokenCollectionAddress = process.env.EVM_CCLTOKENCOLLECTION_ADDRESS;
-    const tokenCollectionContract = await useContract('ICrossChainLayerTokenCollection', tokenCollectionAddress);
+    const tokenCollectionContract = await useContract('ITokenCollection', tokenCollectionAddress);
     const tokenUtilsAddress = process.env.EVM_TOKENUTILS_ADDRESS;
     const tokenUtilsContract = await useContract('ITokenUtils', tokenUtilsAddress);
 

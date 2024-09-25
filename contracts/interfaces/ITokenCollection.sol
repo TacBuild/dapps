@@ -5,12 +5,12 @@ import { TokenInfo, TokenAmount } from "contracts/L2/Structs.sol";
 
 
 /**
- * @title ICrossChainLayerTokenCollection
+ * @title ITokenCollection
  * @dev A factory interface to deploy and manage new Cross-Chain Layer ERC20 tokens.
  */
-interface ICrossChainLayerTokenCollection {
+interface ITokenCollection {
     /**
-    * @dev New CrossChainLayerToken contract was deployed
+    * @dev New Cross-Chain Layer token contract was deployed
     * @param tokenAddress Token address
     * @param name Token name
     * @param symbol Token symbol

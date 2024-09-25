@@ -6,10 +6,9 @@ const routerArtifact = require('@uniswap/v2-periphery/build/UniswapV2Router02.js
 
 async function main() {
     const settingsAddress = process.env.EVM_SETTINGS_ADDRESS;
-    const wethAddress = loadContractAddress('wETH');
-    const tkaAddress = loadContractAddress('TKA');
-    const tkbAddress = loadContractAddress('TKB');
-    const tkcAddress = loadContractAddress('TKC');
+    const wethAddress = process.env.EVM_WETH_ADDRESS;
+    const tkaAddress = process.env.EVM_TKA_ADDRESS;
+    const tkbAddress = process.env.EVM_TKB_ADDRESS;
 
     // Factory 
     const uniswapV2Factory = await deploy('UniswapV2Factory', 'UniswapV2Factory', ['0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'], factoryArtifact);
@@ -23,8 +22,6 @@ async function main() {
     // Ensure token pairs
     const tokenPairs = [
         [tkaAddress, tkbAddress],
-        [tkbAddress, tkcAddress],
-        [tkcAddress, tkaAddress],
     ];
     for (const tokenPair of tokenPairs) {
         const pairAddress = await uniswapV2Factory.getPair(tokenPair[0], tokenPair[1])
