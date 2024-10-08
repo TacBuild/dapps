@@ -214,11 +214,6 @@ async function getTokenContract(tokenAddress) {
                     "type": "string"
                   },
                   {
-                    "internalType": "string",
-                    "name": "l1AdditionalAddress",
-                    "type": "string"
-                  },
-                  {
                     "internalType": "address",
                     "name": "l2Address",
                     "type": "address"
@@ -496,6 +491,7 @@ async function depositToken(tokenSymbol, amount, recipientAddress) {
             {tokenAddress: tokenAddress, amount: amount}
         ],
         unlock: [],
+        deploy: [],
     };
 
     return await sendSimpleMessage(message);
@@ -503,7 +499,7 @@ async function depositToken(tokenSymbol, amount, recipientAddress) {
 
 
 async function deployToken(
-    tokenName, tokenSymbol, tokenDecimals, tokenL1Address, tokenL1AdditionalAddress, 
+    tokenName, tokenSymbol, tokenDecimals, tokenL1Address, 
     verbose=false
 ) {
     // setup
@@ -518,21 +514,27 @@ async function deployToken(
 
     const message = {
         target: tokenCollectionAddress,
-        methodName: 'createToken(string,string,uint8,string,string)',
+        methodName: 'deployToken((string,string,uint8,string))',
         arguments: new ethers.AbiCoder().encode(
-            ['string', 'string', 'uint8', 'string', 'string'],
-            [tokenName, tokenSymbol, tokenDecimals, tokenL1Address, tokenL1AdditionalAddress]
+            ['tuple(string name, string symbol, uint8 decimals, string l1Address)'],
+            [{
+                name: tokenName,
+                symbol: tokenSymbol,
+                decimals: tokenDecimals,
+                l1Address: tokenL1Address
+            }]
         ),
         caller: 'EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk',
         mint: [],
         unlock: [],
+        deploy: [],
     };
 
     await sendSimpleMessage(message, verbose=true);
 
      // check deployment
      const tokenAddress = await tokenUtilsContract.computeAddress(
-        tokenName, tokenSymbol, tokenDecimals, tokenL1Address, tokenL1AdditionalAddress,
+        tokenName, tokenSymbol, tokenDecimals, tokenL1Address,
         await settingsContract.getAddress(), await tokenCollectionContract.getAddress());
     const tokenContract = await getTokenContract(tokenAddress);
     const tokenInfo = await tokenContract.getInfo();

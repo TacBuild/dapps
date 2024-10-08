@@ -22,13 +22,6 @@ interface IStakeVault {
      */
     event CrossChainLayerUpdated(address indexed crossChainLayerAddress);
 
-    // Errors
-
-    /**
-     * @dev No active sequencers error
-     */
-    error NoActiveSequencers();
-
     // Intarface
 
     /**

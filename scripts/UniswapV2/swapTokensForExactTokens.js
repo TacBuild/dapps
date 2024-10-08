@@ -41,6 +41,7 @@ async function main(showEvents=false) {
             {tokenAddress: tokenA, amount: amountInMax},
         ],
         unlock: [],
+        deploy: [],
     };
 
     const receipt = await sendSimpleMessage(message);

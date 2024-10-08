@@ -59,19 +59,6 @@ interface ICrossChainLayer is IConsensus {
         TokenAmount[] tokensLocked
     );
 
-    // Errors
-
-    /**
-     * @dev Invalid Merkle proof error
-     */
-    error InvalidMerkleProof();
-
-    /**
-     * @dev Message already processed error
-     * @param messageHash Message hash
-     */
-    error MessageAlreadyProcessed(bytes32 messageHash);
-
     // Interface
 
     /**

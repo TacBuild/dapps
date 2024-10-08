@@ -36,15 +36,6 @@ interface IConsensus {
      */
     event ConsensusValueUpdated(bytes32 indexed newValue);
 
-    // Errors
-
-    /**
-     * @dev Voter is already voted in the current epoch error
-     * @param voterAddress Voter address
-     * @param currentEpoch Current epoch
-     */
-    error AlreadyVoted(address voterAddress, uint256 currentEpoch);
-
     // Intarface
 
     /**
