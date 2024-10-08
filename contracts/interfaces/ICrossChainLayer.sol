@@ -67,14 +67,6 @@ interface ICrossChainLayer is IConsensus {
     error InvalidMerkleProof();
 
     /**
-     * @dev App proxy call failed arror
-     * @param targetAddress Address of target called
-     * @param methodCall Method call body
-     * @param response Return body of dApp error
-     */
-    error InMessageCallFailed(address targetAddress, bytes methodCall, bytes response);
-
-    /**
      * @dev Message already processed error
      * @param messageHash Message hash
      */

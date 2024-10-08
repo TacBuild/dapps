@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 
-import { TokenInfo, TokenAmount } from "contracts/L2/Structs.sol";
+import { TokenDeploy } from "contracts/L2/Structs.sol";
 
 
 /**
@@ -16,6 +16,12 @@ interface ITokenCollection {
     * @param symbol Token symbol
     */
     event TokenCreated(address tokenAddress, string name, string symbol);
+
+        /**
+     * @dev Deploy new Cross-Chain Layer token.
+     * @param info CCL token info.
+     */
+    function deployToken(TokenDeploy calldata info) external returns (address);
 
     /**
      * @dev Returns the address Cross-Chain Layer token by its index.

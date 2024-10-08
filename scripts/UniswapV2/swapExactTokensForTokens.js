@@ -4,7 +4,6 @@ const {
     printEvents,
     useContract,
     getContract,
-    loadContractAddress,
     sendSimpleMessage,
 }  = require('../utils.js');
 const { printBalances } = require('./utils.js');

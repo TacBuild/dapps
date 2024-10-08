@@ -13,6 +13,18 @@ struct TokenAmount {
 
 
 /**
+ * @title TokenDeploy
+ * @dev Deploy token info
+ */
+struct TokenDeploy {
+    string name;
+    string symbol;
+    uint8 decimals;
+    string l1Address;
+}
+
+
+/**
  * @title TokenInfo
  * @dev Extended L1 token info
  */
@@ -21,7 +33,6 @@ struct TokenInfo {
     string symbol;
     uint8 decimals;
     string l1Address;
-    string l1AdditionalAddress;
     address l2Address;
 }
 
@@ -39,6 +50,7 @@ struct InMessage {
     string caller;
     TokenAmount[] mint;
     TokenAmount[] unlock;
+    TokenDeploy[] deploy;
 }
 
 
@@ -56,6 +68,7 @@ struct OutMessage {
     TokenAmount[] burn;
     TokenAmount[] lock;
 }
+
 
 /**
  * @title EpochInfo
