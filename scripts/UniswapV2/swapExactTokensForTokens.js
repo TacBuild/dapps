@@ -4,7 +4,6 @@ const {
     printEvents,
     useContract,
     getContract,
-    loadContractAddress,
     sendSimpleMessage,
 }  = require('../utils.js');
 const { printBalances } = require('./utils.js');
@@ -17,7 +16,7 @@ async function main(tokenA, tokenB, showEvents=false) {
     await printBalances('\nBalances before operation');
 
     const amountIn = 10n * 10n**9n;
-    const amountOutMin = 0n;
+    const amountOutMin = 1n * 10n**9n;
     const path = [tokenA, tokenB];
     const to = await appProxyContract.getAddress();
     const deadline = 19010987500n;
@@ -42,6 +41,7 @@ async function main(tokenA, tokenB, showEvents=false) {
             {tokenAddress: tokenA, amount: amountIn},
         ],
         unlock: [],
+        deploy: [],
     };
 
     const receipt = await sendSimpleMessage(message, verbose=true);

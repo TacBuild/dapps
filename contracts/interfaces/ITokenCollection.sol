@@ -1,21 +1,27 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 
-import { TokenInfo, TokenAmount } from "contracts/L2/Structs.sol";
+import { TokenDeploy } from "contracts/L2/Structs.sol";
 
 
 /**
- * @title ICrossChainLayerTokenCollection
+ * @title ITokenCollection
  * @dev A factory interface to deploy and manage new Cross-Chain Layer ERC20 tokens.
  */
-interface ICrossChainLayerTokenCollection {
+interface ITokenCollection {
     /**
-    * @dev New CrossChainLayerToken contract was deployed
+    * @dev New Cross-Chain Layer token contract was deployed
     * @param tokenAddress Token address
     * @param name Token name
     * @param symbol Token symbol
     */
     event TokenCreated(address tokenAddress, string name, string symbol);
+
+        /**
+     * @dev Deploy new Cross-Chain Layer token.
+     * @param info CCL token info.
+     */
+    function deployToken(TokenDeploy calldata info) external returns (address);
 
     /**
      * @dev Returns the address Cross-Chain Layer token by its index.

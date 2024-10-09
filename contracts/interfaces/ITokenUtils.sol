@@ -13,7 +13,6 @@ interface ITokenUtils {
      * @param symbol ERC20 token symbol.
      * @param decimals ERC20 token decimals override.
      * @param l1Address Correspondent L1 token address.
-     * @param l1AdditionalAddress Correspondent L1 additional (jetton) token address.
      * @param settingsAddress Settings address.
      * @param creatorAddress The address of token collection.
      */
@@ -22,7 +21,6 @@ interface ITokenUtils {
         string memory symbol,
         uint8 decimals,
         string memory l1Address,
-        string memory l1AdditionalAddress,
         address settingsAddress,
         address creatorAddress
     ) external pure returns (address);

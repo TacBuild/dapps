@@ -10,22 +10,22 @@ import { InMessage, OutMessage, TokenAmount } from "contracts/L2/Structs.sol";
  * @dev An interface for Cross-Chain Layer.
  */
 interface ICrossChainLayer is IConsensus {  
-    
-/**
- * @dev Native Cross-Chain Layer token received event
- * @param fromAddress From address
- * @param amount Token amount
- */
-event NativeTokenReceived(address indexed fromAddress, uint256 amount);
-
-/**
- * @dev Native Cross-Chain Layer token fallback event
- * @param fromAddress From address
- * @param amount Token amount
- */
-event NativeTokenFallback(address indexed fromAddress, uint256 amount);
 
     // Events
+    
+    /**
+     * @dev Native Cross-Chain Layer token received event
+     * @param fromAddress From address
+     * @param amount Token amount
+     */
+    event NativeTokenReceived(address indexed fromAddress, uint256 amount);
+
+    /**
+     * @dev Native Cross-Chain Layer token fallback event
+     * @param fromAddress From address
+     * @param amount Token amount
+     */
+    event NativeTokenFallback(address indexed fromAddress, uint256 amount);
 
     /**
      * @dev Input (receive) message executed event
@@ -58,27 +58,6 @@ event NativeTokenFallback(address indexed fromAddress, uint256 amount);
         TokenAmount[] tokensBurned, 
         TokenAmount[] tokensLocked
     );
-
-    // Errors
-
-    /**
-     * @dev Invalid Merkle proof error
-     */
-    error InvalidMerkleProof();
-
-    /**
-     * @dev App proxy call failed arror
-     * @param targetAddress Address of target called
-     * @param methodCall Method call body
-     * @param response Return body of dApp error
-     */
-    error InMessageCallFailed(address targetAddress, bytes methodCall, bytes response);
-
-    /**
-     * @dev Message already processed error
-     * @param messageHash Message hash
-     */
-    error MessageAlreadyProcessed(bytes32 messageHash);
 
     // Interface
 
