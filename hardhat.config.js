@@ -15,6 +15,9 @@ module.exports = {
       {
         version: "0.8.18",
       },
+      {
+        version: "0.5.16",
+      },
     ],
   },
   defaultNetwork: NETWORK,

@@ -44,9 +44,11 @@ async function deploy(contractName, instanceName, args, artifact = null, silent 
 }
 
 
-async function useContract(contractName, contractAddress) {
+async function useContract(contractName, contractAddress, artifact = null) {
     const signer = (await ethers.getSigners())[0];
-    const artifact = require(`../artifacts/contracts/interfaces/${contractName}.sol/${contractName}.json`);
+    if (artifact == null) {
+        artifact = require(`../artifacts/contracts/interfaces/${contractName}.sol/${contractName}.json`);
+    }
     return new ethers.Contract(contractAddress, artifact.abi, signer);
 }
 

@@ -4,13 +4,36 @@ const {
     useContract,
     getContract,
     printEvents,
-    loadContractAddress,
     sendSimpleMessage,
 }  = require('../utils.js');
 const { printBalances } = require('./utils.js');
 
+async function ensurePairs() {
+    // Factory
+    const factoryArtifact = require('@uniswap/v2-core/build/UniswapV2Factory.json');
+    const uniswapV2Factory = await useContract(
+        'UniswapV2Factory', 
+        process.env.UNISWAPV2_FACTORY_ADDRESS,
+        factoryArtifact,
+    );
+    const tkaAddress = process.env.EVM_TKA_ADDRESS;
+    const tkbAddress = process.env.EVM_TKB_ADDRESS;
+    const tokenPairs = [
+        [tkaAddress, tkbAddress],
+    ];
+    for (const tokenPair of tokenPairs) {
+        const pairAddress = await uniswapV2Factory.getPair(tokenPair[0], tokenPair[1])
+        if (pairAddress == 0x0000000000000000000000000000000000000000) {
+            const tx = await uniswapV2Factory.createPair(tokenPair[0], tokenPair[1]);
+            await tx.wait();
+        }
+    }
+}
+
 
 async function main(tokenA, tokenB, showEvents=false) {
+    await ensurePairs()
+
     const crossChainLayerContract = await useContract('ICrossChainLayer', process.env.EVM_CCL_ADDRESS);
     const appProxyContract = await getContract('UniswapV2Proxy', 'UniswapV2Proxy', null, process.env.UNISWAPV2_PROXY_ADDRESS);
     

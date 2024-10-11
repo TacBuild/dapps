@@ -77,15 +77,15 @@ interface ICrossChainLayer is IConsensus {
 
     /**
      * @dev Checks if the input (receive) message has been processed.
-     * @param message Message to check.
+     * @param messageHash Message hash to check.
      * @return bool True if the message has been processed, false otherwise.
      */
-    function getInMessageState(InMessage calldata message) external view returns (bool);
+    function getInMessageState(bytes32 messageHash) external view returns (bool);
 
     /**
      * @dev Checks if the message has been processed.
-     * @param message Message to check.
+     * @param messageHash Message hash to check.
      * @return bool True if the message has been processed, false otherwise.
      */
-    function getOutMessageState(OutMessage calldata message) external view returns (bool);
+    function getOutMessageState(bytes32 messageHash) external view returns (bool);
 }
