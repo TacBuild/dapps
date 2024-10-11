@@ -453,10 +453,12 @@ async function sendSimpleMessage(message, verbose=false) {
     if (verbose) {
         console.log('set new Merkle root:', messageHash);
         console.log('group:')
+        console.log(await groupContract.getAddress());
         console.log(await groupContract.getCurrentEpoch());
         console.log(await groupContract.getValue());
         console.log(await groupContract.totalVoters());
         console.log('CCL:')
+        console.log(await crossChainLayerContract.getAddress());
         console.log(await crossChainLayerContract.getCurrentEpoch());
         console.log(await crossChainLayerContract.getValue());
         console.log(await crossChainLayerContract.totalVoters());

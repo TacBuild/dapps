@@ -9,13 +9,13 @@ async function main() {
     const wethAddress = process.env.EVM_WETH_ADDRESS;
 
     // Factory
-    const uniswapV2Factory = await deploy('UniswapV2Factory', 'UniswapV2Factory', [process.env.HADRHAT_ADDRESS], factoryArtifact);
+    const uniswapV2Factory = await deploy('UniswapV2Factory', 'UniswapV2Factory', [process.env.HARDHAT_ADDRESS], factoryArtifact);
 
     // Router
     const uniswapV2Router02 = await deploy('UniswapV2Router02', 'UniswapV2Router02', [await uniswapV2Factory.getAddress(), wethAddress], routerArtifact);
 
     // Proxy
-    await deploy('UniswapV2Proxy', 'UniswapV2Proxy', [await uniswapV2Router02.getAddress(), settingsAddress]);
+    const uniswapV2Proxy = await deploy('UniswapV2Proxy', 'UniswapV2Proxy', [await uniswapV2Router02.getAddress(), settingsAddress]);
 }
 
 
