@@ -37,6 +37,7 @@ interface ICrossChainLayer is IConsensus {
      */
     event InMessageProcessed(
         uint64 queryId, 
+        uint256 operationCode,
         string callerAddress, 
         address targetAddress, 
         TokenAmount[] tokensMinted, 
@@ -53,6 +54,7 @@ interface ICrossChainLayer is IConsensus {
      */
     event OutMessageProcessed(
         uint64 queryId, 
+        uint256 operationCode,
         address callerAddress, 
         string targetAddress, 
         TokenAmount[] tokensBurned, 

@@ -433,6 +433,9 @@ async function sendSimpleMessage(message, verbose=false) {
     if (message['queryId'] == null) {
         message['queryId'] = 0;
     }
+    if (message['operationCode'] == null) {
+        message['operationCode'] = 0;
+    }
     if (message['timestamp'] == null) {
         message['timestamp'] = Math.floor(Date.now() / 1000);
     }
