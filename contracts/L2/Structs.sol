@@ -43,7 +43,7 @@ struct TokenInfo {
  */
 struct InMessage {
     uint64 queryId;
-    uint256 operationCode;
+    uint256 operationId;
     uint256 timestamp;
     address target;
     string methodName;
@@ -61,7 +61,7 @@ struct InMessage {
  */
 struct OutMessage {
     uint64 queryId;
-    uint256 operationCode;
+    uint256 operationId;
     uint256 timestamp;
     string target;
     string methodName;
