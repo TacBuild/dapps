@@ -3,28 +3,6 @@ pragma solidity ^0.8.25;
 
 
 /**
- * @title TokenAmount
- * @dev Token address with amount
- */
-struct TokenAmount {
-    address tokenAddress;
-    uint256 amount;
-}
-
-
-/**
- * @title TokenDeploy
- * @dev Deploy token info
- */
-struct TokenDeploy {
-    string name;
-    string symbol;
-    uint8 decimals;
-    string l1Address;
-}
-
-
-/**
  * @title TokenInfo
  * @dev Extended L1 token info
  */
@@ -34,6 +12,16 @@ struct TokenInfo {
     uint8 decimals;
     string l1Address;
     address l2Address;
+}
+
+
+/**
+ * @title TokenAmount
+ * @dev Token address with amount
+ */
+struct TokenAmount {
+    address l2Address;
+    uint256 amount;
 }
 
 
@@ -50,7 +38,7 @@ struct InMessage {
     string caller;
     TokenAmount[] mint;
     TokenAmount[] unlock;
-    TokenDeploy[] deploy;
+    TokenInfo[] meta;
 }
 
 

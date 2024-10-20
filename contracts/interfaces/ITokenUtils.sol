@@ -8,18 +8,18 @@ pragma solidity ^0.8.25;
  */
 interface ITokenUtils {
     /**
+     * @dev Shoows the token axists or not.
+     * @param tokenAddress L2 token address.
+     */
+    function exists(address tokenAddress) external view returns (bool);
+
+    /**
      * @dev Get address of Cross-Chain Layer token.
-     * @param name ERC20 token name.
-     * @param symbol ERC20 token symbol.
-     * @param decimals ERC20 token decimals override.
      * @param l1Address Correspondent L1 token address.
      * @param settingsAddress Settings address.
      * @param creatorAddress The address of token collection.
      */
     function computeAddress(
-        string memory name,
-        string memory symbol,
-        uint8 decimals,
         string memory l1Address,
         address settingsAddress,
         address creatorAddress

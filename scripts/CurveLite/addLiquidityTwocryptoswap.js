@@ -44,7 +44,7 @@ async function main(tokenA, tokenB, showEvents = false) {
             { tokenAddress: tokenB, amount: amountB },
         ],
         unlock: [],
-        deploy: [],
+        meta: [],  // TODO
     };
 
     const receipt = await sendSimpleMessage(message);
