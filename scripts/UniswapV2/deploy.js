@@ -1,4 +1,4 @@
-const { deploy } = require('../utils.js');
+const { deploy, getTokenAddress } = require('../utils.js');
 
 const factoryArtifact = require('@uniswap/v2-core/build/UniswapV2Factory.json');
 const routerArtifact = require('@uniswap/v2-periphery/build/UniswapV2Router02.json');
@@ -6,7 +6,7 @@ const routerArtifact = require('@uniswap/v2-periphery/build/UniswapV2Router02.js
 
 async function main() {
     const settingsAddress = process.env.EVM_SETTINGS_ADDRESS;
-    const wethAddress = process.env.EVM_WETH_ADDRESS;
+    const wethAddress = await getTokenAddress(process.env.TVM_WETH_ADDRESS);
 
     // Factory
     const uniswapV2Factory = await deploy('UniswapV2Factory', 'UniswapV2Factory', [process.env.HARDHAT_ADDRESS], factoryArtifact);
