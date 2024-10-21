@@ -507,15 +507,14 @@ async function deployToken(
         queryId: 123,
         timestamp: Math.floor(Math.random() * 2**32),
         target: tokenCollectionAddress,
-        methodName: 'deployToken((string,string,uint8,string,address))',
+        methodName: 'deployToken((string,string,uint8,string))',
         arguments: new ethers.AbiCoder().encode(
-            ['tuple(string name, string symbol, uint8 decimals, string l1Address, address l2Address)'],
+            ['tuple(string name, string symbol, uint8 decimals, string l1Address)'],
             [{
                 name: tokenName,
                 symbol: tokenSymbol,
                 decimals: tokenDecimals,
                 l1Address: tokenL1Address,
-                l2Address: tokenL2Address,
             }]
         ),
         caller: 'EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk',

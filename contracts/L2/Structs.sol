@@ -11,7 +11,6 @@ struct TokenInfo {
     string symbol;
     uint8 decimals;
     string l1Address;
-    address l2Address;
 }
 
 
