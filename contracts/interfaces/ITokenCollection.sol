@@ -11,11 +11,11 @@ import { TokenInfo } from "contracts/L2/Structs.sol";
 interface ITokenCollection {
     /**
     * @dev New Cross-Chain Layer token contract was deployed
-    * @param tokenAddress Token address
+    * @param l2Address Token address
     * @param name Token name
     * @param symbol Token symbol
     */
-    event TokenCreated(address tokenAddress, string name, string symbol);
+    event TokenCreated(address l2Address, string name, string symbol);
 
     /**
      * @dev Deploy new Cross-Chain Layer token.

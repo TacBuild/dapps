@@ -9,9 +9,9 @@ pragma solidity ^0.8.25;
 interface ITokenUtils {
     /**
      * @dev Shoows the token axists or not.
-     * @param tokenAddress L2 token address.
+     * @param l2Address L2 token address.
      */
-    function exists(address tokenAddress) external view returns (bool);
+    function exists(address l2Address) external view returns (bool);
 
     /**
      * @dev Get address of Cross-Chain Layer token.
