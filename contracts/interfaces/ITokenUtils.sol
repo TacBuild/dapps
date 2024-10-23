@@ -17,11 +17,9 @@ interface ITokenUtils {
      * @dev Get address of Cross-Chain Layer token.
      * @param l1Address Correspondent L1 token address.
      * @param settingsAddress Settings address.
-     * @param creatorAddress The address of token creatro (CCL).
      */
     function computeAddress(
         string memory l1Address,
-        address settingsAddress,
-        address creatorAddress
-    ) external pure returns (address);
+        address settingsAddress
+    ) external view returns (address);
 }

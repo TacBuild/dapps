@@ -243,8 +243,8 @@ async function getTokenAddress(l1Address) {
 
     const tokenL2Address = await tokenUtilsContract.computeAddress(
         l1Address,
-        process.env.EVM_SETTINGS_ADDRESS, 
-        process.env.EVM_CCL_ADDRESS);
+        process.env.EVM_SETTINGS_ADDRESS
+    );
 
     return tokenL2Address;
 }
