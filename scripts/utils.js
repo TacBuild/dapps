@@ -4,6 +4,9 @@ const path = require('path');
 const clc = require('cli-color');
 
 
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
+
+
 function saveContractAddress(instanceName, address) {
     addressFilePath = path.resolve(__dirname, '../addresses.json');
 
@@ -241,7 +244,7 @@ async function getTokenAddress(l1Address) {
     const tokenL2Address = await tokenUtilsContract.computeAddress(
         l1Address,
         process.env.EVM_SETTINGS_ADDRESS, 
-        process.env.EVM_CCLTOKENCOLLECTION_ADDRESS);
+        process.env.EVM_CCL_ADDRESS);
 
     return tokenL2Address;
 }
@@ -492,13 +495,12 @@ async function deployToken(
     tokenName,
     tokenSymbol,
     tokenDecimals,
+    tokenDescription,
+    tokenImage,
     tokenL1Address,
     verbose=false
 ) {
     // setup
-    const tokenCollectionAddress = process.env.EVM_CCLTOKENCOLLECTION_ADDRESS;
-    const tokenCollectionContract = await useContract('ITokenCollection', tokenCollectionAddress);
-
     const tokenL2Address = await getTokenAddress(tokenL1Address);
 
     // create and send CCL message
@@ -506,21 +508,20 @@ async function deployToken(
     const message = {
         queryId: 123,
         timestamp: Math.floor(Math.random() * 2**32),
-        target: tokenCollectionAddress,
-        methodName: 'deployToken((string,string,uint8,string))',
-        arguments: new ethers.AbiCoder().encode(
-            ['tuple(string name, string symbol, uint8 decimals, string l1Address)'],
-            [{
-                name: tokenName,
-                symbol: tokenSymbol,
-                decimals: tokenDecimals,
-                l1Address: tokenL1Address,
-            }]
-        ),
+        target: ZERO_ADDRESS,
+        methodName: '',
+        arguments: '0x',
         caller: 'EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk',
         mint: [],
         unlock: [],
-        meta: [],
+        meta: [{
+            name: tokenName,
+            symbol: tokenSymbol,
+            decimals: tokenDecimals,
+            description: tokenDescription,
+            image: tokenImage,
+            l1Address: tokenL1Address,
+        }],
     };
 
     await sendSimpleMessage(message, verbose=true);
@@ -528,23 +529,12 @@ async function deployToken(
     // check deployment
     const tokenContract = await getTokenContract(tokenL2Address);
     const tokenInfo = await tokenContract.getInfo();
-    const totalTokens = await tokenCollectionContract.totalTokens();
-    const tokenAddressFromFactory = await tokenCollectionContract.getTokenAddress(Number(totalTokens) - 1);
-
-    if (tokenAddressFromFactory != tokenL2Address) {
-        throw new Error('Token was not created or the wrong address is calculated');
-    }
-
-    if (!tokenInfo[0]) {
-        throw new Error('Token was not created or the wrong address is calculated');
-    }
 
     // save token address
     saveContractAddress(tokenSymbol, tokenL2Address);
 
     if (verbose) {
         console.log(`Token ${tokenSymbol} deployed successfully: ${tokenL2Address}, info: ${tokenInfo}`);
-        console.log('Total tokens:', totalTokens);
     }
 
     return tokenL2Address;

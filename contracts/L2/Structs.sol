@@ -10,6 +10,8 @@ struct TokenInfo {
     string name;
     string symbol;
     uint8 decimals;
+    string description;
+    string image;
     string l1Address;
 }
 
