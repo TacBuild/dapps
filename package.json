@@ -13,6 +13,7 @@
     "uniswap-swapexact": "npx hardhat run scripts/UniswapV2/swapExactTokensForTokens.js",
     "uniswap-swaptok": "npx hardhat run scripts/UniswapV2/swapTokensForExactTokens.js",
     "curve-lite-deploy": "npx hardhat run scripts/CurveLite/deployProxy.js",
+    "curve-lite-deploy-pool": "npx hardhat run scripts/CurveLite/deployPoolTwocryptoswap.js",
     "curve-lite-addliq": "npx hardhat run scripts/CurveLite/addLiquidityTwocryptoswap.js",
     "curve-lite-remliq": "npx hardhat run scripts/CurveLite/removeLiquidityTwocryptoswap.js",
     "curve-lite-exchange": "npx hardhat run scripts/CurveLite/exchangeTwocryptoswap.js",
