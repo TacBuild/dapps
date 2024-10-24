@@ -91,6 +91,7 @@ async function main(name, symbol) {
     // resolve token EVN addresses
     const tokenA = await getTokenAddress(process.env.TVM_TKA_ADDRESS);
     const tokenB = await getTokenAddress(process.env.TVM_TKB_ADDRESS);
+    console.log('deploying pool for pair:', tokenA, tokenB);
 
     const signer = (await ethers.getSigners())[0];
     const factoryContract = new ethers.Contract(process.env.CURVE_LITE_TWOCRYPTOSWAP_FACTORY_ADDRESS, ABI, signer);
