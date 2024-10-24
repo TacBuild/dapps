@@ -5,15 +5,20 @@ const {
     getContract,
     printEvents,
     sendSimpleMessage,
+    getTokenAddress,
 } = require('../utils.js');
-const { 
+const {
     printBalances, 
     getPoolFinderContract, 
     getImplementationContract 
 } = require('./utils.js');
 
 
-async function main(tokenA, tokenB, showEvents = false) {
+async function main(showEvents = false) {
+    // resolve token EVN addresses
+    const tokenA = await getTokenAddress(process.env.TVM_TKA_ADDRESS);
+    const tokenB = await getTokenAddress(process.env.TVM_TKB_ADDRESS);
+
     const crossChainLayerContract = await useContract('ICrossChainLayer', process.env.EVM_CCL_ADDRESS);
     const appProxyContract = await getContract('CurveLiteTwocryptoswapProxy', 'CurveLiteTwocryptoswapProxy', null, process.env.CURVE_LITE_TWOCRYPTOSWAP_PROXY_ADDRESS);
     const poolFinder = await getPoolFinderContract(process.env.CURVE_LITE_TWOCRYPTOSWAP_FACTORY_ADDRESS);
@@ -40,11 +45,11 @@ async function main(tokenA, tokenB, showEvents = false) {
         ),
         caller: 'EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk',
         mint: [
-            { tokenAddress: tokenA, amount: amountA },
-            { tokenAddress: tokenB, amount: amountB },
+            { l2Address: tokenA, amount: amountA },
+            { l2Address: tokenB, amount: amountB },
         ],
         unlock: [],
-        deploy: [],
+        meta: [],  // fill if the tokens are new
     };
 
     const receipt = await sendSimpleMessage(message);
@@ -61,8 +66,4 @@ async function main(tokenA, tokenB, showEvents = false) {
 }
 
 
-main(
-    process.env.EVM_TKA_ADDRESS,
-    process.env.EVM_TKB_ADDRESS,
-    true
-);
+main(true);

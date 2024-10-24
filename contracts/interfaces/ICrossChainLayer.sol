@@ -12,7 +12,15 @@ import { InMessage, OutMessage, TokenAmount } from "contracts/L2/Structs.sol";
 interface ICrossChainLayer is IConsensus {  
 
     // Events
-    
+
+    /**
+    * @dev New Cross-Chain Layer token contract was deployed
+    * @param l2Address Token address
+    * @param name Token name
+    * @param symbol Token symbol
+    */
+    event TokenCreated(address l2Address, string name, string symbol);
+
     /**
      * @dev Native Cross-Chain Layer token received event
      * @param fromAddress From address

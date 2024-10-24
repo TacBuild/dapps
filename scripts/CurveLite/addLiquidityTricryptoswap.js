@@ -42,7 +42,7 @@ async function main(showEvents = false) {
             { tokenAddress: tokenC, amount: amountC },
         ],
         unlock: [],
-        deploy: [],
+        meta: [],  // TODO
     };
 
     const receipt = await sendSimpleMessage(message);

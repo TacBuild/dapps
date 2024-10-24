@@ -4,6 +4,9 @@ const path = require('path');
 const clc = require('cli-color');
 
 
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
+
+
 function saveContractAddress(instanceName, address) {
     addressFilePath = path.resolve(__dirname, '../addresses.json');
 
@@ -232,6 +235,18 @@ async function getTokenContract(tokenAddress) {
     ];
 
     return new ethers.Contract(tokenAddress, erc20CCLAbi, (await ethers.getSigners())[0])
+}
+
+async function getTokenAddress(l1Address) {
+    const tokenUtilsAddress = process.env.EVM_TOKENUTILS_ADDRESS;
+    const tokenUtilsContract = await useContract('ITokenUtils', tokenUtilsAddress);
+
+    const tokenL2Address = await tokenUtilsContract.computeAddress(
+        l1Address,
+        process.env.EVM_SETTINGS_ADDRESS
+    );
+
+    return tokenL2Address;
 }
 
 function hexStringToByteArray(hexString) {
@@ -476,98 +491,53 @@ async function sendSimpleMessage(message, verbose=false) {
 }
 
 
-async function depositToken(tokenSymbol, amount, recipientAddress) {
-    // setup
-    const tokenCollectionAddress = process.env.EVM_CCLTOKENCOLLECTION_ADDRESS;
-    const tokenAddress = await loadContractAddress(tokenSymbol);
-
-    // create and send CCL message
-
-    const message = {
-        target: tokenCollectionAddress,
-        methodName: 'deposit(address,uint256,address)',
-        arguments: new ethers.AbiCoder().encode(
-            ['address', 'uint256', 'address'],
-            [tokenAddress, amount, recipientAddress]
-        ),
-        caller: 'EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk',
-        mint: [
-            {tokenAddress: tokenAddress, amount: amount}
-        ],
-        unlock: [],
-        deploy: [],
-    };
-
-    return await sendSimpleMessage(message);
-}
-
-
 async function deployToken(
-    tokenName, tokenSymbol, tokenDecimals, tokenL1Address, 
+    tokenName,
+    tokenSymbol,
+    tokenDecimals,
+    tokenDescription,
+    tokenImage,
+    tokenL1Address,
     verbose=false
 ) {
     // setup
-    const settingsAddress = process.env.EVM_SETTINGS_ADDRESS;
-    const settingsContract = await useContract('ISettings', settingsAddress);
-    const tokenCollectionAddress = process.env.EVM_CCLTOKENCOLLECTION_ADDRESS;
-    const tokenCollectionContract = await useContract('ITokenCollection', tokenCollectionAddress);
-    const tokenUtilsAddress = process.env.EVM_TOKENUTILS_ADDRESS;
-    const tokenUtilsContract = await useContract('ITokenUtils', tokenUtilsAddress);
+    const tokenL2Address = await getTokenAddress(tokenL1Address);
 
     // create and send CCL message
 
     const message = {
-        target: tokenCollectionAddress,
-        methodName: 'deployToken((string,string,uint8,string))',
-        arguments: new ethers.AbiCoder().encode(
-            ['tuple(string name, string symbol, uint8 decimals, string l1Address)'],
-            [{
-                name: tokenName,
-                symbol: tokenSymbol,
-                decimals: tokenDecimals,
-                l1Address: tokenL1Address
-            }]
-        ),
+        queryId: 123,
+        timestamp: Math.floor(Math.random() * 2**32),
+        target: ZERO_ADDRESS,
+        methodName: '',
+        arguments: '0x',
         caller: 'EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk',
         mint: [],
         unlock: [],
-        deploy: [],
+        meta: [{
+            name: tokenName,
+            symbol: tokenSymbol,
+            decimals: tokenDecimals,
+            description: tokenDescription,
+            image: tokenImage,
+            l1Address: tokenL1Address,
+        }],
     };
 
     await sendSimpleMessage(message, verbose=true);
 
-     // check deployment
-     const tokenAddress = await tokenUtilsContract.computeAddress(
-        tokenName, tokenSymbol, tokenDecimals, tokenL1Address,
-        await settingsContract.getAddress(), await tokenCollectionContract.getAddress());
-    const tokenContract = await getTokenContract(tokenAddress);
+    // check deployment
+    const tokenContract = await getTokenContract(tokenL2Address);
     const tokenInfo = await tokenContract.getInfo();
-    const totalTokens = await tokenCollectionContract.totalTokens();
-    const tokenAddressFromFactory = await tokenCollectionContract.getTokenAddress(Number(totalTokens) - 1);
-
-    if (tokenAddressFromFactory != tokenAddress) {
-        throw new Error('Token was not created or the wrong address is calculated');
-    }
-
-    if (verbose) {
-        console.log(tokenAddress);
-        console.log(tokenInfo);
-        console.log(totalTokens);
-    }
-
-    if (!tokenInfo[0]) {
-        throw new Error('Token was not created or the wrong address is calculated');
-    }
 
     // save token address
-    saveContractAddress(tokenSymbol, tokenAddress);
+    saveContractAddress(tokenSymbol, tokenL2Address);
 
     if (verbose) {
-        console.log(`Token ${tokenSymbol} deployed successfully: ${tokenAddress}, info: ${tokenInfo}`);
-        console.log('Total tokens:', totalTokens);
+        console.log(`Token ${tokenSymbol} deployed successfully: ${tokenL2Address}, info: ${tokenInfo}`);
     }
 
-    return tokenAddress;
+    return tokenL2Address;
 }
 
 
@@ -609,6 +579,6 @@ module.exports = {
     waitForNextEpoch,
     sendSimpleMessage,
     deployToken,
-    depositToken,
+    getTokenAddress,
     printContractBalance,
 };

@@ -4,6 +4,7 @@ const {
     useContract,
     getContract,
     printEvents,
+    getTokenAddress,
     sendSimpleMessage,
 }  = require('../utils.js');
 const { printBalances } = require('./utils.js');
@@ -16,8 +17,8 @@ async function ensurePairs() {
         process.env.UNISWAPV2_FACTORY_ADDRESS,
         factoryArtifact,
     );
-    const tkaAddress = process.env.EVM_TKA_ADDRESS;
-    const tkbAddress = process.env.EVM_TKB_ADDRESS;
+    const tkaAddress = await getTokenAddress(process.env.TVM_TKA_ADDRESS);
+    const tkbAddress = await getTokenAddress(process.env.TVM_TKB_ADDRESS);
     const tokenPairs = [
         [tkaAddress, tkbAddress],
     ];
@@ -31,12 +32,15 @@ async function ensurePairs() {
 }
 
 
-async function main(tokenA, tokenB, showEvents=false) {
+async function main(showEvents=false) {
     await ensurePairs()
 
     const crossChainLayerContract = await useContract('ICrossChainLayer', process.env.EVM_CCL_ADDRESS);
     const appProxyContract = await getContract('UniswapV2Proxy', 'UniswapV2Proxy', null, process.env.UNISWAPV2_PROXY_ADDRESS);
-    
+
+    const tokenA = await getTokenAddress(process.env.TVM_TKA_ADDRESS);
+    const tokenB = await getTokenAddress(process.env.TVM_TKB_ADDRESS);
+
     await printBalances('\nBalances before operation');
 
     const amountADesired = 10000n * 10n**9n;
@@ -53,8 +57,8 @@ async function main(tokenA, tokenB, showEvents=false) {
         arguments: new ethers.AbiCoder().encode(
             ['address', 'address', 'uint256', 'uint256', 'uint256', 'uint256', 'address', 'uint256'],
             [
-                tokenA, 
-                tokenB, 
+                tokenA,
+                tokenB,
                 amountADesired, 
                 amountBDesired, 
                 amountAMin, 
@@ -65,11 +69,11 @@ async function main(tokenA, tokenB, showEvents=false) {
         ),
         caller: 'EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk',
         mint: [
-            {tokenAddress: tokenA, amount: amountADesired},
-            {tokenAddress: tokenB, amount: amountBDesired},
+            {l2Address: tokenA, amount: amountADesired},
+            {l2Address: tokenB, amount: amountBDesired},
         ],
         unlock: [],
-        deploy: [],
+        meta: [],  // tokens are already exist, no need to fill meta
     };
 
     const receipt = await sendSimpleMessage(message);
@@ -82,8 +86,4 @@ async function main(tokenA, tokenB, showEvents=false) {
 }
 
 
-main(
-    process.env.EVM_TKA_ADDRESS,
-    process.env.EVM_TKB_ADDRESS,
-    true,
-);
+main(true);
