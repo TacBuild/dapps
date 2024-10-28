@@ -104,7 +104,7 @@ contract CurveLiteTricryptoswapProxy is AppProxy {
         // CCL L2->L1 callback
         OutMessage memory message = OutMessage({
             queryId: 0,
-            operationId: 0,
+            operationId: "",
             timestamp: block.timestamp,
             target: "",
             methodName: "",
@@ -150,7 +150,7 @@ contract CurveLiteTricryptoswapProxy is AppProxy {
         // CCL L2->L1 callback
         OutMessage memory message = OutMessage({
             queryId: 0,
-            operationId: 0,
+            operationId: "",
             timestamp: block.timestamp,
             target: "",
             methodName: "",
@@ -198,7 +198,7 @@ contract CurveLiteTricryptoswapProxy is AppProxy {
         // CCL L2->L1 callback
         OutMessage memory message = OutMessage({
             queryId: 0,
-            operationId: 0,
+            operationId: "",
             timestamp: block.timestamp,
             target: "",
             methodName: "",

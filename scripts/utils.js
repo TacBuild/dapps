@@ -434,7 +434,7 @@ async function sendSimpleMessage(message, verbose=false) {
         message['queryId'] = 0;
     }
     if (message['operationId'] == null) {
-        message['operationId'] = 0;
+        message['operationId'] = "";
     }
     if (message['timestamp'] == null) {
         message['timestamp'] = Math.floor(Date.now() / 1000);
@@ -447,9 +447,9 @@ async function sendSimpleMessage(message, verbose=false) {
 
     // clear epoch
     await waitForNextEpoch(currentEpoch=null, forceNext=true);
-
     // set proper Merkle root
     const messageHash = await treeUtilsContract.hashInMessage(message);
+
     const tx = await groupContract.vote(messageHash);
     await tx.wait();
 
