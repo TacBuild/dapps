@@ -1,16 +1,25 @@
 const { deployToken } = require('../utils.js');
 
 
-async function main(suffix) {
+async function main() {
     const tokenAAddress = await deployToken(
-        `stTON${suffix}`, `stTON${suffix}`, 9, 
-        'EQBFqkxrlEW5hZ_oEW0sBFWJjQVYsfy8CQBkVS53DsVtvB8U')
+        "stTON", 
+        "stTON", 
+        9,
+        "Staked TON",
+        "http://sample/stton.png",
+        process.env.TVM_TKA_ADDRESS,
+    );
     const tokenBAddress = await deployToken(
-        `TAC'${suffix}`, `TAC${suffix}`, 9, 
-        'EQCJZiRkO77bNT8vDOsqCev5Rx4urCRJ6pcZpQb8go0I_T06')
+        "TAC", 
+        "TAC", 
+        9,
+        "TON Application Chain",
+        "http://sample/tac.png",
+        process.env.TVM_TKB_ADDRESS,
+    );
 
     console.log(tokenAAddress, tokenBAddress);    
 }
 
-
-main('');
+main();

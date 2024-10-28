@@ -1,5 +1,12 @@
 const { ethers } = require('hardhat')
 
+const {
+    getTokenAddress,
+} = require('../utils.js');
+const {
+    getPoolFinderContract, 
+} = require('./utils.js');
+
 
 const poolPresetParams = {
     implementation_id: 0,
@@ -80,7 +87,12 @@ const ABI = [{
     ]
 }]
 
-async function main(tokenA, tokenB, name, symbol) {
+async function main(name, symbol) {
+    // resolve token EVN addresses
+    const tokenA = await getTokenAddress(process.env.TVM_TKA_ADDRESS);
+    const tokenB = await getTokenAddress(process.env.TVM_TKB_ADDRESS);
+    console.log('deploying pool for pair:', tokenA, tokenB);
+
     const signer = (await ethers.getSigners())[0];
     const factoryContract = new ethers.Contract(process.env.CURVE_LITE_TWOCRYPTOSWAP_FACTORY_ADDRESS, ABI, signer);
     const gasPrice = ethers.parseUnits("50", "gwei");
@@ -93,13 +105,16 @@ async function main(tokenA, tokenB, name, symbol) {
 
     const receipt = await tx.wait();
 
-    console.log(receipt)
+
+    const poolFinder = await getPoolFinderContract(process.env.CURVE_LITE_TWOCRYPTOSWAP_FACTORY_ADDRESS);
+    const poolAddress = await poolFinder.find_pool_for_coins(tokenA, tokenB, 0);
+
+    console.log('OK =', receipt.status == 1)
+    console.log('Pool address:', poolAddress)
 }
 
 
 main(
-    process.env.EVM_TKA_ADDRESS,
-    process.env.EVM_TKB_ADDRESS,
-    'stTON-TAC',
-    'STTONTAC',
+    'stTON-TAC-v2',
+    'STTONTAC2',
 );

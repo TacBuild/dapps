@@ -4,12 +4,13 @@ const {
     useContract,
     getContract,
     printContractBalance,
+    getTokenAddress,
 } = require('../utils.js');
 
 
 async function printBalances(name, poolAddress) {
-    const tokenTKAAddress = process.env.EVM_TKA_ADDRESS;
-    const tokenTKBAddress = process.env.EVM_TKB_ADDRESS;
+    const tokenTKAAddress = await getTokenAddress(process.env.TVM_TKA_ADDRESS);
+    const tokenTKBAddress = await getTokenAddress(process.env.TVM_TKB_ADDRESS);
     const tokenLPABAddress = poolAddress;
 
     const tokenAddresses = {

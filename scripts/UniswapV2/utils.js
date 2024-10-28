@@ -1,7 +1,7 @@
 const {
     useContract,
     getContract,
-    loadContractAddress,
+    getTokenAddress,
     printContractBalance,
 } = require('../utils.js');
 
@@ -10,8 +10,8 @@ const routerArtifact = require("@uniswap/v2-periphery/build/IUniswapV2Router02")
 
 
 async function printBalances(name) {
-    const tokenTKAAddress = process.env.EVM_TKA_ADDRESS;
-    const tokenTKBAddress = process.env.EVM_TKB_ADDRESS;
+    const tokenTKAAddress = await getTokenAddress(process.env.TVM_TKA_ADDRESS);
+    const tokenTKBAddress = await getTokenAddress(process.env.TVM_TKB_ADDRESS);
     const factoryContract = await getContract('UniswapV2Factory', 'UniswapV2Factory', factoryArtifact,  process.env.UNISWAPV2_FACTORY_ADDRESS);
     const tokenLPABAddress = await factoryContract.getPair(tokenTKAAddress, tokenTKBAddress);
 

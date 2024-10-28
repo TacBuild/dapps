@@ -4,15 +4,19 @@ const {
     printEvents,
     useContract,
     getContract,
+    getTokenAddress,
     sendSimpleMessage,
 }  = require('../utils.js');
 const { printBalances } = require('./utils.js');
 
 
-async function main(tokenA, tokenB, showEvents=false) {
+async function main(showEvents=false) {
     const crossChainLayerContract = await useContract('ICrossChainLayer', process.env.EVM_CCL_ADDRESS);
     const appProxyContract = await getContract('UniswapV2Proxy', 'UniswapV2Proxy', null, process.env.UNISWAPV2_PROXY_ADDRESS);
     
+    const tokenA = await getTokenAddress(process.env.TVM_TKA_ADDRESS);
+    const tokenB = await getTokenAddress(process.env.TVM_TKB_ADDRESS);
+
     await printBalances('\nBalances before operation');
 
     const amountIn = 10n * 10n**9n;
@@ -38,10 +42,10 @@ async function main(tokenA, tokenB, showEvents=false) {
         ),
         caller: 'EQCEuIGH8I2bkAf8rLpuxkWmDJ_xZedEHDvjs6aCAN2FrkFp',
         mint: [
-            {tokenAddress: tokenA, amount: amountIn},
+            {l2Address: tokenA, amount: amountIn},
         ],
         unlock: [],
-        deploy: [],
+        meta: [],  // tokens are already exist, no need to fill meta
     };
 
     const receipt = await sendSimpleMessage(message, verbose=true);
@@ -54,8 +58,4 @@ async function main(tokenA, tokenB, showEvents=false) {
 }
 
 
-main(
-    process.env.EVM_TKA_ADDRESS,
-    process.env.EVM_TKB_ADDRESS,
-    true,
-);
+main(true);

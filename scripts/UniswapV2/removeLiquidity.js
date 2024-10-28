@@ -4,7 +4,7 @@ const {
     printEvents,
     useContract,
     getContract,
-    loadContractAddress,
+    getTokenAddress,
     sendSimpleMessage,
 }  = require('../utils.js');
 const { printBalances } = require('./utils.js');
@@ -19,8 +19,8 @@ async function main(showEvents=false) {
     
     await printBalances('\nBalances before operation');
 
-    const tokenA = loadContractAddress('TKA');
-    const tokenB = loadContractAddress('TKB');
+    const tokenA = await getTokenAddress(process.env.TVM_TKA_ADDRESS);
+    const tokenB = await getTokenAddress(process.env.TVM_TKB_ADDRESS);
     const tokenLPAB = await factoryContract.getPair(tokenA, tokenB);
     const liquidity = 50n * 10n**9n;
     const amountAMin = 20n * 10n**9n;
@@ -46,8 +46,9 @@ async function main(showEvents=false) {
         caller: 'EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk',
         mint: [],
         unlock: [
-            {tokenAddress: tokenLPAB, amount: liquidity},
+            {l2Address: tokenLPAB, amount: liquidity},
         ],
+        meta: [],  // tokens are already exist, no need to fill meta
     };
 
     const receipt = await sendSimpleMessage(message);
