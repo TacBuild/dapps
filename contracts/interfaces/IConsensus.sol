@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 
-import { EpochInfo } from "contracts/L2/Structs.sol";
+import { EpochInfo, RootInfo } from "contracts/L2/Structs.sol";
 
 
 /**
@@ -50,6 +50,12 @@ interface IConsensus {
      * @return Epoch info.
      */
     function getCurrentEpoch() external view returns (EpochInfo memory);
+
+    /**
+     * @dev Returns current root info.
+     * @return Root info.
+     */
+    function getCurrentRoot() external view returns (RootInfo memory);
 
     /**
      * @dev Gets total number of active voters.
