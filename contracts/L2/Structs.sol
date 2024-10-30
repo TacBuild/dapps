@@ -70,3 +70,12 @@ struct EpochInfo {
     uint64 epochStartTime;
     bool consensusReached;
 }
+
+/**
+ * @title RootInfo
+ * @dev Consensus root info
+ */
+struct RootInfo {
+    uint64 epochNumber;
+    bytes32  value;
+}
