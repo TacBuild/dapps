@@ -357,6 +357,7 @@ async function mineBlocks(numBlocks) {
 }
 
 
+
 async function sendEmptyTransaction(signer) {
     const tx = await signer.sendTransaction({
         to: '0x0000000000000000000000000000000000000000',
@@ -441,7 +442,7 @@ async function waitForNextEpoch(currentEpoch=null, forceNext=false, delaySec=1, 
 async function sendSimpleMessage(message, verbose=false) {
     // setup
     const crossChainLayerContract = await useContract('ICrossChainLayer', process.env.EVM_CCL_ADDRESS);
-    const groupContract = await useContract('IGroup', process.env.EVM_TESTGROUP_ADDRESS);
+    const groupContract = await useContract('IGroup', process.env.EVM_GROUP_ADDRESS);
     const treeUtilsContract = await useContract('IMerkleTreeUtils', process.env.EVM_MERKLETREEUTILS_ADDRESS);
 
     // fill message
@@ -489,6 +490,7 @@ async function sendSimpleMessage(message, verbose=false) {
     const receipt =  await resTx.wait();
 
     console.log(`Transaction successful: ${receipt.transactionHash}`);
+    console.log(receipt.toString());
 
     return receipt
 }
