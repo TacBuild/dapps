@@ -6,7 +6,8 @@
   "scripts": {
     "compile": "npx hardhat compile",
     "deploy-weth-token": "npx hardhat run scripts/common/deployWETHToken.js",
-    "deploy-test-tokens": "npx hardhat run scripts/common/deployTestTokens.js",
+    "deploy-stton": "npx hardhat run scripts/common/deployStTON.js",
+    "deploy-tac": "npx hardhat run scripts/common/deployTAC.js",
     "uniswap-deploy": "npx hardhat run scripts/UniswapV2/deploy.js",
     "uniswap-addliq": "npx hardhat run scripts/UniswapV2/addLiquidity.js",
     "uniswap-remliq": "npx hardhat run scripts/UniswapV2/removeLiquidity.js",
