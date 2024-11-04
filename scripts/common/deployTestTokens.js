@@ -1,9 +1,8 @@
 const { deployToken } = require('../utils.js');
 
-
 async function main() {
     const tokenAAddress = await deployToken(
-        "stTON", 
+        "stTON L1 TEST", 
         "stTON", 
         9,
         "Staked TON",
