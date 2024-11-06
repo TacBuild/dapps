@@ -12,3 +12,5 @@ package-lock.json
 tests/local/
 scripts/local/
 .env
+.env.*
+!.env.example
