@@ -13,3 +13,4 @@ tests/local/
 scripts/local/
 .env
 .env.*
+!.env.example

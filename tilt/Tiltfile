@@ -1,0 +1,1 @@
+docker_build("dapps-deployer", ".", dockerfile=".Dockerfile")

@@ -1,0 +1,8 @@
+services:
+  dapps-deployer:
+    container_name: dapps-deployer
+    image: dapps-deployer-image
+    build:
+      dockerfile: tilt/Dockerfile
+      context: ../.
+    network_mode: "host"
