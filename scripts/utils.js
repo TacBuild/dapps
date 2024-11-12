@@ -368,18 +368,23 @@ async function getLatestBlockTimestamp() {
     return timestamp;
 }
 
-
-
 async function sendEmptyTransaction(signer) {
     await delay(1000); 
     
     const currentTime = Math.floor(Date.now() / 1000);
 
-    if (currentTime - await getLatestBlockTimestamp() < 6) {
+    // new block every 7 seconds
+    if (currentTime - await getLatestBlockTimestamp() < 7) {
         return
     }
-    await network.provider.send("evm_setNextBlockTimestamp", [currentTime]);
-    await network.provider.send("evm_mine"); 
+
+    // try to set next block time
+    try {
+        await network.provider.send("evm_setNextBlockTimestamp", [currentTime]);
+        await network.provider.send("evm_mine"); 
+    } catch {
+        return;
+    }
 
     const tx = await signer.sendTransaction({
         to: '0x0000000000000000000000000000000000000000',
