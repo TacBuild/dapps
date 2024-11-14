@@ -2,6 +2,8 @@ const { ethers } = require('hardhat');
 const fs = require('fs-extra');
 const path = require('path');
 const clc = require('cli-color');
+const { fromTwos } = require('ethers');
+const { timeStamp } = require('console');
 
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
@@ -356,9 +358,34 @@ async function mineBlocks(numBlocks) {
     }
 }
 
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 
+async function getLatestBlockTimestamp() {
+    const latestBlock = await ethers.provider.getBlock("latest");
+    const timestamp = latestBlock.timestamp;
+    return timestamp;
+}
 
 async function sendEmptyTransaction(signer) {
+    await delay(1000); 
+    
+    const currentTime = Math.floor(Date.now() / 1000);
+
+    // new block every 7 seconds
+    if (currentTime - await getLatestBlockTimestamp() < 7) {
+        return
+    }
+
+    // try to set next block time
+    try {
+        await network.provider.send("evm_setNextBlockTimestamp", [currentTime]);
+        await network.provider.send("evm_mine"); 
+    } catch {
+        return;
+    }
+
     const tx = await signer.sendTransaction({
         to: '0x0000000000000000000000000000000000000000',
         value: 0,
@@ -422,12 +449,12 @@ async function waitForNextEpoch(currentEpoch=null, forceNext=false, delaySec=1, 
                 } else {
                     iter += 1;
                     if (test) {
-                        await mineBlocks(10);
+                        await mineBlocks(1);
                     } else {
                         const signer = (await ethers.getSigners())[0];
-                        await waitForBlocks(10, signer);
+                        await waitForBlocks(1, signer);
                     }
-                    setTimeout(checkEpoch, delaySec * 1000);
+                    setTimeout(checkEpoch, delaySec * 100);
                 }
             } catch (error) {
                 reject(error);
@@ -462,7 +489,7 @@ async function sendSimpleMessage(message, verbose=false) {
     }
 
     // clear epoch
-    await waitForNextEpoch(currentEpoch=null, forceNext=true);
+    await waitForNextEpoch(currentEpoch=null, forceNext=false);
     // set proper Merkle root
     const messageHash = await treeUtilsContract.hashInMessage(message);
 
@@ -544,7 +571,6 @@ async function deployToken(
 
     return tokenL2Address;
 }
-
 
 function balanceFormat(tokenAmount, digits, precision = 6) {
     const humanReadable = BigInt(10) ** BigInt(precision) * tokenAmount / (BigInt(10) ** BigInt(digits))
