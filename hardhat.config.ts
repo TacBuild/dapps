@@ -1,0 +1,49 @@
+import * as dotenv from "dotenv";
+
+import "@nomicfoundation/hardhat-chai-matchers";
+import "@nomicfoundation/hardhat-toolbox";
+import "@openzeppelin/hardhat-upgrades";
+import { HardhatUserConfig } from "hardhat/config";
+dotenv.config();
+
+const TAC_TESTNET_URL = process.env.TAC_TESTNET_URL!;
+
+const config: HardhatUserConfig = {
+  solidity: {
+    compilers: [
+      {
+        version: "0.8.25",
+        settings: { optimizer: { enabled: true, runs: 200 } }
+      },
+      {
+        version: "0.8.18",
+      },
+    ],
+  },
+  networks: {
+    hardhat: {
+      chainId: 1337,
+      accounts: {
+        count: 50
+      },
+      allowBlocksWithSameTimestamp: true
+    },
+    localhost: {
+	    url:  "http://127.0.0.1:8545",
+    },
+    polygon: {
+      url: "https://tac-dev-rpc.eu-north-2.gateway.fm"
+    },
+    tac_testnet: {
+      url: TAC_TESTNET_URL
+    },
+  },
+  gasReporter: {
+    enabled: false,
+    currency: 'ETH',
+    gasPrice: 1
+  }
+};
+
+export default config;
+

@@ -3,6 +3,7 @@ build/
 artifacts/
 cache/
 addresses.json
+typechain-types/
 
 # libs
 node_modules/

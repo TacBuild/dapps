@@ -3,7 +3,7 @@ pragma solidity ^0.8.25;
 
 import { TransferHelper } from 'contracts/helpers/TransferHelper.sol';
 import { AppProxy } from "contracts/L2/AppProxy.sol";
-import { OutMessage, TokenAmount } from "contracts/L2/Structs.sol";
+import { OutMessage, TokenAmount } from "tac-l2-ccl/contracts/L2/Structs.sol";
 
 /**
  * @title ITwocryptoswapPool Interface
