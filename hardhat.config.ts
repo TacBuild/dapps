@@ -6,7 +6,7 @@ import "@openzeppelin/hardhat-upgrades";
 import { HardhatUserConfig } from "hardhat/config";
 dotenv.config();
 
-const TAC_TESTNET_URL = process.env.TAC_TESTNET_URL!;
+const TAC_TESTNET_URL = process.env.TAC_TESTNET_URL || "http://127.0.0.1:8545";
 
 const config: HardhatUserConfig = {
   solidity: {

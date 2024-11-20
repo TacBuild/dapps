@@ -1,4 +1,4 @@
-const { ethers } = require('hardhat');
+import { ethers } from "hardhat";
 const fs = require('fs-extra');
 const path = require('path');
 const clc = require('cli-color');
