@@ -5,7 +5,6 @@
   "main": "index.js",
   "scripts": {
     "compile": "npx hardhat compile",
-    "deploy-weth-token": "npx hardhat run scripts/common/deployWETHToken.js",
     "deploy-stton": "npx hardhat run scripts/common/deployStTON.js",
     "deploy-tac": "npx hardhat run scripts/common/deployTAC.js",
     "uniswap-deploy": "npx hardhat run scripts/UniswapV2/deploy.js",
@@ -49,7 +48,7 @@
     "hardhat": "^2.22.5",
     "hardhat-gas-reporter": "^1.0.10",
     "jest": "^29.7.0",
-    "tac-l2-ccl": "^0.8.4",
+    "tac-l2-ccl": "^0.8.9",
     "ts-node": "^10.9.2",
     "typechain": "^8.3.2",
     "typescript": "^5.6.3"

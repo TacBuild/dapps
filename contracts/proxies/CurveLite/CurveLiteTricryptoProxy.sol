@@ -104,7 +104,6 @@ contract CurveLiteTricryptoswapProxy is AppProxy {
         // CCL L2->L1 callback
         OutMessage memory message = OutMessage({
             queryId: 0,
-            operationId: "",
             timestamp: block.timestamp,
             target: "",
             methodName: "",
@@ -123,7 +122,6 @@ contract CurveLiteTricryptoswapProxy is AppProxy {
         address pool,
         uint256 amount,
         uint256[3] calldata min_amounts
-        
     ) public {
         // claim tokens addresses
         address tokenA = ITricryptoswapPool(pool).coins(0);
@@ -150,7 +148,6 @@ contract CurveLiteTricryptoswapProxy is AppProxy {
         // CCL L2->L1 callback
         OutMessage memory message = OutMessage({
             queryId: 0,
-            operationId: "",
             timestamp: block.timestamp,
             target: "",
             methodName: "",
@@ -171,7 +168,6 @@ contract CurveLiteTricryptoswapProxy is AppProxy {
         uint256 j,
         uint256 dx,
         uint256 min_dy
-        
     ) public {
         // claim tokens addresses
         address tokenIn = ITricryptoswapPool(pool).coins(i);
@@ -190,7 +186,6 @@ contract CurveLiteTricryptoswapProxy is AppProxy {
         // tokens to L2->L1 transfer (burn)
         TokenAmount[] memory tokensToBurn = new TokenAmount[](1);
         tokensToBurn[0] = TokenAmount(tokenOut, amountOut);
-        
 
         // tokens to L2->L1 transfer (lock)
         TokenAmount[] memory tokensToLock = new TokenAmount[](0);
@@ -198,7 +193,6 @@ contract CurveLiteTricryptoswapProxy is AppProxy {
         // CCL L2->L1 callback
         OutMessage memory message = OutMessage({
             queryId: 0,
-            operationId: "",
             timestamp: block.timestamp,
             target: "",
             methodName: "",
@@ -209,5 +203,4 @@ contract CurveLiteTricryptoswapProxy is AppProxy {
         });
         sendMessage(message);
     }
-    
 }
