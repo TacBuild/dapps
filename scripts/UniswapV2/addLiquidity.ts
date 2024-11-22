@@ -19,7 +19,7 @@ async function main(showEvents=false) {
         {name: 'UniswapV2Router02', address: await uniswapV2Router02.getAddress()},
         {name: 'TAC-stTON pair', address: await lpToken.getAddress()},
     ];
-    const tokensToPrintBalances: ERC20[] = [tacToken, sttonToken, lpToken];
+    const tokensToPrintBalances: {contract: ERC20, name?: string}[] = [{contract: tacToken}, {contract: sttonToken}, {contract: lpToken, name: 'TAC-stTON LP'}];
 
     await printBalances('\nBalances before operation', tokensToPrintBalances, entitiesToPrintBalances);
 

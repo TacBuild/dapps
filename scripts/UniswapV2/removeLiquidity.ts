@@ -3,6 +3,7 @@ import { sendSimpleMessage } from 'tac-l2-ccl';
 import { printEvents, printBalances } from '../utils';
 import { InMessageStruct } from 'tac-l2-ccl/dist/typechain-types/contracts/L2/CrossChainLayer';
 import { loadUniswapTestEnv } from './utils';
+import { ERC20 } from 'tac-l2-ccl/dist/typechain-types';
 
 async function main(showEvents=false) {
 
@@ -17,7 +18,7 @@ async function main(showEvents=false) {
         {name: 'UniswapV2Router02', address: await uniswapV2Router02.getAddress()},
         {name: 'TAC-stTON pair', address: await lpToken.getAddress()},
     ];
-    const tokensToPrintBalances = [tacToken, sttonToken, lpToken];
+    const tokensToPrintBalances: {contract: ERC20, name?: string}[] = [{contract: tacToken}, {contract: sttonToken}, {contract: lpToken, name: 'TAC-stTON LP'}];
 
     await printBalances('\nBalances before operation', tokensToPrintBalances, entitiesToPrintBalances);
 

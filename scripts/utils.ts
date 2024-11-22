@@ -22,13 +22,13 @@ export function printEvents<T extends BaseContract>(txReciept: TransactionReceip
     }
 }
 
-export async function printBalances(printString: string, tokens: ERC20[], entities: { name: string, address: string }[]) {
+export async function printBalances(printString: string, tokens: { contract: ERC20, name?: string}[], entities: { name: string, address: string }[]) {
     console.log(`----------${printString}----------`);
     for (let entity of entities) {
         console.log(`-----${entity.name}-----`);
         for (let token of tokens) {
-            const balance = await token.balanceOf(entity.address);
-            console.log(`${await token.symbol()}: ${ethers.formatEther(balance)}`);
+            const balance = await token.contract.balanceOf(entity.address);
+            console.log(`${ token.name ? token.name : await token.contract.symbol() }: ${ethers.formatEther(balance)}`);
         }
     }
 }
