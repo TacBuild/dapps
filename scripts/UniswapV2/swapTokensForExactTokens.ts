@@ -45,7 +45,7 @@ async function main(showEvents=false) {
         ),
         caller: 'EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk',
         mint: [
-            {l2Address: await tacToken.getAddress(), amount: amountInMax},
+            {l2Address: await sttonToken.getAddress(), amount: amountInMax},
         ],
         unlock: [],
         meta: [],  // tokens are already exist, no need to fill meta
