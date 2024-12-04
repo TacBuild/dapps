@@ -1,6 +1,6 @@
 import hre, { ethers } from "hardhat";
 import path from 'path';
-import { getCCLArtifacts, loadTacContracts } from "tac-l2-ccl";
+import { getCCLArtifacts, loadTacContracts, loadGroupContracts } from "tac-l2-ccl";
 import { CrossChainLayerToken } from "tac-l2-ccl/dist/typechain-types";
 import { loadContractFromFile } from "../utils";
 import { Contract, Signer } from "ethers";
@@ -38,6 +38,7 @@ export async function loadUniswapTestEnv(signer: Signer) {
     const sttonToken = loadContractFromFile<CrossChainLayerToken>(addressesFilePath, 'stTON', cclArtifacts.readArtifactSync('CrossChainLayerToken').abi, signer);
 
     const tacContracts = await loadTacContracts(addressesFilePath, signer);
+    const groups = await loadGroupContracts(addressesFilePath, signer, ["Group-0"]);
 
     const uniswapV2Proxy = loadContractFromFile<UniswapV2Proxy>(addressesFilePath, 'uniswapV2Proxy', hre.artifacts.readArtifactSync('UniswapV2Proxy').abi, signer);
     const uniswapV2Router02 = loadContractFromFile<IUniswapV2Router02>(addressesFilePath, 'uniswapV2Router02', uniswapRouterArtifact.abi, signer);
@@ -49,5 +50,5 @@ export async function loadUniswapTestEnv(signer: Signer) {
 
     const lpToken = new Contract(pairAddress, erc20Artifact.abi, signer) as unknown as ERC20;
 
-    return { tacToken, sttonToken, tacContracts, uniswapV2Proxy, uniswapV2Router02, uniswapV2Factory, lpToken }
+    return { tacToken, sttonToken, tacContracts, groups,uniswapV2Proxy, uniswapV2Router02, uniswapV2Factory, lpToken }
 }
