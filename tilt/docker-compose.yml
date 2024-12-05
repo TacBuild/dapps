@@ -1,6 +1,9 @@
 services:
   dapps-deployer:
     container_name: dapps-deployer
+    env_file:
+      - .env.tilt.fixed
+      - .env.tilt.populated
     image: dapps-deployer-image
     build:
       dockerfile: tilt/Dockerfile

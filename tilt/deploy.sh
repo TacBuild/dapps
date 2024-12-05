@@ -1,11 +1,9 @@
 #!/bin/sh
 
-export $(grep -v '^#' .env | xargs)
-
 NETWORK=""
 
 if [[ -z $DEPLOY_ENV ]]; then
-    echo "DEPLOY_ENV undefined in .env"
+    echo "DEPLOY_ENV undefined in env"
     exit 1
 elif [[ $DEPLOY_ENV == "localhost" ]]; then
     NETWORK="localhost"
