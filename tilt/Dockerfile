@@ -13,10 +13,6 @@ COPY . .
 
 RUN chmod +x ./tilt/deploy.sh
 
-# create and populate .env
-# need to use .env file instead of container env bcs ability to change it on the fly is needed w/o container rebuild
-RUN cat ./tilt/.env.tilt.init ./tilt/.env.tilt.ccl  > .env
-
 # Generate artifacts
 RUN npx hardhat compile
 

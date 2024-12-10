@@ -3,7 +3,7 @@ pragma solidity ^0.8.25;
 
 import { TransferHelper } from 'contracts/helpers/TransferHelper.sol';
 import { AppProxy } from "contracts/L2/AppProxy.sol";
-import { OutMessage, TokenAmount } from "contracts/L2/Structs.sol";
+import { OutMessage, TokenAmount } from "tac-l2-ccl/contracts/L2/Structs.sol";
 
 /**
  * @title ITwocryptoswapPool Interface
@@ -103,7 +103,6 @@ contract CurveLiteTwocryptoswapProxy is AppProxy {
         // CCL L2->L1 callback
         OutMessage memory message = OutMessage({
             queryId: 0,
-            operationId: "",
             timestamp: block.timestamp,
             target: "",
             methodName: "",
@@ -147,7 +146,6 @@ contract CurveLiteTwocryptoswapProxy is AppProxy {
         // CCL L2->L1 callback
         OutMessage memory message = OutMessage({
             queryId: 0,
-            operationId: "",
             timestamp: block.timestamp,
             target: "",
             methodName: "",
@@ -194,7 +192,6 @@ contract CurveLiteTwocryptoswapProxy is AppProxy {
         // CCL L2->L1 callback
         OutMessage memory message = OutMessage({
             queryId: 0,
-            operationId: "",
             timestamp: block.timestamp,
             target: "",
             methodName: "",

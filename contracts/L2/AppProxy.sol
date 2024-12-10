@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 
-import { ISettings } from "contracts/interfaces/ISettings.sol";
-import { ICrossChainLayer } from "contracts/interfaces/ICrossChainLayer.sol";
-import { OutMessage } from "contracts/L2/Structs.sol";
+import { ISettings } from "tac-l2-ccl/contracts/interfaces/ISettings.sol";
+import { ICrossChainLayer } from "tac-l2-ccl/contracts/interfaces/ICrossChainLayer.sol";
+import { OutMessage } from "tac-l2-ccl/contracts/L2/Structs.sol";
 
 
 /**
