@@ -59,6 +59,7 @@ async function main(showEvents=false) {
     if (showEvents) {
         printEvents(receipt!, tacContracts.crossChainLayer);
     }
+    console.log("\n------------------SCRIPT FINISHED------------------")
 }
 
 
