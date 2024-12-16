@@ -1,5 +1,7 @@
 #!/bin/sh
 
+export $(cat .env | xargs)
+
 NETWORK=""
 
 if [[ -z $DEPLOY_ENV ]]; then
