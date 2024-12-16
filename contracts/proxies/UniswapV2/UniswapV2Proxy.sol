@@ -74,7 +74,7 @@ contract UniswapV2Proxy is AppProxy {
             burn: tokensToBurn,
             lock: tokensToLock
         });
-        sendMessage(message);
+        sendMessage(message, 0);
     }
 
     /**
@@ -123,7 +123,7 @@ contract UniswapV2Proxy is AppProxy {
             burn: tokensToBurn,
             lock: tokensToLock
         });
-        sendMessage(message);
+        sendMessage(message, 0);
     }
 
     /**
@@ -166,7 +166,7 @@ contract UniswapV2Proxy is AppProxy {
             burn: tokensToBurn,
             lock: tokensToLock
         });
-        sendMessage(message);
+        sendMessage(message, 0);
     }
 
     /**
@@ -210,6 +210,6 @@ contract UniswapV2Proxy is AppProxy {
             burn: tokensToBurn,
             lock: tokensToLock
         });
-        sendMessage(message);
+        sendMessage(message, 0);
     }
 }

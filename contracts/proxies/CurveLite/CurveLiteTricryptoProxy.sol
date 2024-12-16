@@ -112,7 +112,7 @@ contract CurveLiteTricryptoswapProxy is AppProxy {
             burn: tokensToBurn,
             lock: tokensToLock
         });
-        sendMessage(message);
+        sendMessage(message, 0);
     }
 
     /**
@@ -156,7 +156,7 @@ contract CurveLiteTricryptoswapProxy is AppProxy {
             burn: tokensToBurn,
             lock: tokensToLock
         });
-        sendMessage(message);
+        sendMessage(message, 0);
     }
 
     /**
@@ -201,6 +201,6 @@ contract CurveLiteTricryptoswapProxy is AppProxy {
             burn: tokensToBurn,
             lock: tokensToLock
         });
-        sendMessage(message);
+        sendMessage(message, 0);
     }
 }

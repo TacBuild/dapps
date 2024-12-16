@@ -111,7 +111,7 @@ contract CurveLiteTwocryptoswapProxy is AppProxy {
             burn: tokensToBurn,
             lock: tokensToLock
         });
-        sendMessage(message);
+        sendMessage(message, 0);
     }
 
     /**
@@ -154,7 +154,7 @@ contract CurveLiteTwocryptoswapProxy is AppProxy {
             burn: tokensToBurn,
             lock: tokensToLock
         });
-        sendMessage(message);
+        sendMessage(message, 0);
     }
 
     /**
@@ -200,7 +200,7 @@ contract CurveLiteTwocryptoswapProxy is AppProxy {
             burn: tokensToBurn,
             lock: tokensToLock
         });
-        sendMessage(message);
+        sendMessage(message, 0);
     }
     
 }
