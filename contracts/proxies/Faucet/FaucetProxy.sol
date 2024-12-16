@@ -59,6 +59,9 @@ contract FaucetProxy is AppProxy {
     function burn(
         uint256 amount
     ) public {
+        // grant token approvals
+        TransferHelper.safeApprove(ITreasurySwap(_appAddress).token(), _appAddress, amount);
+
         // proxy call
         ITreasurySwap(_appAddress).burn(amount);
         uint256 tokenValue = ITreasurySwap(_appAddress).tokenValue();
