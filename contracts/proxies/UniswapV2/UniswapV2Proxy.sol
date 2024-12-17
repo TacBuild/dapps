@@ -9,7 +9,6 @@ import { OutMessage, TokenAmount } from "tac-l2-ccl/contracts/L2/Structs.sol";
 import { UniswapV2Library } from "contracts/proxies/UniswapV2/CompilerVersionAdapters.sol";
 import { ICrossChainLayer } from "tac-l2-ccl/contracts/interfaces/ICrossChainLayer.sol";
 
-
 /**
  * @title UniswapV2Proxy
  * @dev Proxy contract UniswapV2, namely UniswapV2Router02
@@ -21,6 +20,134 @@ contract UniswapV2Proxy is AppProxy {
      * @param settingsAddress Settings address.
      */
     constructor(address appAddress, address settingsAddress) AppProxy(appAddress, settingsAddress) {
+    }
+
+    /**
+     * @dev A proxy to IUniswapV2Router02.addLiquidity(...).
+     */
+    function addLiquidityETH(
+        address token,
+        uint amountTokenDesired,
+        uint amountTokenMin,
+        uint amountETHMin,
+        address to,
+        uint deadline
+    ) public payable {
+        // grant token approvals
+        TransferHelper.safeApprove(token, _appAddress, amountTokenDesired);
+
+        // proxy call
+        (uint amountToken, uint amountETH, uint liquidity) = IUniswapV2Router02(_appAddress).addLiquidityETH{value: msg.value}(
+            token,
+            amountTokenDesired,
+            amountTokenMin,
+            amountETHMin,
+            to,
+            deadline
+        );
+
+        // tokens to L2->L1 transfer (burn)
+        TokenAmount[] memory tokensToBurn = new TokenAmount[](1);
+        tokensToBurn[0] = TokenAmount(token, amountTokenDesired - amountToken);
+
+        // tokens to L2->L1 transfer (lock)
+        address tokenLiquidity = UniswapV2Library.pairFor(IUniswapV2Router02(_appAddress).factory(), IUniswapV2Router02(_appAddress).WETH(), token);
+        TransferHelper.safeApprove(tokenLiquidity, getCrossChainLayerAddress(), liquidity);
+        TokenAmount[] memory tokensToLock = new TokenAmount[](1);
+        tokensToLock[0] = TokenAmount(tokenLiquidity, liquidity);
+
+        // CCL L2->L1 callback
+        OutMessage memory message = OutMessage({
+            queryId: 0,
+            timestamp: block.timestamp,
+            target: "",
+            methodName: "",
+            arguments: new bytes(0),
+            caller: address(this),
+            burn: tokensToBurn,
+            lock: tokensToLock
+        });
+        sendMessage(message, msg.value - amountETH);
+    }
+
+    /**
+     * @dev A proxy to IUniswapV2Router02.swapExactETHForTokens(...).
+     */
+    function swapExactETHForTokens(
+        uint amountOutMin,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) public payable {
+        // proxy call
+        (uint[] memory amounts) = IUniswapV2Router02(_appAddress).swapExactETHForTokens{value: msg.value}(
+            amountOutMin,
+            path,
+            to,
+            deadline
+        );
+
+        // tokens to L2->L1 transfer (burn)
+        TokenAmount[] memory tokensToBurn = new TokenAmount[](1);
+        tokensToBurn[0] = TokenAmount(path[path.length - 1], amounts[amounts.length - 1]);
+
+        // tokens to L2->L1 transfer (lock)
+        TokenAmount[] memory tokensToLock = new TokenAmount[](0);
+
+        // CCL L2->L1 callback
+        OutMessage memory message = OutMessage({
+            queryId: 0,
+            timestamp: block.timestamp,
+            target: "",
+            methodName: "",
+            arguments: new bytes(0),
+            caller: address(this),
+            burn: tokensToBurn,
+            lock: tokensToLock
+        });
+        sendMessage(message, 0);
+    }
+
+    /**
+     * @dev A proxy to IUniswapV2Router02.swapExactTokensForETH(...).
+     */
+    function swapExactTokensForETH(
+        uint amountIn,
+        uint amountOutMin,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) public {
+        // grant token approvals
+        TransferHelper.safeApprove(path[0], _appAddress, amountIn);
+
+        // proxy call
+        (uint[] memory amounts) = IUniswapV2Router02(_appAddress).swapExactTokensForETH(
+            amountIn,
+            amountOutMin,
+            path,
+            to,
+            deadline
+        );
+
+        // tokens to L2->L1 transfer (burn)
+        TokenAmount[] memory tokensToBurn = new TokenAmount[](0);
+
+        // tokens to L2->L1 transfer (lock)
+        TokenAmount[] memory tokensToLock = new TokenAmount[](0);
+
+        // CCL L2->L1 callback
+        OutMessage memory message = OutMessage({
+            queryId: 0,
+            timestamp: block.timestamp,
+            target: "",
+            methodName: "",
+            arguments: new bytes(0),
+            caller: address(this),
+            burn: tokensToBurn,
+            lock: tokensToLock
+        });
+        sendMessage(message, amounts[amounts.length - 1]);
     }
 
     /**
@@ -212,4 +339,6 @@ contract UniswapV2Proxy is AppProxy {
         });
         sendMessage(message, 0);
     }
+
+    receive() external payable {}
 }
