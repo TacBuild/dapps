@@ -8,4 +8,6 @@ services:
     build:
       dockerfile: tilt/Dockerfile
       context: ../.
+      args:
+        - SEQUENCER_PRIVATE_KEY_EVM=${SEQUENCER_PRIVATE_KEY_EVM}
     network_mode: "host"
