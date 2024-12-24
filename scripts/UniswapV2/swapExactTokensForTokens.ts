@@ -33,8 +33,8 @@ async function main(showEvents=false) {
         operationId: "test swapExactTokensForTokens",
         timestamp: 1726050404,
         target: to,
-        methodName: 'swapExactTokensForTokens(uint256,uint256,address[],address,uint256)',
-        arguments: new ethers.AbiCoder().encode(
+        methodName: 'swapExactTokensForTokens((string,uint64,string),bytes)',
+        payload: new ethers.AbiCoder().encode(
             ['uint256', 'uint256', 'address[]', 'address', 'uint256'],
             [
                 amountIn,

@@ -32,8 +32,8 @@ async function main(showEvents=false) {
         operationId: "test swapTokensForExactTokens",
         timestamp: BigInt(Math.floor(Date.now() / 1000)),
         target: await uniswapV2Proxy.getAddress(),
-        methodName: 'swapTokensForExactTokens(uint256,uint256,address[],address,uint256)',
-        arguments: new ethers.AbiCoder().encode(
+        methodName: 'swapTokensForExactTokens((string,uint64,string),bytes)',
+        payload: new ethers.AbiCoder().encode(
             ['uint256', 'uint256', 'address[]', 'address', 'uint256'],
             [
                 amountOut,

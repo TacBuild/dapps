@@ -5,7 +5,7 @@ import { IUniswapV2Router02 } from '@uniswap/v2-periphery/contracts/interfaces/I
 import { TransferHelper } from '@uniswap/lib/contracts/libraries/TransferHelper.sol';
 
 import { AppProxy } from "contracts/L2/AppProxy.sol";
-import { OutMessage, TokenAmount } from "tac-l2-ccl/contracts/L2/Structs.sol";
+import { OutMessage, TokenAmount, TacHeader } from "tac-l2-ccl/contracts/L2/Structs.sol";
 import { UniswapV2Library } from "contracts/proxies/UniswapV2/CompilerVersionAdapters.sol";
 import { ICrossChainLayer } from "tac-l2-ccl/contracts/interfaces/ICrossChainLayer.sol";
 
@@ -27,15 +27,19 @@ contract UniswapV2Proxy is AppProxy {
      * @dev A proxy to IUniswapV2Router02.addLiquidity(...).
      */
     function addLiquidity(
-        address tokenA,
-        address tokenB,
-        uint amountADesired,
-        uint amountBDesired,
-        uint amountAMin,
-        uint amountBMin,
-        address to,
-        uint deadline
+        TacHeader calldata header,
+        bytes calldata payload
     ) public {
+        (
+            address tokenA,
+            address tokenB,
+            uint amountADesired,
+            uint amountBDesired,
+            uint amountAMin,
+            uint amountBMin,
+            address to,
+            uint deadline
+        ) = abi.decode(payload, (address, address, uint, uint, uint, uint, address, uint));
         // grant token approvals
         TransferHelper.safeApprove(tokenA, _appAddress, amountADesired);
         TransferHelper.safeApprove(tokenB, _appAddress, amountBDesired);
@@ -52,27 +56,24 @@ contract UniswapV2Proxy is AppProxy {
             deadline
         );
 
-        // tokens to L2->L1 transfer (burn)
-        TokenAmount[] memory tokensToBurn = new TokenAmount[](2);
-        tokensToBurn[0] = TokenAmount(tokenA, amountADesired - amountA);
-        tokensToBurn[1] = TokenAmount(tokenB, amountBDesired - amountB);
-
-        // tokens to L2->L1 transfer (lock)
+        // bridge remaining tokens to TON
+        TokenAmount[] memory tokensToBridge = new TokenAmount[](2);
+        tokensToBridge[0] = TokenAmount(tokenA, amountADesired - amountA);
+        tokensToBridge[1] = TokenAmount(tokenB, amountBDesired - amountB);
+        // bridge LP tokens to TON
         address tokenLiquidity = UniswapV2Library.pairFor(IUniswapV2Router02(_appAddress).factory(), tokenA, tokenB);
-        TransferHelper.safeApprove(tokenLiquidity, getCrossChainLayerAddress(), liquidity);
-        TokenAmount[] memory tokensToLock = new TokenAmount[](1);
-        tokensToLock[0] = TokenAmount(tokenLiquidity, liquidity);
+        tokensToBridge[0] = TokenAmount(tokenLiquidity, liquidity);
 
-        // CCL L2->L1 callback
+        TransferHelper.safeApprove(tokenLiquidity, getCrossChainLayerAddress(), liquidity);
+        TransferHelper.safeApprove(tokenA, getCrossChainLayerAddress(), amountADesired - amountA);
+        TransferHelper.safeApprove(tokenB, getCrossChainLayerAddress(), amountBDesired - amountB);
+
+        // CCL TAC->TON callback
         OutMessage memory message = OutMessage({
-            queryId: 0,
-            timestamp: block.timestamp,
-            target: "",
-            methodName: "",
-            arguments: new bytes(0),
-            caller: address(this),
-            burn: tokensToBurn,
-            lock: tokensToLock
+            queryId: header.queryId,
+            tvmTarget: header.tvmCaller,
+            tvmPayload: "",
+            toBridge: tokensToBridge
         });
         sendMessage(message);
     }
@@ -81,14 +82,18 @@ contract UniswapV2Proxy is AppProxy {
      * @dev A proxy to IUniswapV2Router02.removeLiquidity(...).
      */
     function removeLiquidity(
-        address tokenA,
-        address tokenB,
-        uint liquidity,
-        uint amountAMin,
-        uint amountBMin,
-        address to,
-        uint deadline
+        TacHeader calldata header,
+        bytes calldata payload
     ) public {
+        (
+            address tokenA,
+            address tokenB,
+            uint liquidity,
+            uint amountAMin,
+            uint amountBMin,
+            address to,
+            uint deadline
+        ) = abi.decode(payload, (address, address, uint, uint, uint, address, uint));
         // grant token approvals
         address tokenLiquidity = UniswapV2Library.pairFor(IUniswapV2Router02(_appAddress).factory(), tokenA, tokenB);
         TransferHelper.safeApprove(tokenLiquidity, _appAddress, liquidity);
@@ -104,24 +109,20 @@ contract UniswapV2Proxy is AppProxy {
             deadline
         );
 
-        // tokens to L2->L1 transfer (burn)
-        TokenAmount[] memory tokensToBurn = new TokenAmount[](2);
-        tokensToBurn[0] = TokenAmount(tokenA, amountA);
-        tokensToBurn[1] = TokenAmount(tokenB, amountB);
+        // bridge tokens to TON
+        TokenAmount[] memory tokensToBridge = new TokenAmount[](2);
+        tokensToBridge[0] = TokenAmount(tokenA, amountA);
+        tokensToBridge[1] = TokenAmount(tokenB, amountB);
 
-        // tokens to L2->L1 transfer (lock)
-        TokenAmount[] memory tokensToLock = new TokenAmount[](0);
+        TransferHelper.safeApprove(tokenA, getCrossChainLayerAddress(), amountA);
+        TransferHelper.safeApprove(tokenB, getCrossChainLayerAddress(), amountB);
 
-        // CCL L2->L1 callback
+        // CCL TAC->TON callback
         OutMessage memory message = OutMessage({
-            queryId: 0,
-            timestamp: block.timestamp,
-            target: "",
-            methodName: "",
-            arguments: new bytes(0),
-            caller: address(this),
-            burn: tokensToBurn,
-            lock: tokensToLock
+            queryId: header.queryId,
+            tvmTarget: header.tvmCaller,
+            tvmPayload: "",
+            toBridge: tokensToBridge
         });
         sendMessage(message);
     }
@@ -130,12 +131,16 @@ contract UniswapV2Proxy is AppProxy {
      * @dev A proxy to IUniswapV2Router02.swapExactTokensForTokens(...).
      */
     function swapExactTokensForTokens(
-        uint amountIn,
-        uint amountOutMin,
-        address[] calldata path,
-        address to,
-        uint deadline
+        TacHeader calldata header,
+        bytes calldata payload
     ) public {
+        (
+            uint amountIn,
+            uint amountOutMin,
+            address[] memory path,
+            address to,
+            uint deadline
+        ) = abi.decode(payload, (uint, uint, address[], address, uint));
         // grant token approvals
         TransferHelper.safeApprove(path[0], _appAddress, amountIn);
 
@@ -148,23 +153,18 @@ contract UniswapV2Proxy is AppProxy {
             deadline
         );
 
-        // tokens to L2->L1 transfer (burn)
-        TokenAmount[] memory tokensToBurn = new TokenAmount[](1);
-        tokensToBurn[0] = TokenAmount(path[path.length - 1], amounts[amounts.length - 1]);
+        // bridge tokens to TON
+        TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
+        tokensToBridge[0] = TokenAmount(path[path.length - 1], amounts[amounts.length - 1]);
 
-        // tokens to L2->L1 transfer (lock)
-        TokenAmount[] memory tokensToLock = new TokenAmount[](0);
+        TransferHelper.safeApprove(path[path.length - 1], getCrossChainLayerAddress(), amounts[amounts.length - 1]);
 
-        // CCL L2->L1 callback
+        // CCL TAC->TON callback
         OutMessage memory message = OutMessage({
-            queryId: 0,
-            timestamp: block.timestamp,
-            target: "",
-            methodName: "",
-            arguments: new bytes(0),
-            caller: address(this),
-            burn: tokensToBurn,
-            lock: tokensToLock
+            queryId: header.queryId,
+            tvmTarget: header.tvmCaller,
+            tvmPayload: "",
+            toBridge: tokensToBridge
         });
         sendMessage(message);
     }
@@ -173,12 +173,16 @@ contract UniswapV2Proxy is AppProxy {
      * @dev A proxy to IUniswapV2Router02.swapTokensForExactTokens(...).
      */
     function swapTokensForExactTokens(
-        uint amountOut,
-        uint amountInMax,
-        address[] calldata path,
-        address to,
-        uint deadline
+        TacHeader calldata header,
+        bytes calldata payload
     ) public {
+        (
+            uint amountOut,
+            uint amountInMax,
+            address[] memory path,
+            address to,
+            uint deadline
+        ) = abi.decode(payload, (uint, uint, address[], address, uint));
         // grant token approvals
         TransferHelper.safeApprove(path[0], _appAddress, amountInMax);
 
@@ -191,24 +195,20 @@ contract UniswapV2Proxy is AppProxy {
             deadline
         );
 
-        // tokens to L2->L1 transfer (burn)
-        TokenAmount[] memory tokensToBurn = new TokenAmount[](2);
-        tokensToBurn[0] = TokenAmount(path[0], amountInMax - amounts[0]);
-        tokensToBurn[1] = TokenAmount(path[path.length - 1], amounts[amounts.length - 1]);
+        // bridge tokens to TON
+        TokenAmount[] memory tokensToBridge = new TokenAmount[](2);
+        tokensToBridge[0] = TokenAmount(path[0], amountInMax - amounts[0]);
+        tokensToBridge[1] = TokenAmount(path[path.length - 1], amounts[amounts.length - 1]);
 
-        // tokens to L2->L1 transfer (lock)
-        TokenAmount[] memory tokensToLock = new TokenAmount[](0);
+        TransferHelper.safeApprove(path[0], getCrossChainLayerAddress(), amountInMax - amounts[0]);
+        TransferHelper.safeApprove(path[path.length - 1], getCrossChainLayerAddress(), amounts[amounts.length - 1]);
 
-        // CCL L2->L1 callback
+        // CCL TAC->TON callback
         OutMessage memory message = OutMessage({
-            queryId: 0,
-            timestamp: block.timestamp,
-            target: "",
-            methodName: "",
-            arguments: new bytes(0),
-            caller: address(this),
-            burn: tokensToBurn,
-            lock: tokensToLock
+            queryId: header.queryId,
+            tvmTarget: header.tvmCaller,
+            tvmPayload: "",
+            toBridge: tokensToBridge
         });
         sendMessage(message);
     }

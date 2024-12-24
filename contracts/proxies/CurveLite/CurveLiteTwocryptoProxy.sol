@@ -3,7 +3,7 @@ pragma solidity ^0.8.25;
 
 import { TransferHelper } from 'contracts/helpers/TransferHelper.sol';
 import { AppProxy } from "contracts/L2/AppProxy.sol";
-import { OutMessage, TokenAmount } from "tac-l2-ccl/contracts/L2/Structs.sol";
+import { OutMessage, TokenAmount, TacHeader } from "tac-l2-ccl/contracts/L2/Structs.sol";
 
 /**
  * @title ITwocryptoswapPool Interface
@@ -74,10 +74,11 @@ contract CurveLiteTwocryptoswapProxy is AppProxy {
      * @dev A proxy to addLiquidity
      */
     function addLiquidity(
-        address pool,
-        uint256[2] calldata amounts,
-        uint256 minMintAmount
+        TacHeader calldata header,
+        bytes calldata payload
     ) public {
+        (address pool, uint256[2] memory amounts, uint256 minMintAmount) =
+                abi.decode(payload, (address, uint256[2], uint256));
         // claim tokens addresses
         address tokenA = ITwocryptoswapPool(pool).coins(0);
         address tokenB = ITwocryptoswapPool(pool).coins(1);
@@ -91,25 +92,18 @@ contract CurveLiteTwocryptoswapProxy is AppProxy {
             minMintAmount
         );
 
-        // tokens to L2->L1 transfer (burn)
-        TokenAmount[] memory tokensToBurn = new TokenAmount[](0);
+        // bridge LP tokens to TON
+        TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
+        tokensToBridge[0] = TokenAmount(pool, liquidity);
 
-        // tokens to L2->L1 transfer (lock)
-        address tokenLiquidity = pool;
-        TransferHelper.safeApprove(tokenLiquidity, getCrossChainLayerAddress(), liquidity);
-        TokenAmount[] memory tokensToLock = new TokenAmount[](1);
-        tokensToLock[0] = TokenAmount(tokenLiquidity, liquidity);
+        TransferHelper.safeApprove(pool, getCrossChainLayerAddress(), liquidity);
 
-        // CCL L2->L1 callback
+        // CCL TAC->TON callback
         OutMessage memory message = OutMessage({
-            queryId: 0,
-            timestamp: block.timestamp,
-            target: "",
-            methodName: "",
-            arguments: new bytes(0),
-            caller: address(this),
-            burn: tokensToBurn,
-            lock: tokensToLock
+            queryId: header.queryId,
+            tvmTarget: header.tvmCaller,
+            tvmPayload: "",
+            toBridge: tokensToBridge
         });
         sendMessage(message);
     }
@@ -118,11 +112,11 @@ contract CurveLiteTwocryptoswapProxy is AppProxy {
      * @dev A proxy to removeLiquidity
      */
     function removeLiquidity(
-        address pool,
-        uint256 amount,
-        uint256[2] calldata min_amounts
-        
+        TacHeader calldata header,
+        bytes calldata payload
     ) public {
+        (address pool, uint256 amount, uint256[2] memory min_amounts) =
+                abi.decode(payload, (address, uint256, uint256[2]));
         // claim tokens addresses
         address tokenA = ITwocryptoswapPool(pool).coins(0);
         address tokenB = ITwocryptoswapPool(pool).coins(1);
@@ -135,24 +129,23 @@ contract CurveLiteTwocryptoswapProxy is AppProxy {
             min_amounts
         );
 
-        // tokens to L2->L1 transfer (burn)
-        TokenAmount[] memory tokensToBurn = new TokenAmount[](2);
-        tokensToBurn[0] = TokenAmount(tokenA, amounts[0]);
-        tokensToBurn[1] = TokenAmount(tokenB, amounts[1]);
+        // bridge tokens to TON
+        TokenAmount[] memory tokensToBridge = new TokenAmount[](2);
+        tokensToBridge[0] = TokenAmount(tokenA, amounts[0]);
+        tokensToBridge[1] = TokenAmount(tokenB, amounts[1]);
 
-        // tokens to L2->L1 transfer (lock)
-        TokenAmount[] memory tokensToLock = new TokenAmount[](0);
+        address crossChainLayer = getCrossChainLayerAddress();
 
-        // CCL L2->L1 callback
+        // approve tokens to CCL
+        TransferHelper.safeApprove(tokenA, crossChainLayer, amounts[0]);
+        TransferHelper.safeApprove(tokenB, crossChainLayer, amounts[1]);
+
+        // CCL TAC->TON callback
         OutMessage memory message = OutMessage({
-            queryId: 0,
-            timestamp: block.timestamp,
-            target: "",
-            methodName: "",
-            arguments: new bytes(0),
-            caller: address(this),
-            burn: tokensToBurn,
-            lock: tokensToLock
+            queryId: header.queryId,
+            tvmTarget: header.tvmCaller,
+            tvmPayload: "",
+            toBridge: tokensToBridge
         });
         sendMessage(message);
     }
@@ -161,13 +154,11 @@ contract CurveLiteTwocryptoswapProxy is AppProxy {
      * @dev A proxy to exchange
      */
     function exchange(
-        address pool,
-        uint256 i,
-        uint256 j,
-        uint256 dx,
-        uint256 min_dy
-        
+        TacHeader calldata header,
+        bytes calldata payload
     ) public {
+        (address pool, uint256 i, uint256 j, uint256 dx, uint256 min_dy) =
+                abi.decode(payload, (address, uint256, uint256, uint256, uint256));
         // claim tokens addresses
         address tokenIn = ITwocryptoswapPool(pool).coins(i);
         address tokenOut = ITwocryptoswapPool(pool).coins(j);
@@ -182,25 +173,19 @@ contract CurveLiteTwocryptoswapProxy is AppProxy {
             min_dy
         );
 
-        // tokens to L2->L1 transfer (burn)
-        TokenAmount[] memory tokensToBurn = new TokenAmount[](1);
-        tokensToBurn[0] = TokenAmount(tokenOut, amountOut);
+        // bridge tokens to TON
+        TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
+        tokensToBridge[0] = TokenAmount(tokenOut, amountOut);
 
-        // tokens to L2->L1 transfer (lock)
-        TokenAmount[] memory tokensToLock = new TokenAmount[](0);
+        TransferHelper.safeApprove(tokenOut, getCrossChainLayerAddress(), amountOut);
 
-        // CCL L2->L1 callback
+        // CCL TAC->TON callback
         OutMessage memory message = OutMessage({
-            queryId: 0,
-            timestamp: block.timestamp,
-            target: "",
-            methodName: "",
-            arguments: new bytes(0),
-            caller: address(this),
-            burn: tokensToBurn,
-            lock: tokensToLock
+            queryId: header.queryId,
+            tvmTarget: header.tvmCaller,
+            tvmPayload: "",
+            toBridge: tokensToBridge
         });
         sendMessage(message);
     }
-    
 }
