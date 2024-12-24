@@ -57,12 +57,12 @@ contract UniswapV2Proxy is AppProxy {
         );
 
         // bridge remaining tokens to TON
-        TokenAmount[] memory tokensToBridge = new TokenAmount[](2);
+        TokenAmount[] memory tokensToBridge = new TokenAmount[](3);
         tokensToBridge[0] = TokenAmount(tokenA, amountADesired - amountA);
         tokensToBridge[1] = TokenAmount(tokenB, amountBDesired - amountB);
         // bridge LP tokens to TON
         address tokenLiquidity = UniswapV2Library.pairFor(IUniswapV2Router02(_appAddress).factory(), tokenA, tokenB);
-        tokensToBridge[0] = TokenAmount(tokenLiquidity, liquidity);
+        tokensToBridge[2] = TokenAmount(tokenLiquidity, liquidity);
 
         TransferHelper.safeApprove(tokenLiquidity, getCrossChainLayerAddress(), liquidity);
         TransferHelper.safeApprove(tokenA, getCrossChainLayerAddress(), amountADesired - amountA);
