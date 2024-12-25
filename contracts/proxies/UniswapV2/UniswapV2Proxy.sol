@@ -23,13 +23,9 @@ contract UniswapV2Proxy is AppProxy {
     constructor(address appAddress, address settingsAddress) AppProxy(appAddress, settingsAddress) {
     }
 
-    /**
-     * @dev A proxy to IUniswapV2Router02.addLiquidity(...).
-     */
-    function addLiquidity(
-        TacHeader calldata header,
+    function _addLiquidity(
         bytes calldata payload
-    ) public {
+    ) internal returns (TokenAmount[] memory) {
         (
             address tokenA,
             address tokenB,
@@ -64,9 +60,26 @@ contract UniswapV2Proxy is AppProxy {
         address tokenLiquidity = UniswapV2Library.pairFor(IUniswapV2Router02(_appAddress).factory(), tokenA, tokenB);
         tokensToBridge[2] = TokenAmount(tokenLiquidity, liquidity);
 
-        TransferHelper.safeApprove(tokenLiquidity, getCrossChainLayerAddress(), liquidity);
-        TransferHelper.safeApprove(tokenA, getCrossChainLayerAddress(), amountADesired - amountA);
-        TransferHelper.safeApprove(tokenB, getCrossChainLayerAddress(), amountBDesired - amountB);
+        return tokensToBridge;
+    }
+
+    /**
+     * @dev A proxy to IUniswapV2Router02.addLiquidity(...).
+     */
+    function addLiquidity(
+        TacHeader calldata header,
+        bytes calldata payload
+    ) public {
+
+        TokenAmount[] memory tokensToBridge = _addLiquidity(payload);
+
+        uint i;
+        for (; i < tokensToBridge.length;) {
+            TransferHelper.safeApprove(tokensToBridge[i].l2Address, getCrossChainLayerAddress(), tokensToBridge[i].amount);
+            unchecked {
+                i++;
+            }
+        }
 
         // CCL TAC->TON callback
         OutMessage memory message = OutMessage({
@@ -78,13 +91,9 @@ contract UniswapV2Proxy is AppProxy {
         sendMessage(message);
     }
 
-    /**
-     * @dev A proxy to IUniswapV2Router02.removeLiquidity(...).
-     */
-    function removeLiquidity(
-        TacHeader calldata header,
+    function _removeLiquidity(
         bytes calldata payload
-    ) public {
+    ) internal returns (TokenAmount[] memory) {
         (
             address tokenA,
             address tokenB,
@@ -114,8 +123,26 @@ contract UniswapV2Proxy is AppProxy {
         tokensToBridge[0] = TokenAmount(tokenA, amountA);
         tokensToBridge[1] = TokenAmount(tokenB, amountB);
 
-        TransferHelper.safeApprove(tokenA, getCrossChainLayerAddress(), amountA);
-        TransferHelper.safeApprove(tokenB, getCrossChainLayerAddress(), amountB);
+        return tokensToBridge;
+    }
+
+    /**
+     * @dev A proxy to IUniswapV2Router02.removeLiquidity(...).
+     */
+    function removeLiquidity(
+        TacHeader calldata header,
+        bytes calldata payload
+    ) public {
+
+        TokenAmount[] memory tokensToBridge = _removeLiquidity(payload);
+
+        uint i;
+        for (; i < tokensToBridge.length;) {
+            TransferHelper.safeApprove(tokensToBridge[i].l2Address, getCrossChainLayerAddress(), tokensToBridge[i].amount);
+            unchecked {
+                i++;
+            }
+        }
 
         // CCL TAC->TON callback
         OutMessage memory message = OutMessage({
@@ -127,13 +154,9 @@ contract UniswapV2Proxy is AppProxy {
         sendMessage(message);
     }
 
-    /**
-     * @dev A proxy to IUniswapV2Router02.swapExactTokensForTokens(...).
-     */
-    function swapExactTokensForTokens(
-        TacHeader calldata header,
+    function _swapExactTokensForTokens(
         bytes calldata payload
-    ) public {
+    ) internal returns (TokenAmount[] memory) {
         (
             uint amountIn,
             uint amountOutMin,
@@ -157,7 +180,26 @@ contract UniswapV2Proxy is AppProxy {
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(path[path.length - 1], amounts[amounts.length - 1]);
 
-        TransferHelper.safeApprove(path[path.length - 1], getCrossChainLayerAddress(), amounts[amounts.length - 1]);
+        return tokensToBridge;
+    }
+
+    /**
+     * @dev A proxy to IUniswapV2Router02.swapExactTokensForTokens(...).
+     */
+    function swapExactTokensForTokens(
+        TacHeader calldata header,
+        bytes calldata payload
+    ) public {
+
+        TokenAmount[] memory tokensToBridge = _swapExactTokensForTokens(payload);
+
+        uint i;
+        for (; i < tokensToBridge.length;) {
+            TransferHelper.safeApprove(tokensToBridge[i].l2Address, getCrossChainLayerAddress(), tokensToBridge[i].amount);
+            unchecked {
+                i++;
+            }
+        }
 
         // CCL TAC->TON callback
         OutMessage memory message = OutMessage({
@@ -169,13 +211,9 @@ contract UniswapV2Proxy is AppProxy {
         sendMessage(message);
     }
 
-    /**
-     * @dev A proxy to IUniswapV2Router02.swapTokensForExactTokens(...).
-     */
-    function swapTokensForExactTokens(
-        TacHeader calldata header,
+    function _swapTokensForExactTokens(
         bytes calldata payload
-    ) public {
+    ) internal returns (TokenAmount[] memory) {
         (
             uint amountOut,
             uint amountInMax,
@@ -200,8 +238,26 @@ contract UniswapV2Proxy is AppProxy {
         tokensToBridge[0] = TokenAmount(path[0], amountInMax - amounts[0]);
         tokensToBridge[1] = TokenAmount(path[path.length - 1], amounts[amounts.length - 1]);
 
-        TransferHelper.safeApprove(path[0], getCrossChainLayerAddress(), amountInMax - amounts[0]);
-        TransferHelper.safeApprove(path[path.length - 1], getCrossChainLayerAddress(), amounts[amounts.length - 1]);
+        return tokensToBridge;
+    }
+
+    /**
+     * @dev A proxy to IUniswapV2Router02.swapTokensForExactTokens(...).
+     */
+    function swapTokensForExactTokens(
+        TacHeader calldata header,
+        bytes calldata payload
+    ) public {
+
+        TokenAmount[] memory tokensToBridge = _swapTokensForExactTokens(payload);
+
+        uint i;
+        for (; i < tokensToBridge.length;) {
+            TransferHelper.safeApprove(tokensToBridge[i].l2Address, getCrossChainLayerAddress(), tokensToBridge[i].amount);
+            unchecked {
+                i++;
+            }
+        }
 
         // CCL TAC->TON callback
         OutMessage memory message = OutMessage({
