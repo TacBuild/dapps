@@ -78,6 +78,9 @@ interface IDODOFeeRouteProxy {
  * @dev Proxy contract Taco Protocol, namely DODOV2Proxy02(createDODOVendingMachine, addDVMLiquidity) and DODOFeeRouteProxy
  */
 contract TacoProxy is AppProxy {
+
+    address constant _ETH_ADDRESS_ = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+
     /**
      * @dev Constructor function to initialize the contract with initial state.
      * @param appAddress Application address.
@@ -99,7 +102,7 @@ contract TacoProxy is AppProxy {
         uint256 k,
         bool isOpenTWAP,
         uint256 deadLine
-    ) public {
+    ) public payable {
         // grant token approvals
         TransferHelper.safeApprove(baseToken, _appAddress, baseInAmount);
         TransferHelper.safeApprove(quoteToken, _appAddress, quoteInAmount);
@@ -146,7 +149,7 @@ contract TacoProxy is AppProxy {
         uint256 quoteMinAmount,
         uint8 flag, //  0 - ERC20, 1 - baseInETH, 2 - quoteInETH
         uint256 deadLine
-    ) public {
+    ) public payable {
         // get token addresses from the pool
         address baseToken = IDODOV2(dvmAddress)._BASE_TOKEN_();
         address quoteToken = IDODOV2(dvmAddress)._QUOTE_TOKEN_();
@@ -209,12 +212,14 @@ contract TacoProxy is AppProxy {
         bytes[] memory moreInfos,
         bytes memory feeData,
         uint256 deadLine
-    ) public {
+    ) public payable {
         // grant token approvals
-        TransferHelper.safeApprove(fromToken, feeRouteProxy, fromTokenAmount);
+        if (fromToken != _ETH_ADDRESS_) {
+            TransferHelper.safeApprove(fromToken, feeRouteProxy, fromTokenAmount);
+        }
 
         // proxy call
-        uint256 returnAmount = IDODOFeeRouteProxy(feeRouteProxy).mixSwap(
+        uint256 returnAmount = IDODOFeeRouteProxy(feeRouteProxy).mixSwap{value: msg.value}(
             fromToken,
             toToken,
             fromTokenAmount,
@@ -230,8 +235,16 @@ contract TacoProxy is AppProxy {
         );
 
         // tokens to L2->L1 transfer (bridge )
-        TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
-        tokensToBridge[0] = TokenAmount(toToken, returnAmount);
+        uint256 value;
+        TokenAmount[] memory tokensToBridge;
+        if (toToken == _ETH_ADDRESS_) {
+            tokensToBridge = new TokenAmount[](0);
+            value = returnAmount;
+        } else {
+            tokensToBridge = new TokenAmount[](1);
+            tokensToBridge[0] = TokenAmount(toToken, returnAmount);
+            value = 0;
+        }
 
         // CCL L2->L1 callback
         OutMessage memory message = OutMessage({
@@ -243,6 +256,6 @@ contract TacoProxy is AppProxy {
             caller: address(this),
             toBridge: tokensToBridge
         });
-        sendMessage(message);
+        sendMessage(message, value);
     }
 }
