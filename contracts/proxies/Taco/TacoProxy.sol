@@ -159,11 +159,14 @@ contract TacoProxy is AppProxy {
         address baseToken = IDODOV2(dvmAddress)._BASE_TOKEN_();
         address quoteToken = IDODOV2(dvmAddress)._QUOTE_TOKEN_();
 
+        bool isBaseETH = baseToken != _ETH_ADDRESS_;
+        bool isQuoteETH = quoteToken != _ETH_ADDRESS_;
+
         // grant token approvals
-        if (baseToken != _ETH_ADDRESS_) {
+        if (!isBaseETH) {
             TransferHelper.safeApprove(baseToken, _appAddress, baseInAmount);
         }
-        if (quoteToken != _ETH_ADDRESS_) {
+        if (!isQuoteETH) {
             TransferHelper.safeApprove(quoteToken, _appAddress, quoteInAmount);
         }
 
@@ -184,12 +187,25 @@ contract TacoProxy is AppProxy {
 
         // tokens to L2->L1 transfer (bridge)
 
-        TokenAmount[] memory tokensToBridge = new TokenAmount[](3);
-        tokensToBridge[0] = TokenAmount(baseToken, baseInAmount - baseAdjustedInAmount);
-        tokensToBridge[1] = TokenAmount(quoteToken, quoteMinAmount - quoteAdjustedInAmount);
+        uint256 bridgeLength = (isBaseETH ? 1 : 0) + (isQuoteETH ? 1 : 0) + 1;
+        TokenAmount[] memory tokensToBridge = new TokenAmount[](bridgeLength);
+        uint256 index = 0;
+        uint256 value = 0;
 
+        if (!isBaseETH) {
+            tokensToBridge[index] = TokenAmount(baseToken, baseInAmount - baseAdjustedInAmount);
+            index++;
+        } else {
+            value += baseInAmount - baseAdjustedInAmount;
+        }
+        if (isQuoteETH) {
+            tokensToBridge[index] = TokenAmount(quoteToken, quoteMinAmount - quoteAdjustedInAmount);
+            index++;
+        } else {
+            value += quoteMinAmount - quoteAdjustedInAmount;
+        }
         TransferHelper.safeApprove(dvmAddress, getCrossChainLayerAddress(), shares);
-        tokensToBridge[2] = TokenAmount(dvmAddress, shares);
+        tokensToBridge[index] = TokenAmount(dvmAddress, shares);
 
         // CCL L2->L1 callback
         OutMessage memory message = OutMessage({
@@ -201,7 +217,7 @@ contract TacoProxy is AppProxy {
             caller: address(this),
             toBridge: tokensToBridge
         });
-        sendMessage(message);
+        sendMessage(message, value);
     }
 
     /**
