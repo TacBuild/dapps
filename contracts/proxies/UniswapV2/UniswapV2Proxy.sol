@@ -72,7 +72,7 @@ contract UniswapV2Proxy is AppProxy {
             caller: address(this),
             toBridge: tokensToBridge
         });
-        sendMessage(message);
+        sendMessage(message, 0);
     }
 
     /**
@@ -117,7 +117,7 @@ contract UniswapV2Proxy is AppProxy {
             caller: address(this),
             toBridge: tokensToBridge
         });
-        sendMessage(message);
+        sendMessage(message, 0);
     }
 
     /**
@@ -156,7 +156,7 @@ contract UniswapV2Proxy is AppProxy {
             caller: address(this),
             toBridge: tokensToBridge
         });
-        sendMessage(message);
+        sendMessage(message, 0);
     }
 
     /**
@@ -196,6 +196,6 @@ contract UniswapV2Proxy is AppProxy {
             caller: address(this),
             toBridge: tokensToBridge
         });
-        sendMessage(message);
+        sendMessage(message, 0);
     }
 }
