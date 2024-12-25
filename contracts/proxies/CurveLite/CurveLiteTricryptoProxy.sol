@@ -136,7 +136,7 @@ contract CurveLiteTricryptoswapProxy is AppProxy {
         TokenAmount[] memory tokensToBridge = new TokenAmount[](3);
         tokensToBridge[0] = TokenAmount(tokenA, amounts[0]);
         tokensToBridge[1] = TokenAmount(tokenB, amounts[1]);
-        tokensToBridge[1] = TokenAmount(tokenC, amounts[2]);
+        tokensToBridge[2] = TokenAmount(tokenC, amounts[2]);
 
         // CCL L2->L1 callback
         OutMessage memory message = OutMessage({

@@ -104,21 +104,26 @@ contract TacoProxy is AppProxy {
         uint256 deadLine
     ) public payable {
         // grant token approvals
-        TransferHelper.safeApprove(baseToken, _appAddress, baseInAmount);
-        TransferHelper.safeApprove(quoteToken, _appAddress, quoteInAmount);
+        if (baseToken != _ETH_ADDRESS_) {
+            TransferHelper.safeApprove(baseToken, _appAddress, baseInAmount);
+        }
+        if (quoteToken != _ETH_ADDRESS_) {
+            TransferHelper.safeApprove(quoteToken, _appAddress, quoteInAmount);
+        }
 
         // proxy call
-        (address newVendingMachine, uint256 shares) = IDODOV2Proxy01(_appAddress).createDODOVendingMachine(
-            baseToken,
-            quoteToken,
-            baseInAmount,
-            quoteInAmount,
-            lpFeeRate,
-            i,
-            k,
-            isOpenTWAP,
-            deadLine
-        );
+        (address newVendingMachine, uint256 shares) = 
+            IDODOV2Proxy01(_appAddress).createDODOVendingMachine{value: msg.value}(
+                baseToken,
+                quoteToken,
+                baseInAmount,
+                quoteInAmount,
+                lpFeeRate,
+                i,
+                k,
+                isOpenTWAP,
+                deadLine
+            );
 
         // tokens to L2->L1 transfer (bridge)
         TransferHelper.safeApprove(newVendingMachine, getCrossChainLayerAddress(), shares);
@@ -135,7 +140,7 @@ contract TacoProxy is AppProxy {
             caller: address(this),
             toBridge: tokensToBridge
         });
-        sendMessage(message);
+        sendMessage(message, 0);
     }
 
     /**
@@ -155,15 +160,19 @@ contract TacoProxy is AppProxy {
         address quoteToken = IDODOV2(dvmAddress)._QUOTE_TOKEN_();
 
         // grant token approvals
-        TransferHelper.safeApprove(baseToken, _appAddress, baseInAmount);
-        TransferHelper.safeApprove(quoteToken, _appAddress, quoteInAmount);
+        if (baseToken != _ETH_ADDRESS_) {
+            TransferHelper.safeApprove(baseToken, _appAddress, baseInAmount);
+        }
+        if (quoteToken != _ETH_ADDRESS_) {
+            TransferHelper.safeApprove(quoteToken, _appAddress, quoteInAmount);
+        }
 
         // proxy call
         (
             uint256 shares,
             uint256 baseAdjustedInAmount,
             uint256 quoteAdjustedInAmount
-        ) = IDODOV2Proxy01(_appAddress).addDVMLiquidity(
+        ) = IDODOV2Proxy01(_appAddress).addDVMLiquidity{value: msg.value}(
             dvmAddress,
             baseInAmount,
             quoteInAmount,
@@ -180,7 +189,7 @@ contract TacoProxy is AppProxy {
         tokensToBridge[1] = TokenAmount(quoteToken, quoteMinAmount - quoteAdjustedInAmount);
 
         TransferHelper.safeApprove(dvmAddress, getCrossChainLayerAddress(), shares);
-        tokensToBridge[0] = TokenAmount(dvmAddress, shares);
+        tokensToBridge[2] = TokenAmount(dvmAddress, shares);
 
         // CCL L2->L1 callback
         OutMessage memory message = OutMessage({
