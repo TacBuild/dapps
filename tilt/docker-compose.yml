@@ -1,6 +1,7 @@
 services:
   dapps-deployer:
     container_name: dapps-deployer
+    hostname: dapps-deployer
     env_file:
       - .env.tilt.fixed
       - .env.tilt.populated
