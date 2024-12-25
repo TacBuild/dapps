@@ -73,14 +73,14 @@ contract CurveLiteTricryptoswapProxy is AppProxy {
     /**
      * @dev A proxy to addLiquidity
      * @param header TacHeader struct containing the header information
-     * @param payload Payload data
+     * @param arguments arguments data
      */
     function addLiquidity(
         TacHeader calldata header,
-        bytes calldata payload
+        bytes calldata arguments
     ) public {
         (address pool, uint256[3] memory amounts, uint256 minMintAmount) =
-                abi.decode(payload, (address, uint256[3], uint256));
+                abi.decode(arguments, (address, uint256[3], uint256));
         // claim tokens addresses
         address tokenA = ITricryptoswapPool(pool).coins(0);
         address tokenB = ITricryptoswapPool(pool).coins(1);
@@ -116,10 +116,10 @@ contract CurveLiteTricryptoswapProxy is AppProxy {
      */
     function removeLiquidity(
         TacHeader calldata header,
-        bytes calldata payload
+        bytes calldata arguments
     ) public {
         (address pool, uint256 amount, uint256[3] memory min_amounts) =
-                abi.decode(payload, (address, uint256, uint256[3]));
+                abi.decode(arguments, (address, uint256, uint256[3]));
         // claim tokens addresses
         address tokenA = ITricryptoswapPool(pool).coins(0);
         address tokenB = ITricryptoswapPool(pool).coins(1);
@@ -160,10 +160,10 @@ contract CurveLiteTricryptoswapProxy is AppProxy {
      */
     function exchange(
         TacHeader calldata header,
-        bytes calldata payload
+        bytes calldata arguments
     ) public {
         (address pool, uint256 i, uint256 j, uint256 dx, uint256 min_dy) =
-                abi.decode(payload, (address, uint256, uint256, uint256, uint256));
+                abi.decode(arguments, (address, uint256, uint256, uint256, uint256));
         // claim tokens addresses
         address tokenIn = ITricryptoswapPool(pool).coins(i);
         address tokenOut = ITricryptoswapPool(pool).coins(j);

@@ -24,7 +24,7 @@ contract UniswapV2Proxy is AppProxy {
     }
 
     function _addLiquidity(
-        bytes calldata payload
+        bytes calldata arguments
     ) internal returns (TokenAmount[] memory) {
         (
             address tokenA,
@@ -35,7 +35,7 @@ contract UniswapV2Proxy is AppProxy {
             uint amountBMin,
             address to,
             uint deadline
-        ) = abi.decode(payload, (address, address, uint, uint, uint, uint, address, uint));
+        ) = abi.decode(arguments, (address, address, uint, uint, uint, uint, address, uint));
         // grant token approvals
         TransferHelper.safeApprove(tokenA, _appAddress, amountADesired);
         TransferHelper.safeApprove(tokenB, _appAddress, amountBDesired);
@@ -68,10 +68,10 @@ contract UniswapV2Proxy is AppProxy {
      */
     function addLiquidity(
         TacHeader calldata header,
-        bytes calldata payload
+        bytes calldata arguments
     ) public {
 
-        TokenAmount[] memory tokensToBridge = _addLiquidity(payload);
+        TokenAmount[] memory tokensToBridge = _addLiquidity(arguments);
 
         uint i;
         for (; i < tokensToBridge.length;) {
@@ -92,7 +92,7 @@ contract UniswapV2Proxy is AppProxy {
     }
 
     function _removeLiquidity(
-        bytes calldata payload
+        bytes calldata arguments
     ) internal returns (TokenAmount[] memory) {
         (
             address tokenA,
@@ -102,7 +102,7 @@ contract UniswapV2Proxy is AppProxy {
             uint amountBMin,
             address to,
             uint deadline
-        ) = abi.decode(payload, (address, address, uint, uint, uint, address, uint));
+        ) = abi.decode(arguments, (address, address, uint, uint, uint, address, uint));
         // grant token approvals
         address tokenLiquidity = UniswapV2Library.pairFor(IUniswapV2Router02(_appAddress).factory(), tokenA, tokenB);
         TransferHelper.safeApprove(tokenLiquidity, _appAddress, liquidity);
@@ -131,10 +131,10 @@ contract UniswapV2Proxy is AppProxy {
      */
     function removeLiquidity(
         TacHeader calldata header,
-        bytes calldata payload
+        bytes calldata arguments
     ) public {
 
-        TokenAmount[] memory tokensToBridge = _removeLiquidity(payload);
+        TokenAmount[] memory tokensToBridge = _removeLiquidity(arguments);
 
         uint i;
         for (; i < tokensToBridge.length;) {
@@ -155,7 +155,7 @@ contract UniswapV2Proxy is AppProxy {
     }
 
     function _swapExactTokensForTokens(
-        bytes calldata payload
+        bytes calldata arguments
     ) internal returns (TokenAmount[] memory) {
         (
             uint amountIn,
@@ -163,7 +163,7 @@ contract UniswapV2Proxy is AppProxy {
             address[] memory path,
             address to,
             uint deadline
-        ) = abi.decode(payload, (uint, uint, address[], address, uint));
+        ) = abi.decode(arguments, (uint, uint, address[], address, uint));
         // grant token approvals
         TransferHelper.safeApprove(path[0], _appAddress, amountIn);
 
@@ -188,10 +188,10 @@ contract UniswapV2Proxy is AppProxy {
      */
     function swapExactTokensForTokens(
         TacHeader calldata header,
-        bytes calldata payload
+        bytes calldata arguments
     ) public {
 
-        TokenAmount[] memory tokensToBridge = _swapExactTokensForTokens(payload);
+        TokenAmount[] memory tokensToBridge = _swapExactTokensForTokens(arguments);
 
         uint i;
         for (; i < tokensToBridge.length;) {
@@ -212,7 +212,7 @@ contract UniswapV2Proxy is AppProxy {
     }
 
     function _swapTokensForExactTokens(
-        bytes calldata payload
+        bytes calldata arguments
     ) internal returns (TokenAmount[] memory) {
         (
             uint amountOut,
@@ -220,7 +220,7 @@ contract UniswapV2Proxy is AppProxy {
             address[] memory path,
             address to,
             uint deadline
-        ) = abi.decode(payload, (uint, uint, address[], address, uint));
+        ) = abi.decode(arguments, (uint, uint, address[], address, uint));
         // grant token approvals
         TransferHelper.safeApprove(path[0], _appAddress, amountInMax);
 
@@ -246,10 +246,10 @@ contract UniswapV2Proxy is AppProxy {
      */
     function swapTokensForExactTokens(
         TacHeader calldata header,
-        bytes calldata payload
+        bytes calldata arguments
     ) public {
 
-        TokenAmount[] memory tokensToBridge = _swapTokensForExactTokens(payload);
+        TokenAmount[] memory tokensToBridge = _swapTokensForExactTokens(arguments);
 
         uint i;
         for (; i < tokensToBridge.length;) {

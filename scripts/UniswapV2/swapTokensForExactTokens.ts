@@ -33,7 +33,7 @@ async function main(showEvents=false) {
         timestamp: BigInt(Math.floor(Date.now() / 1000)),
         target: await uniswapV2Proxy.getAddress(),
         methodName: 'swapTokensForExactTokens((string,uint64,string),bytes)',
-        payload: new ethers.AbiCoder().encode(
+        arguments: new ethers.AbiCoder().encode(
             ['uint256', 'uint256', 'address[]', 'address', 'uint256'],
             [
                 amountOut,

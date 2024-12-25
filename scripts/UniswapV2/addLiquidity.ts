@@ -36,7 +36,7 @@ async function main(showEvents=false) {
         timestamp: BigInt(Math.floor(Date.now() / 1000)),
         target: to,
         methodName: 'addLiquidity((string,uint64,string),bytes)',
-        payload: new ethers.AbiCoder().encode(
+        arguments: new ethers.AbiCoder().encode(
             ['address', 'address', 'uint256', 'uint256', 'uint256', 'uint256', 'address', 'uint256'],
             [
                 await sttonToken.getAddress(),

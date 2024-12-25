@@ -75,10 +75,10 @@ contract CurveLiteTwocryptoswapProxy is AppProxy {
      */
     function addLiquidity(
         TacHeader calldata header,
-        bytes calldata payload
+        bytes calldata arguments
     ) public {
         (address pool, uint256[2] memory amounts, uint256 minMintAmount) =
-                abi.decode(payload, (address, uint256[2], uint256));
+                abi.decode(arguments, (address, uint256[2], uint256));
         // claim tokens addresses
         address tokenA = ITwocryptoswapPool(pool).coins(0);
         address tokenB = ITwocryptoswapPool(pool).coins(1);
@@ -113,10 +113,10 @@ contract CurveLiteTwocryptoswapProxy is AppProxy {
      */
     function removeLiquidity(
         TacHeader calldata header,
-        bytes calldata payload
+        bytes calldata arguments
     ) public {
         (address pool, uint256 amount, uint256[2] memory min_amounts) =
-                abi.decode(payload, (address, uint256, uint256[2]));
+                abi.decode(arguments, (address, uint256, uint256[2]));
         // claim tokens addresses
         address tokenA = ITwocryptoswapPool(pool).coins(0);
         address tokenB = ITwocryptoswapPool(pool).coins(1);
@@ -155,10 +155,10 @@ contract CurveLiteTwocryptoswapProxy is AppProxy {
      */
     function exchange(
         TacHeader calldata header,
-        bytes calldata payload
+        bytes calldata arguments
     ) public {
         (address pool, uint256 i, uint256 j, uint256 dx, uint256 min_dy) =
-                abi.decode(payload, (address, uint256, uint256, uint256, uint256));
+                abi.decode(arguments, (address, uint256, uint256, uint256, uint256));
         // claim tokens addresses
         address tokenIn = ITwocryptoswapPool(pool).coins(i);
         address tokenOut = ITwocryptoswapPool(pool).coins(j);
