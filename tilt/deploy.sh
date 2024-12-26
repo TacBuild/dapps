@@ -1,8 +1,6 @@
 #!/bin/sh
 
-# you can use this script to deploy dapps 1) on tacchain from your local machine 2) on local node with tilt
-# for case 1) populate your .env before running, for case 2) next command won't make anything
-export $(cat .env | xargs)
+# export $(cat .env | xargs) # uncomment this line if you gonna deploy to testnet. Make sure to specify you local `.env` file
 
 NETWORK=""
 
