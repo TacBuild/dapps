@@ -52,16 +52,15 @@ contract UniswapV2Proxy is AppProxy {
             deadline
         );
 
-        // tokens to L2->L1 transfer (burn)
-        TokenAmount[] memory tokensToBurn = new TokenAmount[](2);
-        tokensToBurn[0] = TokenAmount(tokenA, amountADesired - amountA);
-        tokensToBurn[1] = TokenAmount(tokenB, amountBDesired - amountB);
+        // tokens to L2->L1 transfer (bridge)
 
-        // tokens to L2->L1 transfer (lock)
+        TokenAmount[] memory tokensToBridge = new TokenAmount[](3);
+        tokensToBridge[0] = TokenAmount(tokenA, amountADesired - amountA);
+        tokensToBridge[1] = TokenAmount(tokenB, amountBDesired - amountB);
+
         address tokenLiquidity = UniswapV2Library.pairFor(IUniswapV2Router02(_appAddress).factory(), tokenA, tokenB);
         TransferHelper.safeApprove(tokenLiquidity, getCrossChainLayerAddress(), liquidity);
-        TokenAmount[] memory tokensToLock = new TokenAmount[](1);
-        tokensToLock[0] = TokenAmount(tokenLiquidity, liquidity);
+        tokensToBridge[2] = TokenAmount(tokenLiquidity, liquidity);
 
         // CCL L2->L1 callback
         OutMessage memory message = OutMessage({
@@ -71,8 +70,7 @@ contract UniswapV2Proxy is AppProxy {
             methodName: "",
             arguments: new bytes(0),
             caller: address(this),
-            burn: tokensToBurn,
-            lock: tokensToLock
+            toBridge: tokensToBridge
         });
         sendMessage(message);
     }
@@ -104,13 +102,10 @@ contract UniswapV2Proxy is AppProxy {
             deadline
         );
 
-        // tokens to L2->L1 transfer (burn)
-        TokenAmount[] memory tokensToBurn = new TokenAmount[](2);
-        tokensToBurn[0] = TokenAmount(tokenA, amountA);
-        tokensToBurn[1] = TokenAmount(tokenB, amountB);
-
-        // tokens to L2->L1 transfer (lock)
-        TokenAmount[] memory tokensToLock = new TokenAmount[](0);
+        // tokens to L2->L1 transfer (bridge)
+        TokenAmount[] memory tokensToBridge = new TokenAmount[](2);
+        tokensToBridge[0] = TokenAmount(tokenA, amountA);
+        tokensToBridge[1] = TokenAmount(tokenB, amountB);
 
         // CCL L2->L1 callback
         OutMessage memory message = OutMessage({
@@ -120,8 +115,7 @@ contract UniswapV2Proxy is AppProxy {
             methodName: "",
             arguments: new bytes(0),
             caller: address(this),
-            burn: tokensToBurn,
-            lock: tokensToLock
+            toBridge: tokensToBridge
         });
         sendMessage(message);
     }
@@ -148,12 +142,9 @@ contract UniswapV2Proxy is AppProxy {
             deadline
         );
 
-        // tokens to L2->L1 transfer (burn)
-        TokenAmount[] memory tokensToBurn = new TokenAmount[](1);
-        tokensToBurn[0] = TokenAmount(path[path.length - 1], amounts[amounts.length - 1]);
-
-        // tokens to L2->L1 transfer (lock)
-        TokenAmount[] memory tokensToLock = new TokenAmount[](0);
+        // tokens to L2->L1 transfer (bridge)
+        TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
+        tokensToBridge[0] = TokenAmount(path[path.length - 1], amounts[amounts.length - 1]);
 
         // CCL L2->L1 callback
         OutMessage memory message = OutMessage({
@@ -163,8 +154,7 @@ contract UniswapV2Proxy is AppProxy {
             methodName: "",
             arguments: new bytes(0),
             caller: address(this),
-            burn: tokensToBurn,
-            lock: tokensToLock
+            toBridge: tokensToBridge
         });
         sendMessage(message);
     }
@@ -191,13 +181,10 @@ contract UniswapV2Proxy is AppProxy {
             deadline
         );
 
-        // tokens to L2->L1 transfer (burn)
-        TokenAmount[] memory tokensToBurn = new TokenAmount[](2);
-        tokensToBurn[0] = TokenAmount(path[0], amountInMax - amounts[0]);
-        tokensToBurn[1] = TokenAmount(path[path.length - 1], amounts[amounts.length - 1]);
-
-        // tokens to L2->L1 transfer (lock)
-        TokenAmount[] memory tokensToLock = new TokenAmount[](0);
+        // tokens to L2->L1 transfer (bridge)
+        TokenAmount[] memory tokensToBridge = new TokenAmount[](2);
+        tokensToBridge[0] = TokenAmount(path[0], amountInMax - amounts[0]);
+        tokensToBridge[1] = TokenAmount(path[path.length - 1], amounts[amounts.length - 1]);
 
         // CCL L2->L1 callback
         OutMessage memory message = OutMessage({
@@ -207,8 +194,7 @@ contract UniswapV2Proxy is AppProxy {
             methodName: "",
             arguments: new bytes(0),
             caller: address(this),
-            burn: tokensToBurn,
-            lock: tokensToLock
+            toBridge: tokensToBridge
         });
         sendMessage(message);
     }

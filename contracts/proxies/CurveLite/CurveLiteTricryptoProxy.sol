@@ -92,14 +92,11 @@ contract CurveLiteTricryptoswapProxy is AppProxy {
             minMintAmount
         );
 
-        // tokens to L2->L1 transfer (burn)
-        TokenAmount[] memory tokensToBurn = new TokenAmount[](0);
-
-        // tokens to L2->L1 transfer (lock)
+        // tokens to L2->L1 transfer
         address tokenLiquidity = pool;
         TransferHelper.safeApprove(tokenLiquidity, getCrossChainLayerAddress(), liquidity);
-        TokenAmount[] memory tokensToLock = new TokenAmount[](1);
-        tokensToLock[0] = TokenAmount(tokenLiquidity, liquidity);
+        TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
+        tokensToBridge[0] = TokenAmount(tokenLiquidity, liquidity);
 
         // CCL L2->L1 callback
         OutMessage memory message = OutMessage({
@@ -109,8 +106,7 @@ contract CurveLiteTricryptoswapProxy is AppProxy {
             methodName: "",
             arguments: new bytes(0),
             caller: address(this),
-            burn: tokensToBurn,
-            lock: tokensToLock
+            toBridge: tokensToBridge
         });
         sendMessage(message);
     }
@@ -136,14 +132,11 @@ contract CurveLiteTricryptoswapProxy is AppProxy {
             min_amounts
         );
 
-        // tokens to L2->L1 transfer (burn)
-        TokenAmount[] memory tokensToBurn = new TokenAmount[](3);
-        tokensToBurn[0] = TokenAmount(tokenA, amounts[0]);
-        tokensToBurn[1] = TokenAmount(tokenB, amounts[1]);
-        tokensToBurn[1] = TokenAmount(tokenC, amounts[2]);
-
-        // tokens to L2->L1 transfer (lock)
-        TokenAmount[] memory tokensToLock = new TokenAmount[](0);
+        // tokens to L2->L1 transfer
+        TokenAmount[] memory tokensToBridge = new TokenAmount[](3);
+        tokensToBridge[0] = TokenAmount(tokenA, amounts[0]);
+        tokensToBridge[1] = TokenAmount(tokenB, amounts[1]);
+        tokensToBridge[2] = TokenAmount(tokenC, amounts[2]);
 
         // CCL L2->L1 callback
         OutMessage memory message = OutMessage({
@@ -153,8 +146,7 @@ contract CurveLiteTricryptoswapProxy is AppProxy {
             methodName: "",
             arguments: new bytes(0),
             caller: address(this),
-            burn: tokensToBurn,
-            lock: tokensToLock
+            toBridge: tokensToBridge
         });
         sendMessage(message);
     }
@@ -183,12 +175,9 @@ contract CurveLiteTricryptoswapProxy is AppProxy {
             min_dy
         );
 
-        // tokens to L2->L1 transfer (burn)
-        TokenAmount[] memory tokensToBurn = new TokenAmount[](1);
-        tokensToBurn[0] = TokenAmount(tokenOut, amountOut);
-
-        // tokens to L2->L1 transfer (lock)
-        TokenAmount[] memory tokensToLock = new TokenAmount[](0);
+        // tokens to L2->L1 transfer
+        TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
+        tokensToBridge[0] = TokenAmount(tokenOut, amountOut);
 
         // CCL L2->L1 callback
         OutMessage memory message = OutMessage({
@@ -198,8 +187,7 @@ contract CurveLiteTricryptoswapProxy is AppProxy {
             methodName: "",
             arguments: new bytes(0),
             caller: address(this),
-            burn: tokensToBurn,
-            lock: tokensToLock
+            toBridge: tokensToBridge
         });
         sendMessage(message);
     }
