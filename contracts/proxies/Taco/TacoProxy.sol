@@ -18,6 +18,14 @@ interface IDODOV2 {
 }
 
 /**
+ * @title IDVMFactory Interface (from https://github.com/DODOEX/contractV2)
+ */
+interface IDVMFactory {
+    function getDODOPool(address baseToken, address quoteToken) 
+        external view returns (address[] memory machines);
+}
+
+/**
  * @title IDODOV2Proxy01 Interface (from https://github.com/DODOEX/contractV2)
  */
 interface IDODOV2Proxy01 {
@@ -51,7 +59,6 @@ interface IDODOV2Proxy01 {
         );
 }
 
-
 /**
  * @title IDODOFeeRouteProxy Interface (from https://github.com/DODOEX/dodo-route-contract).
  */
@@ -79,7 +86,7 @@ interface IDODOFeeRouteProxy {
  */
 contract TacoProxy is AppProxy {
 
-    address constant _ETH_ADDRESS_ = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+    address public constant _ETH_ADDRESS_ = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
     /**
      * @dev Constructor function to initialize the contract with initial state.

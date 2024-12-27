@@ -1,7 +1,6 @@
 import { ethers } from "hardhat";
 import fs from 'fs';
-import { Artifact } from "hardhat/types";
-import { BaseContract, Result, Signer, TransactionReceipt } from "ethers";
+import { BaseContract, Signer, TransactionReceipt } from "ethers";
 import { ERC20 } from "tac-l2-ccl/dist/typechain-types";
 import assert from "assert";
 

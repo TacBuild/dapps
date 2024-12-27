@@ -1,23 +1,25 @@
-import hre, { ethers } from 'hardhat';
+import { ethers } from 'hardhat';
 import { printEvents, printBalances } from '../utils';
 import { ERC20 } from 'tac-l2-ccl/dist/typechain-types';
 import { sendSimpleMessage } from 'tac-l2-ccl';
 import { InMessageStruct } from 'tac-l2-ccl/dist/typechain-types/contracts/L2/CrossChainLayer';
-import { loadUniswapTestEnv } from './utils';
-
+import { loadTacoTestEnv } from './utils';
 
 async function main(showEvents=false) {
     const sequencerSigner = new ethers.Wallet(process.env.SEQUENCER_PRIVATE_KEY_EVM!, ethers.provider);
 
-    const { tacToken, sttonToken, tacContracts, groups, uniswapV2Proxy, uniswapV2Router02, uniswapV2Factory, lpToken } = await loadUniswapTestEnv(sequencerSigner);
+    const { tokenA, tokenB, tacContracts, groups, tacoProxy } = await loadTacoTestEnv(sequencerSigner);
+    const tacoV2Proxy02Address = process.env.DODO_V2PROXY02_ADDRESS as string
+    const tacoFeeRouteProxyAddress = process.env.DODO_FEEROUTEPROXY_ADDRESS as string
 
     const entitiesToPrintBalances = [
         {name: "CrossChainLayer", address: await tacContracts.crossChainLayer.getAddress()},
-        {name: 'UniswapV2Proxy', address: await uniswapV2Proxy.getAddress()},
-        {name: 'UniswapV2Router02', address: await uniswapV2Router02.getAddress()},
-        {name: 'TAC-stTON pair', address: await lpToken.getAddress()},
+        {name: 'TacoProxy', address: await tacoProxy.getAddress()},
+        {name: 'TacoV2Proxy02', address: tacoV2Proxy02Address},
+        {name: 'TacoFeeRouteProxy', address: tacoFeeRouteProxyAddress},
     ];
-    const tokensToPrintBalances: {contract: ERC20, name?: string}[] = [{contract: tacToken}, {contract: sttonToken}, {contract: lpToken, name: 'TAC-stTON LP'}];
+    const tokensToPrintBalances: {contract: ERC20, name?: string}[] = 
+        [{contract: tokenA}, {contract: tokenB}];
 
     await printBalances('\nBalances before operation', tokensToPrintBalances, entitiesToPrintBalances);
 
@@ -25,7 +27,7 @@ async function main(showEvents=false) {
     const amountBDesired = 20000n * 10n**9n;
     const amountAMin = 5000n * 10n**9n;
     const amountBMin = 10000n * 10n**9n;
-    const to = await uniswapV2Proxy.getAddress();
+    const to = await tacoProxy.getAddress();
     const deadline = 19010987500n;
 
     const message: InMessageStruct = {
