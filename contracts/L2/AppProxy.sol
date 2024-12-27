@@ -4,13 +4,14 @@ pragma solidity ^0.8.25;
 import { ISettings } from "tac-l2-ccl/contracts/interfaces/ISettings.sol";
 import { ICrossChainLayer } from "tac-l2-ccl/contracts/interfaces/ICrossChainLayer.sol";
 import { OutMessage } from "tac-l2-ccl/contracts/L2/Structs.sol";
+import { TacProxyV1 } from "tac-l2-ccl/contracts/proxies/TacProxyV1.sol";
 
 
 /**
  * @title AppProxy
  * @dev A base contract for application proxies.
  */
-abstract contract AppProxy {
+abstract contract AppProxy is TacProxyV1 {
     // State variables
     address internal immutable _appAddress;
     ISettings internal immutable _settings;

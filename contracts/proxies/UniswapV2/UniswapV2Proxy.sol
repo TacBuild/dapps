@@ -5,7 +5,7 @@ import { IUniswapV2Router02 } from '@uniswap/v2-periphery/contracts/interfaces/I
 import { TransferHelper } from '@uniswap/lib/contracts/libraries/TransferHelper.sol';
 
 import { AppProxy } from "contracts/L2/AppProxy.sol";
-import { OutMessage, TokenAmount, TacHeader } from "tac-l2-ccl/contracts/L2/Structs.sol";
+import { OutMessage, TokenAmount, TacHeaderV1 } from "tac-l2-ccl/contracts/L2/Structs.sol";
 import { UniswapV2Library } from "contracts/proxies/UniswapV2/CompilerVersionAdapters.sol";
 import { ICrossChainLayer } from "tac-l2-ccl/contracts/interfaces/ICrossChainLayer.sol";
 
@@ -67,7 +67,7 @@ contract UniswapV2Proxy is AppProxy {
      * @dev A proxy to IUniswapV2Router02.addLiquidity(...).
      */
     function addLiquidity(
-        TacHeader calldata header,
+        bytes calldata tacHeader,
         bytes calldata arguments
     ) public {
 
@@ -82,6 +82,7 @@ contract UniswapV2Proxy is AppProxy {
         }
 
         // CCL TAC->TON callback
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         OutMessage memory message = OutMessage({
             queryId: header.queryId,
             tvmTarget: header.tvmCaller,
@@ -130,7 +131,7 @@ contract UniswapV2Proxy is AppProxy {
      * @dev A proxy to IUniswapV2Router02.removeLiquidity(...).
      */
     function removeLiquidity(
-        TacHeader calldata header,
+        bytes calldata tacHeader,
         bytes calldata arguments
     ) public {
 
@@ -145,6 +146,7 @@ contract UniswapV2Proxy is AppProxy {
         }
 
         // CCL TAC->TON callback
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         OutMessage memory message = OutMessage({
             queryId: header.queryId,
             tvmTarget: header.tvmCaller,
@@ -187,7 +189,7 @@ contract UniswapV2Proxy is AppProxy {
      * @dev A proxy to IUniswapV2Router02.swapExactTokensForTokens(...).
      */
     function swapExactTokensForTokens(
-        TacHeader calldata header,
+        bytes calldata tacHeader,
         bytes calldata arguments
     ) public {
 
@@ -202,6 +204,7 @@ contract UniswapV2Proxy is AppProxy {
         }
 
         // CCL TAC->TON callback
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         OutMessage memory message = OutMessage({
             queryId: header.queryId,
             tvmTarget: header.tvmCaller,
@@ -245,7 +248,7 @@ contract UniswapV2Proxy is AppProxy {
      * @dev A proxy to IUniswapV2Router02.swapTokensForExactTokens(...).
      */
     function swapTokensForExactTokens(
-        TacHeader calldata header,
+        bytes calldata tacHeader,
         bytes calldata arguments
     ) public {
 
@@ -260,6 +263,7 @@ contract UniswapV2Proxy is AppProxy {
         }
 
         // CCL TAC->TON callback
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         OutMessage memory message = OutMessage({
             queryId: header.queryId,
             tvmTarget: header.tvmCaller,

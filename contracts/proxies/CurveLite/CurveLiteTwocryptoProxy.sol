@@ -3,7 +3,7 @@ pragma solidity ^0.8.25;
 
 import { TransferHelper } from 'contracts/helpers/TransferHelper.sol';
 import { AppProxy } from "contracts/L2/AppProxy.sol";
-import { OutMessage, TokenAmount, TacHeader } from "tac-l2-ccl/contracts/L2/Structs.sol";
+import { OutMessage, TokenAmount, TacHeaderV1 } from "tac-l2-ccl/contracts/L2/Structs.sol";
 
 /**
  * @title ITwocryptoswapPool Interface
@@ -74,7 +74,7 @@ contract CurveLiteTwocryptoswapProxy is AppProxy {
      * @dev A proxy to addLiquidity
      */
     function addLiquidity(
-        TacHeader calldata header,
+        bytes calldata tacHeader,
         bytes calldata arguments
     ) public {
         (address pool, uint256[2] memory amounts, uint256 minMintAmount) =
@@ -99,6 +99,7 @@ contract CurveLiteTwocryptoswapProxy is AppProxy {
         TransferHelper.safeApprove(pool, getCrossChainLayerAddress(), liquidity);
 
         // CCL TAC->TON callback
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         OutMessage memory message = OutMessage({
             queryId: header.queryId,
             tvmTarget: header.tvmCaller,
@@ -112,7 +113,7 @@ contract CurveLiteTwocryptoswapProxy is AppProxy {
      * @dev A proxy to removeLiquidity
      */
     function removeLiquidity(
-        TacHeader calldata header,
+        bytes calldata tacHeader,
         bytes calldata arguments
     ) public {
         (address pool, uint256 amount, uint256[2] memory min_amounts) =
@@ -141,6 +142,7 @@ contract CurveLiteTwocryptoswapProxy is AppProxy {
         TransferHelper.safeApprove(tokenB, crossChainLayer, amounts[1]);
 
         // CCL TAC->TON callback
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         OutMessage memory message = OutMessage({
             queryId: header.queryId,
             tvmTarget: header.tvmCaller,
@@ -154,7 +156,7 @@ contract CurveLiteTwocryptoswapProxy is AppProxy {
      * @dev A proxy to exchange
      */
     function exchange(
-        TacHeader calldata header,
+        bytes calldata tacHeader,
         bytes calldata arguments
     ) public {
         (address pool, uint256 i, uint256 j, uint256 dx, uint256 min_dy) =
@@ -180,6 +182,7 @@ contract CurveLiteTwocryptoswapProxy is AppProxy {
         TransferHelper.safeApprove(tokenOut, getCrossChainLayerAddress(), amountOut);
 
         // CCL TAC->TON callback
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         OutMessage memory message = OutMessage({
             queryId: header.queryId,
             tvmTarget: header.tvmCaller,
