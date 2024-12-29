@@ -22,7 +22,7 @@ async function main() {
 
     const tx = await ccl.connect(signer).sendMessage(
         message,
-        { value: ethers.parseEther("5") }
+        { value: ethers.parseEther("10") }
     );
     await tx.wait();
 }

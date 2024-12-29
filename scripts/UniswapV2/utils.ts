@@ -58,5 +58,5 @@ export async function loadUniswapTestEnv(signer: Signer) {
 
     const lpTokenTacAndStTon = new Contract(pairAddressWithNative, erc20Artifact.abi, signer) as unknown as ERC20;
 
-    return { tacToken, sttonToken, tacContracts, groups,uniswapV2Proxy, uniswapV2Router02, uniswapV2Factory, lpToken, lpTokenTacAndStTon }
+    return { tacToken, sttonToken, tacContracts, groups,uniswapV2Proxy, uniswapV2Router02, uniswapV2Factory, lpToken, lpTokenTacAndStTon, wtacToken }
 }

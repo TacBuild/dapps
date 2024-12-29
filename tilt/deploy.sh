@@ -15,11 +15,12 @@ elif [[ $DEPLOY_ENV == "mainnet" ]]; then
     NETWORK="tac_mainnet"
 fi
 
-npx hardhat --network $NETWORK run ./scripts/depositTac.ts
+# npx hardhat --network $NETWORK run ./scripts/depositTac.ts
 # npx hardhat --network $NETWORK run ./scripts/common/deployStTON.ts
 # npx hardhat --network $NETWORK run ./scripts/common/deployTAC.ts
-npx hardhat --network $NETWORK run ./scripts/UniswapV2/deploy.ts
-npx hardhat --network $NETWORK run ./scripts/UniswapV2/addLiquidityWithNative.ts
+# npx hardhat --network $NETWORK run ./scripts/UniswapV2/deploy.ts
+# npx hardhat --network $NETWORK run ./scripts/UniswapV2/addLiquidityWithNative.ts
+npx hardhat --network $NETWORK run ./scripts/UniswapV2/swapExactTokensForETH.ts
 
 echo "------------------DEPLOY FINISHED------------------"
 

@@ -1,10 +1,8 @@
 import hre, { ethers } from 'hardhat';
-import { printEvents, printBalances } from '../utils';
-import { ERC20 } from 'tac-l2-ccl/dist/typechain-types';
+import { printEvents } from '../utils';
 import { sendSimpleMessage } from 'tac-l2-ccl';
 import { InMessageStruct } from 'tac-l2-ccl/dist/typechain-types/contracts/L2/CrossChainLayer';
 import { loadUniswapTestEnv } from './utils';
-
 
 async function main(showEvents=false) {
 
@@ -15,7 +13,7 @@ async function main(showEvents=false) {
 
     const amountTokenDesired = 1000n * 10n**9n;
     const amountETHDesired = 2000n * 10n**9n;
-    const amountTokenMin = 5000n * 10n**9n;
+    const amountTokenMin = 500n * 10n**9n;
     const amountETHMin = 1000n * 10n**9n;
     const to = await uniswapV2Proxy.getAddress();
     const deadline = 19010987500n;
