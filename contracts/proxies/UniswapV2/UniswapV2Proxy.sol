@@ -22,7 +22,7 @@ contract UniswapV2Proxy is AppProxy {
     constructor(address appAddress, address settingsAddress) AppProxy(appAddress, settingsAddress) {
     }
 
-    function WETH() public view returns (address) {
+    function WETH() external view returns (address) {
         return IUniswapV2Router02(_appAddress).WETH();
     }
 
