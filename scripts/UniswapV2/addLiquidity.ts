@@ -35,7 +35,7 @@ async function main(showEvents=false) {
         operationId: "test add liquidity",
         timestamp: BigInt(Math.floor(Date.now() / 1000)),
         target: to,
-        methodName: 'addLiquidity((string,uint64,string),bytes)',
+        methodName: 'addLiquidity(bytes,bytes)',
         arguments: new ethers.AbiCoder().encode(
             ['address', 'address', 'uint256', 'uint256', 'uint256', 'uint256', 'address', 'uint256'],
             [

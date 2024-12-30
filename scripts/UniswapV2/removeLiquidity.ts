@@ -34,7 +34,7 @@ async function main(showEvents=false) {
         operationId: "test remove liquidity",
         timestamp: BigInt(Math.floor(Date.now() / 1000)),
         target: await uniswapV2Proxy.getAddress(),
-        methodName: 'removeLiquidity((string,uint64,string),bytes)',
+        methodName: 'removeLiquidity(bytes,bytes)',
         arguments: new ethers.AbiCoder().encode(
             ['address', 'address', 'uint256', 'uint256', 'uint256', 'address', 'uint256'],
             [

@@ -33,7 +33,7 @@ async function main(showEvents=false) {
         operationId: "test swapExactTokensForTokens",
         timestamp: BigInt(Math.floor(Date.now() / 1000)),
         target: to,
-        methodName: 'swapExactTokensForTokens((string,uint64,string),bytes)',
+        methodName: 'swapExactTokensForTokens(bytes,bytes)',
         arguments: new ethers.AbiCoder().encode(
             ['uint256', 'uint256', 'address[]', 'address', 'uint256'],
             [
