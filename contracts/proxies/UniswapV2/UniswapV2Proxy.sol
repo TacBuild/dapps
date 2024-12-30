@@ -22,6 +22,10 @@ contract UniswapV2Proxy is AppProxy {
     constructor(address appAddress, address settingsAddress) AppProxy(appAddress, settingsAddress) {
     }
 
+    function WETH() public view returns (address) {
+        return IUniswapV2Router02(_appAddress).WETH();
+    }
+
     /**
      * @dev A proxy to IUniswapV2Router02.addLiquidity(...).
      */
