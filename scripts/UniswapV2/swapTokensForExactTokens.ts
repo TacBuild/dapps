@@ -34,13 +34,15 @@ async function main(showEvents=false) {
         target: await uniswapV2Proxy.getAddress(),
         methodName: 'swapTokensForExactTokens(bytes,bytes)',
         arguments: new ethers.AbiCoder().encode(
-            ['uint256', 'uint256', 'address[]', 'address', 'uint256'],
+            ["tuple(uint256,uint256,address[],address,uint256)"],
             [
-                amountOut,
-                amountInMax,
-                path,
-                to,
-                deadline,
+                [
+                    amountOut,
+                    amountInMax,
+                    path,
+                    to,
+                    deadline,
+                ]
             ]
         ),
         caller: 'EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk',

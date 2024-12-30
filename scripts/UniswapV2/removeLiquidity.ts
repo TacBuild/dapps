@@ -36,15 +36,17 @@ async function main(showEvents=false) {
         target: await uniswapV2Proxy.getAddress(),
         methodName: 'removeLiquidity(bytes,bytes)',
         arguments: new ethers.AbiCoder().encode(
-            ['address', 'address', 'uint256', 'uint256', 'uint256', 'address', 'uint256'],
+            ["tuple(address,address,uint256,uint256,uint256,address,uint256)"],
             [
-                await sttonToken.getAddress(),
-                await tacToken.getAddress(),
-                liquidity,
-                amountAMin,
-                amountBMin,
-                to,
-                deadline,
+                [
+                    await sttonToken.getAddress(),
+                    await tacToken.getAddress(),
+                    liquidity,
+                    amountAMin,
+                    amountBMin,
+                    to,
+                    deadline,
+                ]
             ]
         ),
         caller: 'EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk',
