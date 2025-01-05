@@ -13,6 +13,8 @@ import { ICrossChainLayer } from "tac-l2-ccl/contracts/interfaces/ICrossChainLay
  * @title IDODOV2Proxy01 Interface (from https://github.com/DODOEX/contractV2)
  */
 interface IDODOV2 {
+    function _DODO_APPROVE_PROXY_() external view returns (address);
+    function _DODO_APPROVE_() external view returns (address);
     function _BASE_TOKEN_() external view returns (address);
     function _QUOTE_TOKEN_() external view returns (address);
 }
@@ -79,6 +81,14 @@ interface IDODOFeeRouteProxy {
     ) external payable returns (uint256);
 }
 
+/**
+ * @title IDODOApprove Interface (from https://github.com/DODOEX/dodo-route-contract).
+ */
+interface IDODOApprove {
+    function claimTokens(address token,address who,address dest,uint256 amount) external;
+    function getDODOProxy() external view returns (address);
+}
+
 
 /**
  * @title TacoProxy
@@ -111,11 +121,13 @@ contract TacoProxy is AppProxy {
         uint256 deadLine
     ) public payable {
         // grant token approvals
+        address approveProxy = IDODOV2(_appAddress)._DODO_APPROVE_PROXY_();
+        address approveContract = IDODOV2(approveProxy)._DODO_APPROVE_();
         if (baseToken != _ETH_ADDRESS_) {
-            TransferHelper.safeApprove(baseToken, _appAddress, baseInAmount);
+            TransferHelper.safeApprove(baseToken, approveContract, baseInAmount);
         }
         if (quoteToken != _ETH_ADDRESS_) {
-            TransferHelper.safeApprove(quoteToken, _appAddress, quoteInAmount);
+            TransferHelper.safeApprove(quoteToken, approveContract, quoteInAmount);
         }
 
         // proxy call
@@ -165,16 +177,17 @@ contract TacoProxy is AppProxy {
         // get token addresses from the pool
         address baseToken = IDODOV2(dvmAddress)._BASE_TOKEN_();
         address quoteToken = IDODOV2(dvmAddress)._QUOTE_TOKEN_();
-
         bool isBaseETH = baseToken != _ETH_ADDRESS_;
         bool isQuoteETH = quoteToken != _ETH_ADDRESS_;
 
         // grant token approvals
+        address approveProxy = IDODOV2(_appAddress)._DODO_APPROVE_PROXY_();
+        address approveContract = IDODOV2(approveProxy)._DODO_APPROVE_();
         if (!isBaseETH) {
-            TransferHelper.safeApprove(baseToken, _appAddress, baseInAmount);
+            TransferHelper.safeApprove(baseToken, approveContract, baseInAmount);
         }
         if (!isQuoteETH) {
-            TransferHelper.safeApprove(quoteToken, _appAddress, quoteInAmount);
+            TransferHelper.safeApprove(quoteToken, approveContract, quoteInAmount);
         }
 
         // proxy call
@@ -246,8 +259,10 @@ contract TacoProxy is AppProxy {
         uint256 deadLine
     ) public payable {
         // grant token approvals
+        address approveProxy = IDODOV2(_appAddress)._DODO_APPROVE_PROXY_();
+        address approveContract = IDODOV2(approveProxy)._DODO_APPROVE_();
         if (fromToken != _ETH_ADDRESS_) {
-            TransferHelper.safeApprove(fromToken, feeRouteProxy, fromTokenAmount);
+            TransferHelper.safeApprove(fromToken, approveContract, fromTokenAmount);
         }
 
         // proxy call

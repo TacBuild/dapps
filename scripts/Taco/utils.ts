@@ -5,15 +5,15 @@ import { CrossChainLayerToken } from "tac-l2-ccl/dist/typechain-types";
 import { loadContractFromFile } from "../utils";
 import { Signer } from "ethers";
 import { ERC20 } from "tac-l2-ccl/dist/typechain-types";
-import { TacoProxy, IDODOV2Proxy01, IDODOFeeRouteProxy, IDVMFactory } from "../../typechain-types";
-import { token } from "tac-l2-ccl/dist/typechain-types/@openzeppelin/contracts";
+import { TacoProxy, IDODOV2Proxy01, IDODOFeeRouteProxy, IDVMFactory, IDODOApprove } from "../../typechain-types";
 
 
 async function ensurePairs(
     signer: Signer,
     tacoProxy: TacoProxy,
     tacoV2Proxy02: IDODOV2Proxy01,
-    dvmFactory: IDVMFactory,
+    tacoDFMFactory: IDVMFactory,
+    tacoApprove: IDODOApprove,
     tokenA: ERC20,
     tokenB: ERC20,
 ) {
@@ -23,14 +23,14 @@ async function ensurePairs(
     const result: string[] = [];
 
     const tokenPairs = [
-        [tacoNativeAddress, await tokenB.getAddress()],
-        [await tokenA.getAddress(), tacoNativeAddress],
+        // [tacoNativeAddress, await tokenB.getAddress()],
+        // [await tokenA.getAddress(), tacoNativeAddress],
         [await tokenA.getAddress(), await tokenB.getAddress()],
     ];
     for (const tokenPair of tokenPairs) {
         console.log(`ensuring ${tokenPair[0]}-${tokenPair[1]} pool...`);
 
-        let pools = await dvmFactory.getDODOPool(tokenPair[0], tokenPair[1]);
+        let pools = await tacoDFMFactory.getDODOPool(tokenPair[0], tokenPair[1]);
         if (pools.length > 0) {
             console.log(`pool exists: ${pools[0]}`);
             result.push(pools[0]);
@@ -39,10 +39,10 @@ async function ensurePairs(
 
         const baseToken = tokenPair[0];
         const quoteToken = tokenPair[1];
-        const baseInAmount = 1n * 10n**17n;
-        const quoteInAmount = 2000n * 10n**9n;
+        const baseInAmount = 2n * 10n**9n;
+        const quoteInAmount = 1n * 10n**9n;
         const lpFeeRate = 5000000n *10n**9n;
-        const i = 1n * 10n**9n;
+        const i = 1n * 10n**18n;
         const k = 100000n * 10n**9n;
         const isOpenTWAP = false;
         const deadLine = 19010987500n;
@@ -53,6 +53,27 @@ async function ensurePairs(
             value = quoteInAmount;
         }
 
+        console.log('Signer:', await signer.getAddress());
+        console.log('Base token ', baseToken,  'balance:', await tokenA.balanceOf(await signer.getAddress()));
+        console.log('Quote token', quoteToken, 'balance:', await tokenB.balanceOf(await signer.getAddress()));
+
+        const txApproveA = await tokenA.connect(signer).approve(await tacoApprove.getAddress(), baseInAmount);
+        const receiptA = await txApproveA.wait();
+        if (receiptA?.status != 1) {
+            console.log('error creating approving base token');
+            continue;
+        }
+        console.log('Base token approved: ', baseInAmount, 'to', await tacoApprove.getAddress());
+
+        const txApproveB = await tokenB.connect(signer).approve(await tacoApprove.getAddress(), quoteInAmount);
+        const receiptB = await txApproveB.wait();
+        if (receiptB?.status != 1) {
+            console.log('error creating approving quote token');
+            continue;
+        }
+        console.log('Quote token approved:', quoteInAmount, 'to', await tacoApprove.getAddress());
+
+        console.log('Taco V2 proxy:', await tacoV2Proxy02.getAddress());
         const tx = await tacoV2Proxy02.connect(signer).createDODOVendingMachine(
             baseToken,
             quoteToken,
@@ -73,7 +94,7 @@ async function ensurePairs(
             continue;
         }
 
-        pools = await dvmFactory.getDODOPool(tokenPair[0], tokenPair[1]);
+        pools = await tacoDFMFactory.getDODOPool(tokenPair[0], tokenPair[1]);
         result.push(pools[0]);
 
         console.log(`pool successfully deployed: ${pools[0]}`);
@@ -94,9 +115,20 @@ export async function loadTacoTestEnv(signer: Signer) {
     const tacoProxy = loadContractFromFile<TacoProxy>(addressesFilePath, 'tacoProxy', hre.artifacts.readArtifactSync('TacoProxy').abi, signer);
     const tacoV2Proxy02 = loadContractFromFile<IDODOV2Proxy01>(addressesFilePath, 'tacoV2Proxy02', hre.artifacts.readArtifactSync('IDODOV2Proxy01').abi, signer);
     const tacoFeeRouteProxy = loadContractFromFile<IDODOFeeRouteProxy>(addressesFilePath, 'tacoFeeRouteProxy', hre.artifacts.readArtifactSync('IDODOFeeRouteProxy').abi, signer);
-    const dfmFactory = loadContractFromFile<IDVMFactory>(addressesFilePath, 'dfmFactory', hre.artifacts.readArtifactSync('IDVMFactory').abi, signer);
+    const tacoDFMFactory = loadContractFromFile<IDVMFactory>(addressesFilePath, 'tacoDFMFactory', hre.artifacts.readArtifactSync('IDVMFactory').abi, signer);
+    const tacoApprove = loadContractFromFile<IDODOApprove>(addressesFilePath, 'tacoApprove', hre.artifacts.readArtifactSync('IDODOApprove').abi, signer);
+    
+    await ensurePairs(signer, tacoProxy, tacoV2Proxy02, tacoDFMFactory, tacoApprove, tokenA, tokenB);
 
-    await ensurePairs(signer, tacoProxy, tacoV2Proxy02, dfmFactory, tokenA, tokenB);
-
-    return { tokenA, tokenB, tacContracts, groups, tacoProxy, tacoV2Proxy02, tacoFeeRouteProxy, dfmFactory }
+    return { 
+        tokenA, 
+        tokenB, 
+        tacContracts, 
+        groups, 
+        tacoProxy, 
+        tacoV2Proxy02, 
+        tacoFeeRouteProxy, 
+        tacoDFMFactory, 
+        tacoApprove,
+    }
 }

@@ -39,8 +39,8 @@ async function main(showEvents=false) {
         arguments: new ethers.AbiCoder().encode(
             ['address', 'address', 'uint256', 'uint256', 'uint256', 'uint256', 'address', 'uint256'],
             [
-                await sttonToken.getAddress(),
-                await tacToken.getAddress(),
+                await tokenA.getAddress(),
+                await tokenB.getAddress(),
                 amountADesired,
                 amountBDesired,
                 amountAMin,
@@ -51,8 +51,8 @@ async function main(showEvents=false) {
         ),
         caller: 'EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk',
         mint: [
-            {l2Address: await sttonToken.getAddress(), amount: amountADesired},
-            {l2Address: await tacToken.getAddress(), amount: amountBDesired},
+            {l2Address: await tokenA.getAddress(), amount: amountADesired},
+            {l2Address: await tokenB.getAddress(), amount: amountBDesired},
         ],
         unlock: [],
         meta: [],  // tokens are already exist, no need to fill meta

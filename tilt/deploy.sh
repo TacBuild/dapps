@@ -10,7 +10,7 @@ if [[ -z $DEPLOY_ENV ]]; then
 elif [[ $DEPLOY_ENV == "localhost" ]]; then
     NETWORK="localhost"
 elif [[ $DEPLOY_ENV == "testnet" ]]; then
-        NETWORK="tac_testnet"
+    NETWORK="tac_testnet"
 elif [[ $DEPLOY_ENV == "mainnet" ]]; then
     NETWORK="tac_mainnet"
 fi
