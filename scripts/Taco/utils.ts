@@ -69,25 +69,21 @@ async function ensurePairs(
         const deadLine = 19010987500n;
         const value = (isBaseNative ? baseInAmount : 0n) + (isQuoteNative ? quoteInAmount : 0n);
 
-        if (!isBaseNative) {
-            const txApproveA = await tokenA.connect(signer).approve(await tacoApprove.getAddress(), baseInAmount);
-            const receiptA = await txApproveA.wait();
-            if (receiptA?.status != 1) {
-                console.log('error creating approving base token');
-                continue;
-            }
-            console.log('Base token approved: ', baseInAmount, 'to', await tacoApprove.getAddress());
+        const txApproveA = await baseToken.connect(signer).approve(await tacoApprove.getAddress(), baseInAmount);
+        const receiptA = await txApproveA.wait();
+        if (receiptA?.status != 1) {
+            console.log('error creating approving base token');
+            continue;
         }
+        console.log('Base token approved: ', baseInAmount, 'to', await tacoApprove.getAddress());
 
-        if (!isQuoteNative) {
-            const txApproveB = await tokenB.connect(signer).approve(await tacoApprove.getAddress(), quoteInAmount);
-            const receiptB = await txApproveB.wait();
-            if (receiptB?.status != 1) {
-                console.log('error creating approving quote token');
-                continue;
-            }
-            console.log('Quote token approved:', quoteInAmount, 'to', await tacoApprove.getAddress());
+        const txApproveB = await quoteToken.connect(signer).approve(await tacoApprove.getAddress(), quoteInAmount);
+        const receiptB = await txApproveB.wait();
+        if (receiptB?.status != 1) {
+            console.log('error creating approving quote token');
+            continue;
         }
+        console.log('Quote token approved:', quoteInAmount, 'to', await tacoApprove.getAddress());
 
         const tx = await tacoV2Proxy02.connect(signer).createDODOVendingMachine(
             baseTokenAddress,
