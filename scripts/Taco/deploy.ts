@@ -14,10 +14,12 @@ async function main() {
     const tacoFeeRouteProxyAddress = process.env.DODO_FEEROUTEPROXY_ADDRESS as string
     const tacoDFMFactoryAddress = process.env.DODO_DVMFACTORY_ADDRESS as string
     const tacoApproveAddress = process.env.DODO_APPROVE_ADDRESS as string
+    const tacoWETHAddress = process.env.DODO_WETH_ADDRESS as string
     saveContractAddress(addressesFilePath, 'tacoV2Proxy02', tacoV2Proxy02Address);
     saveContractAddress(addressesFilePath, 'tacoFeeRouteProxy', tacoFeeRouteProxyAddress);
     saveContractAddress(addressesFilePath, 'tacoDFMFactory', tacoDFMFactoryAddress);
     saveContractAddress(addressesFilePath, 'tacoApprove', tacoApproveAddress);
+    saveContractAddress(addressesFilePath, 'tacoWETH', tacoWETHAddress);
 
     // Proxy
     const tacoProxy = await deploy<TacoProxy>(deployer, hre.artifacts.readArtifactSync('TacoProxy'), [tacoV2Proxy02Address, await tacContracts.settings.getAddress()], undefined, true);

@@ -8,7 +8,17 @@ import { loadTacoTestEnv } from './utils';
 async function main(showEvents=false) {
     const sequencerSigner = new ethers.Wallet(process.env.SEQUENCER_PRIVATE_KEY_EVM!, ethers.provider);
 
-    const { tokenA, tokenB, tacContracts, groups, tacoProxy } = await loadTacoTestEnv(sequencerSigner);
+    const { 
+        tokenA, 
+        tokenB, 
+        tacContracts, 
+        groups, 
+        tacoProxy, 
+        tacoV2Proxy02, 
+        tacoFeeRouteProxy, 
+        tacoDFMFactory, 
+        tacoApprove,
+    } = await loadTacoTestEnv(sequencerSigner);
     const tacoV2Proxy02Address = process.env.DODO_V2PROXY02_ADDRESS as string
     const tacoFeeRouteProxyAddress = process.env.DODO_FEEROUTEPROXY_ADDRESS as string
 
