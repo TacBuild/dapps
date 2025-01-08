@@ -96,7 +96,7 @@ contract UniswapV2Proxy is AppProxy {
     function addLiquidity(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) public {
+    ) external onlyCrossChainLayer {
 
         AddLiquidityArguments memory args = abi.decode(arguments, (AddLiquidityArguments));
         TokenAmount[] memory tokensToBridge = _addLiquidity(args);
@@ -153,7 +153,7 @@ contract UniswapV2Proxy is AppProxy {
     function removeLiquidity(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) public {
+    ) external onlyCrossChainLayer {
 
         RemoveLiquidityArguments memory args = abi.decode(arguments, (RemoveLiquidityArguments));
         TokenAmount[] memory tokensToBridge = _removeLiquidity(args);
@@ -206,7 +206,7 @@ contract UniswapV2Proxy is AppProxy {
     function swapExactTokensForTokens(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) public {
+    ) external onlyCrossChainLayer {
 
         SwapExactTokensForTokensArguments memory args = abi.decode(arguments, (SwapExactTokensForTokensArguments));
         TokenAmount[] memory tokensToBridge = _swapExactTokensForTokens(args);
@@ -259,7 +259,7 @@ contract UniswapV2Proxy is AppProxy {
     function swapTokensForExactTokens(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) public {
+    ) external onlyCrossChainLayer {
 
         SwapTokensForExactTokensArguments memory args = abi.decode(arguments, (SwapTokensForExactTokensArguments));
         TokenAmount[] memory tokensToBridge = _swapTokensForExactTokens(args);

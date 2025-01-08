@@ -26,6 +26,11 @@ abstract contract AppProxy is TacProxyV1 {
        _settings = ISettings(settingsAddress);
     }
 
+    modifier onlyCrossChainLayer() {
+        require(msg.sender == getCrossChainLayerAddress(), "Only Cross-Chain Layer can call this function");
+        _;
+    }
+
     /**
      * @dev Sens a callback message to Cross-Chain Layer.
      * @param message Callback message to send via Cross-Chain Layer.
