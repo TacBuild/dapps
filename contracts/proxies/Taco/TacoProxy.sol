@@ -17,6 +17,7 @@ interface IDODOV2 {
     function _DODO_APPROVE_() external view returns (address);
     function _BASE_TOKEN_() external view returns (address);
     function _QUOTE_TOKEN_() external view returns (address);
+    function _WETH_() external view returns (address);
 }
 
 /**
@@ -123,11 +124,17 @@ contract TacoProxy is AppProxy {
         // grant token approvals
         address approveProxy = IDODOV2(_appAddress)._DODO_APPROVE_PROXY_();
         address approveContract = IDODOV2(approveProxy)._DODO_APPROVE_();
+        address wethToken = IDODOV2(_appAddress)._WETH_();
+
         if (baseToken != _ETH_ADDRESS_) {
             TransferHelper.safeApprove(baseToken, approveContract, baseInAmount);
+        } else {
+            TransferHelper.safeApprove(wethToken, approveContract, baseInAmount);
         }
         if (quoteToken != _ETH_ADDRESS_) {
             TransferHelper.safeApprove(quoteToken, approveContract, quoteInAmount);
+        } else {
+            TransferHelper.safeApprove(wethToken, approveContract, quoteInAmount);
         }
 
         // proxy call
@@ -181,13 +188,18 @@ contract TacoProxy is AppProxy {
         bool isQuoteETH = quoteToken != _ETH_ADDRESS_;
 
         // grant token approvals
+        address wethToken = IDODOV2(_appAddress)._WETH_();
         address approveProxy = IDODOV2(_appAddress)._DODO_APPROVE_PROXY_();
         address approveContract = IDODOV2(approveProxy)._DODO_APPROVE_();
         if (!isBaseETH) {
             TransferHelper.safeApprove(baseToken, approveContract, baseInAmount);
+        } else {
+            TransferHelper.safeApprove(wethToken, approveContract, baseInAmount);
         }
         if (!isQuoteETH) {
             TransferHelper.safeApprove(quoteToken, approveContract, quoteInAmount);
+        } else {
+            TransferHelper.safeApprove(wethToken, approveContract, quoteInAmount);
         }
 
         // proxy call
@@ -259,10 +271,13 @@ contract TacoProxy is AppProxy {
         uint256 deadLine
     ) public payable {
         // grant token approvals
+        address wethToken = IDODOV2(_appAddress)._WETH_();
         address approveProxy = IDODOV2(_appAddress)._DODO_APPROVE_PROXY_();
         address approveContract = IDODOV2(approveProxy)._DODO_APPROVE_();
         if (fromToken != _ETH_ADDRESS_) {
             TransferHelper.safeApprove(fromToken, approveContract, fromTokenAmount);
+        } else {
+            TransferHelper.safeApprove(wethToken, approveContract, fromTokenAmount);
         }
 
         // proxy call

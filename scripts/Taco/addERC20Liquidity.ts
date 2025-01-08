@@ -22,7 +22,7 @@ async function main(showEvents=false) {
 
     let pools = await tacoDFMFactory.getDODOPool(await tokenA.getAddress(), await tokenB.getAddress());
     if (pools.length == 0) {
-        throw new Error('pool doesnt exist');
+        throw new Error('pool doesn\'t exist');
     }
 
     const entitiesToPrintBalances = [
@@ -47,7 +47,7 @@ async function main(showEvents=false) {
         operationId: 'TACO test add liquidity',
         timestamp: BigInt(Math.floor(Date.now() / 1000)),
         target: await tacoProxy.getAddress(),
-        methodName: 'addDVMLiquidity(address,uint256,uint256,uint256,uint256,uint8,uint256',
+        methodName: 'addDVMLiquidity(address,uint256,uint256,uint256,uint256,uint8,uint256)',
         arguments: new ethers.AbiCoder().encode(
             ['address', 'uint256', 'uint256', 'uint256', 'uint256', 'uint8', 'uint256'],
             [
