@@ -125,7 +125,6 @@ contract TacoProxy is AppProxy {
         address approveProxy = IDODOV2(_appAddress)._DODO_APPROVE_PROXY_();
         address approveContract = IDODOV2(approveProxy)._DODO_APPROVE_();
         address wethToken = IDODOV2(_appAddress)._WETH_();
-
         if (baseToken != _ETH_ADDRESS_) {
             TransferHelper.safeApprove(baseToken, approveContract, baseInAmount);
         } else {
@@ -184,8 +183,8 @@ contract TacoProxy is AppProxy {
         // get token addresses from the pool
         address baseToken = IDODOV2(dvmAddress)._BASE_TOKEN_();
         address quoteToken = IDODOV2(dvmAddress)._QUOTE_TOKEN_();
-        bool isBaseETH = baseToken != _ETH_ADDRESS_;
-        bool isQuoteETH = quoteToken != _ETH_ADDRESS_;
+        bool isBaseETH = baseToken == _ETH_ADDRESS_;
+        bool isQuoteETH = quoteToken == _ETH_ADDRESS_;
 
         // grant token approvals
         address wethToken = IDODOV2(_appAddress)._WETH_();
@@ -219,7 +218,7 @@ contract TacoProxy is AppProxy {
 
         // tokens to L2->L1 transfer (bridge)
 
-        uint256 bridgeLength = (isBaseETH ? 1 : 0) + (isQuoteETH ? 1 : 0) + 1;
+        uint256 bridgeLength = (isBaseETH ? 0 : 1) + (isQuoteETH ? 0 : 1) + 1;
         TokenAmount[] memory tokensToBridge = new TokenAmount[](bridgeLength);
         uint256 index = 0;
         uint256 value = 0;
@@ -230,11 +229,11 @@ contract TacoProxy is AppProxy {
         } else {
             value += baseInAmount - baseAdjustedInAmount;
         }
-        if (isQuoteETH) {
-            tokensToBridge[index] = TokenAmount(quoteToken, quoteMinAmount - quoteAdjustedInAmount);
+        if (!isQuoteETH) {
+            tokensToBridge[index] = TokenAmount(quoteToken, quoteInAmount - quoteAdjustedInAmount);
             index++;
         } else {
-            value += quoteMinAmount - quoteAdjustedInAmount;
+            value += quoteInAmount - quoteAdjustedInAmount;
         }
         TransferHelper.safeApprove(dvmAddress, getCrossChainLayerAddress(), shares);
         tokensToBridge[index] = TokenAmount(dvmAddress, shares);
