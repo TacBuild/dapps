@@ -1,5 +1,6 @@
 import { ethers } from 'hardhat';
-import { printEvents, printBalances } from '../utils';
+import path from 'path';
+import { printEvents, printBalances, loadERC20FromFile } from '../utils';
 import { ERC20 } from 'tac-l2-ccl/dist/typechain-types';
 import { sendSimpleMessage } from 'tac-l2-ccl';
 import { InMessageStruct } from 'tac-l2-ccl/dist/typechain-types/contracts/L2/CrossChainLayer';
@@ -19,8 +20,11 @@ async function main(showEvents=false) {
         tacoDFMFactory,
         tacoApprove,
     } = await loadTacoTestEnv(sequencerSigner);
+    const addressesFilePath = path.resolve(__dirname, '../../addresses.json');
+    const tacoWETH = loadERC20FromFile(addressesFilePath, 'tacoWETH', sequencerSigner);
+    const tacNativeAddress = await tacContracts.crossChainLayer.NATIVE_TOKEN_ADDRESS();
 
-    let pools = await tacoDFMFactory.getDODOPool(await tokenA.getAddress(), await tokenB.getAddress());
+    let pools = await tacoDFMFactory.getDODOPool(await tacoWETH.getAddress(), await tokenB.getAddress());
     if (pools.length == 0) {
         throw new Error('pool doesn\'t exist');
     }
@@ -39,12 +43,12 @@ async function main(showEvents=false) {
     const quoteInAmount = 2000n * 10n**9n;
     const baseMinAmount = 0n;
     const quoteMinAmount = 0n;
-    const flag = 0 // 0 - ERC20, 1 - baseInETH, 2 - quoteInETH
+    const flag = 1 // 0 - ERC20, 1 - baseInETH, 2 - quoteInETH
     const deadLine = 19010987500n;
 
     const message: InMessageStruct = {
         queryId: 5,
-        operationId: 'TACO test add ERC20-ERC20 liquidity',
+        operationId: 'TACO test add TAC-ERC20 liquidity',
         timestamp: BigInt(Math.floor(Date.now() / 1000)),
         target: await tacoProxy.getAddress(),
         methodName: 'addDVMLiquidity(address,uint256,uint256,uint256,uint256,uint8,uint256)',
@@ -62,10 +66,11 @@ async function main(showEvents=false) {
         ),
         caller: 'EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk',
         mint: [
-            {l2Address: await tokenA.getAddress(), amount: baseInAmount},
             {l2Address: await tokenB.getAddress(), amount: quoteInAmount},
         ],
-        unlock: [],
+        unlock: [
+            {l2Address: tacNativeAddress, amount: baseInAmount},
+        ],
         meta: [],  // tokens are already exist, no need to fill meta
     };
 

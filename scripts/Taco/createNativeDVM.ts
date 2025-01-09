@@ -2,7 +2,7 @@ import hre, { ethers } from 'hardhat';
 import path from 'path';
 import { printEvents } from '../utils';
 import { getCCLArtifacts, loadTacContracts, loadGroupContracts } from "tac-l2-ccl";
-import { CrossChainLayerToken, CrossChainLayerToken__factory } from "tac-l2-ccl/dist/typechain-types";
+import { CrossChainLayerToken } from "tac-l2-ccl/dist/typechain-types";
 import { loadContractFromFile, loadERC20FromFile } from "../utils";
 import { sendSimpleMessage } from 'tac-l2-ccl';
 import { InMessageStruct } from 'tac-l2-ccl/dist/typechain-types/contracts/L2/CrossChainLayer';
