@@ -39,7 +39,7 @@ async function main(showEvents=false) {
     await printBalances('\nBalances before operation', tokensToPrintBalances, entitiesToPrintBalances);
 
     const dvmAddress = pools[0];
-    const baseInAmount = 2000n * 10n**9n;
+    const baseInAmount = 5000n * 10n**9n;
     const quoteInAmount = 1000n * 10n**9n;
     const baseMinAmount = 0n;
     const quoteMinAmount = 0n;
