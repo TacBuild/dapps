@@ -1,27 +1,28 @@
-import hre, { ethers } from 'hardhat';
+import { ethers } from 'hardhat';
 import path from 'path';
-import { printEvents } from '../utils';
-import { getCCLArtifacts, loadTacContracts, loadGroupContracts } from "tac-l2-ccl";
-import { CrossChainLayerToken } from "tac-l2-ccl/dist/typechain-types";
-import { loadContractFromFile, loadERC20FromFile } from "../utils";
+import { printEvents, loadERC20FromFile } from '../utils';
+import { loadTacoTestEnv } from './utils';
 import { sendSimpleMessage } from 'tac-l2-ccl';
 import { InMessageStruct } from 'tac-l2-ccl/dist/typechain-types/contracts/L2/CrossChainLayer';
-import { IDVMFactory, TacoProxy } from "../../typechain-types";
 
 
 async function main(showEvents=false) {
     const sequencerSigner = new ethers.Wallet(process.env.SEQUENCER_PRIVATE_KEY_EVM!, ethers.provider);
 
+    const {
+        tokenA,
+        tokenB,
+        tacContracts,
+        groups,
+        tacoProxy,
+        tacoV2Proxy02,
+        tacoFeeRouteProxy,
+        tacoDFMFactory,
+        tacoApprove,
+    } = await loadTacoTestEnv(sequencerSigner, false);
     const addressesFilePath = path.resolve(__dirname, '../../addresses.json');
-
-    const cclArtifacts = await getCCLArtifacts();
-    const tacContracts = await loadTacContracts(addressesFilePath, sequencerSigner);
-    const tokenA = loadContractFromFile<CrossChainLayerToken>(addressesFilePath, 'TAC', cclArtifacts.readArtifactSync('CrossChainLayerToken').abi, sequencerSigner);
-    const groups = await loadGroupContracts(addressesFilePath, sequencerSigner, ["Group-0"]);
-    const tacoDFMFactory = loadContractFromFile<IDVMFactory>(addressesFilePath, 'tacoDFMFactory', hre.artifacts.readArtifactSync('IDVMFactory').abi, sequencerSigner);
-    const tacoProxy = loadContractFromFile<TacoProxy>(addressesFilePath, 'tacoProxy', hre.artifacts.readArtifactSync('TacoProxy').abi, sequencerSigner);
-    const tacoWETH = loadERC20FromFile(addressesFilePath, 'tacoWETH', sequencerSigner);
     const tacoNativeAddress = await tacoProxy._ETH_ADDRESS_();
+    const tacoWETH = loadERC20FromFile(addressesFilePath, 'tacoWETH', sequencerSigner);
     const tacNativeAddress = await tacContracts.crossChainLayer.NATIVE_TOKEN_ADDRESS();
 
     let pools = await tacoDFMFactory.getDODOPool(await tacoWETH.getAddress(), await tokenA.getAddress());

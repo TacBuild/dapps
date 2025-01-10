@@ -117,7 +117,7 @@ async function ensurePairs(
     return result;
 }
 
-export async function loadTacoTestEnv(signer: Signer) {
+export async function loadTacoTestEnv(signer: Signer, ensure: boolean = true) {
     const addressesFilePath = path.resolve(__dirname, '../../addresses.json');
 
     const cclArtifacts = await getCCLArtifacts();
@@ -133,7 +133,9 @@ export async function loadTacoTestEnv(signer: Signer) {
     const tacoApprove = loadContractFromFile<IDODOApprove>(addressesFilePath, 'tacoApprove', hre.artifacts.readArtifactSync('IDODOApprove').abi, signer);
     const tacoWETH = loadERC20FromFile(addressesFilePath, 'tacoWETH', signer);
 
-    await ensurePairs(signer, tacoProxy, tacoV2Proxy02, tacoDFMFactory, tacoApprove, tacoWETH, tokenA, tokenB);
+    if (ensure) {
+        await ensurePairs(signer, tacoProxy, tacoV2Proxy02, tacoDFMFactory, tacoApprove, tacoWETH, tokenA, tokenB);
+    }
 
     return { 
         tokenA, 
