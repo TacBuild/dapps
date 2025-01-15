@@ -5,6 +5,8 @@ import { sendSimpleMessage } from "tac-l2-ccl";
 import { InMessageStruct } from "tac-l2-ccl/dist/typechain-types/contracts/L2/CrossChainLayer";
 import { ERC20 } from "tac-l2-ccl/dist/typechain-types";
 
+const abiCoder = ethers.AbiCoder.defaultAbiCoder();
+
 
 async function main(showEvents=false) {
     const [signer] = await ethers.getSigners();
@@ -31,17 +33,18 @@ async function main(showEvents=false) {
     const message: InMessageStruct = {
         queryId: 42,
         operationId: "test swapExactTokensForTokens",
-        timestamp: 1726050404,
+        timestamp: BigInt(Math.floor(Date.now() / 1000)),
         target: to,
-        methodName: 'swapExactTokensForTokens(uint256,uint256,address[],address,uint256)',
-        arguments: new ethers.AbiCoder().encode(
-            ['uint256', 'uint256', 'address[]', 'address', 'uint256'],
+        methodName: 'swapExactTokensForTokens(bytes,bytes)',
+        arguments:  abiCoder.encode(
+            ["tuple(uint256,uint256,address[],address,uint256)"],
             [
-                amountIn,
-                amountOutMin,
-                path,
-                to,
-                deadline,
+                [   amountIn,
+                    amountOutMin,
+                    path,
+                    to,
+                    deadline
+                ]
             ]
         ),
         caller: 'EQCEuIGH8I2bkAf8rLpuxkWmDJ_xZedEHDvjs6aCAN2FrkFp',
