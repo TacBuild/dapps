@@ -55,7 +55,7 @@ async function main(showEvents=false) {
         meta: [],  // tokens are already exist, no need to fill meta
     };
 
-    const receipt = await sendSimpleMessage([sequencerSigner], message, [tacContracts, groups], true);
+    const receipt = await sendSimpleMessage([sequencerSigner], message, [tacContracts, groups], "0x", true);
 
     await printBalances('\nBalances after operation', tokensToPrintBalances, entitiesToPrintBalances);
 
