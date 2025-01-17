@@ -65,11 +65,8 @@ contract UniswapV2Proxy is AppProxy {
         // CCL L2->L1 callback
         OutMessage memory message = OutMessage({
             queryId: 0,
-            timestamp: block.timestamp,
-            target: "",
-            methodName: "",
-            arguments: new bytes(0),
-            caller: address(this),
+            tvmTarget: "",
+            tvmPayload: new bytes(0),
             toBridge: tokensToBridge
         });
         sendMessage(message, 0);
