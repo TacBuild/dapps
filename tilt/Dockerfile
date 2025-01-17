@@ -3,7 +3,7 @@ FROM node:20.11.1-alpine AS dapps-deployer-image
 
 ARG SEQUENCER_PRIVATE_KEY_EVM
 
-RUN apk add nano jq
+RUN apk add nano jq dos2unix
 
 WORKDIR /usr/src/app
 
@@ -12,6 +12,8 @@ COPY package.json package-lock.json ./
 RUN npm install
 
 COPY . .
+
+RUN dos2unix ./tilt/deploy.sh
 
 RUN chmod +x ./tilt/deploy.sh
 
