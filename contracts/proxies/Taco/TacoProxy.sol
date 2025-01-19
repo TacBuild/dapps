@@ -113,7 +113,6 @@ struct AddDVMLiquidityArguments {
 }
 
 struct MixSwapArguments {
-
     address fromToken;
     address toToken;
     uint256 fromTokenAmount;
@@ -260,7 +259,7 @@ contract TacoProxy is AppProxy {
 
         // approve share to CCL
         TransferHelper.safeApprove(args.dvmAddress, getCrossChainLayerAddress(), shares);
-    
+
         // tokens to L2->L1 transfer (bridge)
         address baseToken = IDODOV2(args.dvmAddress)._BASE_TOKEN_();
         address quoteToken = IDODOV2(args.dvmAddress)._QUOTE_TOKEN_();
@@ -273,6 +272,7 @@ contract TacoProxy is AppProxy {
             value += args.baseInAmount - baseAdjustedInAmount;
         } else {
             tokensToBridge[i] = TokenAmount(baseToken, args.baseInAmount - baseAdjustedInAmount);
+            TransferHelper.safeApprove(baseToken, getCrossChainLayerAddress(), args.baseInAmount - baseAdjustedInAmount);
             unchecked {
                 i++;
             }
@@ -280,7 +280,8 @@ contract TacoProxy is AppProxy {
         if (quoteToken == _ETH_ADDRESS_) {
             value += args.quoteInAmount - quoteAdjustedInAmount;
         } else {
-            tokensToBridge[i] = TokenAmount(quoteToken,args. quoteInAmount - quoteAdjustedInAmount);
+            tokensToBridge[i] = TokenAmount(quoteToken, args.quoteInAmount - quoteAdjustedInAmount);
+            TransferHelper.safeApprove(quoteToken, getCrossChainLayerAddress(), args.quoteInAmount - quoteAdjustedInAmount);
             unchecked {
                 i++;
             }
@@ -293,7 +294,7 @@ contract TacoProxy is AppProxy {
             queryId: header.queryId,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
-            toBridge: tokensToBridge
+            toBridge: new TokenAmount[](0)
         });
         sendMessage(message, value);
     }
@@ -348,6 +349,7 @@ contract TacoProxy is AppProxy {
         } else {
             tokensToBridge = new TokenAmount[](1);
             tokensToBridge[0] = TokenAmount(args.toToken, returnAmount);
+            TransferHelper.safeApprove(args.toToken, getCrossChainLayerAddress(), returnAmount);
             value = 0;
         }
 

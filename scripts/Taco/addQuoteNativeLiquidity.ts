@@ -28,6 +28,7 @@ async function main(showEvents=false) {
     if (pools.length == 0) {
         throw new Error('pool doesn\'t exist');
     }
+    console.log(`use pool: ${pools[0]}`)
 
     const entitiesToPrintBalances = [
         {name: 'CrossChainLayer', address: await tacContracts.crossChainLayer.getAddress()},
@@ -51,17 +52,19 @@ async function main(showEvents=false) {
         operationId: 'TACO test add TAC-ERC20 liquidity',
         timestamp: BigInt(Math.floor(Date.now() / 1000)),
         target: await tacoProxy.getAddress(),
-        methodName: 'addDVMLiquidity(address,uint256,uint256,uint256,uint256,uint8,uint256)',
+        methodName: 'addDVMLiquidity(bytes,bytes)',
         arguments: new ethers.AbiCoder().encode(
-            ['address', 'uint256', 'uint256', 'uint256', 'uint256', 'uint8', 'uint256'],
+            ['tuple(address,uint256,uint256,uint256,uint256,uint8,uint256)'],
             [
-                dvmAddress,
-                baseInAmount,
-                quoteInAmount,
-                baseMinAmount,
-                quoteMinAmount,
-                flag,
-                deadLine,
+                [
+                    dvmAddress,
+                    baseInAmount,
+                    quoteInAmount,
+                    baseMinAmount,
+                    quoteMinAmount,
+                    flag,
+                    deadLine,
+                ]
             ]
         ),
         caller: 'EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk',

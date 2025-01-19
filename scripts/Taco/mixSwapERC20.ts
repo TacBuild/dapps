@@ -34,7 +34,6 @@ async function main(showEvents=false) {
 
     await printBalances('\nBalances before operation', tokensToPrintBalances, entitiesToPrintBalances);
 
-    const feeRouteProxy = await tacoFeeRouteProxy.getAddress();
     const fromToken = tokenA.getAddress()
     const toToken = tokenB.getAddress()
     const fromTokenAmount = 100n * 10n**9n;
@@ -53,23 +52,24 @@ async function main(showEvents=false) {
         operationId: 'TACO test add ERC20-ERC20 liquidity',
         timestamp: BigInt(Math.floor(Date.now() / 1000)),
         target: await tacoProxy.getAddress(),
-        methodName: 'mixSwap(address,address,address,uint256,uint256,uint256,address[],address[],address[],uint256,bytes[],bytes,uint256)',
+        methodName: 'mixSwap(bytes,bytes)',
         arguments: new ethers.AbiCoder().encode(
-            ['address' ,'address' ,'address' ,'uint256' ,'uint256' ,'uint256' ,'address[]' ,'address[]' ,'address[]' ,'uint256' ,'bytes[]' ,'bytes' ,'uint256'],
+            ['tuple(address,address,uint256,uint256,uint256,address[],address[],address[],uint256,bytes[],bytes,uint256)'],
             [
-                feeRouteProxy,
-                fromToken,
-                toToken,
-                fromTokenAmount,
-                expReturnAmount,
-                minReturnAmount,
-                mixAdapters,
-                mixPairs,
-                assetTo,
-                directions,
-                moreInfos,
-                feeData,
-                deadLine,
+                [
+                    fromToken,
+                    toToken,
+                    fromTokenAmount,
+                    expReturnAmount,
+                    minReturnAmount,
+                    mixAdapters,
+                    mixPairs,
+                    assetTo,
+                    directions,
+                    moreInfos,
+                    feeData,
+                    deadLine,
+                ]
             ]
         ),
         caller: 'EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk',
