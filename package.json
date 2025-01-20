@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "compile": "npx hardhat compile",
+    "deposit-tac": "npx hardhat run scripts/depositTac.ts",
     "deploy-stton": "npx hardhat run scripts/common/deployStTON.ts",
     "deploy-tac": "npx hardhat run scripts/common/deployTAC.ts",
     "uniswap-deploy": "npx hardhat run scripts/UniswapV2/deploy.ts",

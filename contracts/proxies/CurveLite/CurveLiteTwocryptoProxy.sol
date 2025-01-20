@@ -106,7 +106,7 @@ contract CurveLiteTwocryptoswapProxy is AppProxy {
             tvmPayload: "",
             toBridge: tokensToBridge
         });
-        sendMessage(message);
+        sendMessage(message, 0);
     }
 
     /**
@@ -149,7 +149,7 @@ contract CurveLiteTwocryptoswapProxy is AppProxy {
             tvmPayload: "",
             toBridge: tokensToBridge
         });
-        sendMessage(message);
+        sendMessage(message, 0);
     }
 
     /**
@@ -189,6 +189,6 @@ contract CurveLiteTwocryptoswapProxy is AppProxy {
             tvmPayload: "",
             toBridge: tokensToBridge
         });
-        sendMessage(message);
+        sendMessage(message, 0);
     }
 }
