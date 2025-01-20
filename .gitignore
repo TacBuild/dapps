@@ -4,6 +4,7 @@ artifacts/
 cache/
 addresses.json
 typechain-types/
+signatures.json
 
 # libs
 node_modules/
