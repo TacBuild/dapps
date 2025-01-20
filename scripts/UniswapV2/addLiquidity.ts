@@ -11,7 +11,7 @@ async function main(showEvents=false) {
     const [signer] = await ethers.getSigners();
     const sequencerSigner = new ethers.Wallet(process.env.SEQUENCER_PRIVATE_KEY_EVM!, ethers.provider);
 
-    const { tacToken, sttonToken, tacContracts, groups, uniswapV2Proxy, uniswapV2Router02, uniswapV2Factory, lpToken } = await loadUniswapTestEnv(signer);
+    const { tacToken, sttonToken, tacContracts, groups, uniswapV2Proxy, uniswapV2Router02, uniswapV2Factory, lpToken } = await loadUniswapTestEnv(sequencerSigner);
 
     const entitiesToPrintBalances = [
         {name: "CrossChainLayer", address: await tacContracts.crossChainLayer.getAddress()},
