@@ -20,7 +20,7 @@ async function main(showEvents=false) {
     const message: InMessageStruct = {
         queryId: 42,
         operationId: "test swapExactTokensForETH",
-        timestamp: 1726050403,
+        timestamp: BigInt(Math.floor(Date.now() / 1000)),
         target: to,
         methodName: 'swapExactTokensForETH(bytes,bytes)',
         arguments: new ethers.AbiCoder().encode(
