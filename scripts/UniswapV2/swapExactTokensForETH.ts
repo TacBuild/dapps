@@ -20,17 +20,19 @@ async function main(showEvents=false) {
     const message: InMessageStruct = {
         queryId: 42,
         operationId: "test swapExactTokensForETH",
-        timestamp: 1726050401,
+        timestamp: 1726050403,
         target: to,
-        methodName: 'swapExactTokensForETH(uint256,uint256,address[],address,uint256)',
+        methodName: 'swapExactTokensForETH(bytes,bytes)',
         arguments: new ethers.AbiCoder().encode(
-            ['uint256', 'uint256', 'address[]', 'address', 'uint256'],
+            ['tuple(uint256, uint256, address[], address, uint256)'],
             [
-                amountIn,
-                amountOutMin,
-                path,
-                to,
-                deadline,
+                [
+                    amountIn,
+                    amountOutMin,
+                    path,
+                    to,
+                    deadline,
+                ]
             ]
         ),
         caller: 'EQCEuIGH8I2bkAf8rLpuxkWmDJ_xZedEHDvjs6aCAN2FrkFp',

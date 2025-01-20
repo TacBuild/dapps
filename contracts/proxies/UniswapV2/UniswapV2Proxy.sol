@@ -109,10 +109,10 @@ contract UniswapV2Proxy is AppProxy {
         tokensToBridge[0] = TokenAmount(arguments.token, arguments.amountTokenDesired - amountToken);
 
         // tokens to L2->L1 transfer (lock)
-        address tokenLiquidity = UniswapV2Library.pairFor(IUniswapV2Router02(_appAddress).factory(), IUniswapV2Router02(_appAddress).WETH(), token);
+        address tokenLiquidity = UniswapV2Library.pairFor(IUniswapV2Router02(_appAddress).factory(), IUniswapV2Router02(_appAddress).WETH(), arguments.token);
         tokensToBridge[1] = TokenAmount(tokenLiquidity, liquidity);
 
-        return tokensToBridge, amountETH;
+        return (tokensToBridge, amountETH);
     }
 
     /**
@@ -124,7 +124,7 @@ contract UniswapV2Proxy is AppProxy {
     ) external payable onlyCrossChainLayer {
 
         AddLiquidityETHArguments memory args = abi.decode(arguments, (AddLiquidityETHArguments));
-        (TokenAmount[] memory tokensToBridge, uint256 amountETH) = _addLiquidity(args);
+        (TokenAmount[] memory tokensToBridge, uint256 amountETH) = _addLiquidityETH(args);
 
         uint i;
         for (; i < tokensToBridge.length;) {
@@ -168,10 +168,8 @@ contract UniswapV2Proxy is AppProxy {
      * @dev A proxy to IUniswapV2Router02.swapExactETHForTokens(...).
      */
     function swapExactETHForTokens(
-        uint amountOutMin,
-        address[] calldata path,
-        address to,
-        uint deadline
+        bytes calldata tacHeader,
+        bytes calldata arguments
     ) public payable onlyCrossChainLayer {
         SwapExactETHForTokensArguments memory args = abi.decode(arguments, (SwapExactETHForTokensArguments));
         TokenAmount[] memory tokensToBridge = _swapExactETHForTokens(args);

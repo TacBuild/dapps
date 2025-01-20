@@ -11,18 +11,14 @@ async function main() {
     const ccl = loadContractFromFile<ICrossChainLayer>(addressesFilePath, 'crossChainLayer', hre.artifacts.readArtifactSync('ICrossChainLayer').abi, signer);
     const message: OutMessageStruct = {
         queryId: 5,
-        timestamp: BigInt(Math.floor(Date.now() / 1000)),
-        target: 'EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk',
-        methodName: '',
-        arguments: '0x',
-        caller: await ccl.getAddress(),
-        burn: [],
-        lock: [],
+        tvmTarget: 'EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk',
+        tvmPayload: '',
+        toBridge: [],
     };
 
     const tx = await ccl.connect(signer).sendMessage(
         message,
-        { value: ethers.parseEther("10") }
+        { value: ethers.parseEther("5") }
     );
     await tx.wait();
 }

@@ -23,16 +23,18 @@ async function main(showEvents=false) {
         operationId: "test add liquidity with native token",
         timestamp: BigInt(Math.floor(Date.now() / 1000)),
         target: to,
-        methodName: 'addLiquidityETH(address,uint256,uint256,uint256,address,uint256)',
+        methodName: 'addLiquidityETH(bytes,bytes)',
         arguments: new ethers.AbiCoder().encode(
-            ['address', 'uint256', 'uint256', 'uint256', 'address', 'uint256'],
+            ['tuple(address, uint256, uint256, uint256, address, uint256)'],
             [
-                await sttonToken.getAddress(),
-                amountTokenDesired,
-                amountTokenMin,
-                amountETHMin,
-                to,
-                deadline,
+                [
+                    await sttonToken.getAddress(),
+                    amountTokenDesired,
+                    amountTokenMin,
+                    amountETHMin,
+                    to,
+                    deadline,
+                ]
             ]
         ),
         caller: 'EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk',
