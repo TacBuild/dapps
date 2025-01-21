@@ -3,7 +3,7 @@ pragma solidity ^0.8.25;
 
 import { TransferHelper } from 'contracts/helpers/TransferHelper.sol';
 import { AppProxy } from "contracts/L2/AppProxy.sol";
-import { OutMessage, TokenAmount } from "tac-l2-ccl/contracts/L2/Structs.sol";
+import { OutMessage, TokenAmount, TacHeaderV1 } from "tac-l2-ccl/contracts/L2/Structs.sol";
 
 /**
  * @title ITwocryptoswapPool Interface
@@ -74,10 +74,11 @@ contract CurveLiteTwocryptoswapProxy is AppProxy {
      * @dev A proxy to addLiquidity
      */
     function addLiquidity(
-        address pool,
-        uint256[2] calldata amounts,
-        uint256 minMintAmount
+        bytes calldata tacHeader,
+        bytes calldata arguments
     ) public {
+        (address pool, uint256[2] memory amounts, uint256 minMintAmount) =
+                abi.decode(arguments, (address, uint256[2], uint256));
         // claim tokens addresses
         address tokenA = ITwocryptoswapPool(pool).coins(0);
         address tokenB = ITwocryptoswapPool(pool).coins(1);
@@ -91,20 +92,19 @@ contract CurveLiteTwocryptoswapProxy is AppProxy {
             minMintAmount
         );
 
-        // tokens to L2->L1 transfer (bridge)
+        // bridge LP tokens to TON
         address tokenLiquidity = pool;
-        TransferHelper.safeApprove(tokenLiquidity, getCrossChainLayerAddress(), liquidity);
-        TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
+        TokenAmount[] memory tokensToBurn = new TokenAmount[](0);
         tokensToBridge[0] = TokenAmount(tokenLiquidity, liquidity);
 
-        // CCL L2->L1 callback
+        TransferHelper.safeApprove(pool, getCrossChainLayerAddress(), liquidity);
+
+        // CCL TAC->TON callback
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         OutMessage memory message = OutMessage({
-            queryId: 0,
-            timestamp: block.timestamp,
-            target: "",
-            methodName: "",
-            arguments: new bytes(0),
-            caller: address(this),
+            queryId: header.queryId,
+            tvmTarget: header.tvmCaller,
+            tvmPayload: "",
             toBridge: tokensToBridge
         });
         sendMessage(message, 0);
@@ -114,11 +114,11 @@ contract CurveLiteTwocryptoswapProxy is AppProxy {
      * @dev A proxy to removeLiquidity
      */
     function removeLiquidity(
-        address pool,
-        uint256 amount,
-        uint256[2] calldata min_amounts
-        
+        bytes calldata tacHeader,
+        bytes calldata arguments
     ) public {
+        (address pool, uint256 amount, uint256[2] memory min_amounts) =
+                abi.decode(arguments, (address, uint256, uint256[2]));
         // claim tokens addresses
         address tokenA = ITwocryptoswapPool(pool).coins(0);
         address tokenB = ITwocryptoswapPool(pool).coins(1);
@@ -131,19 +131,23 @@ contract CurveLiteTwocryptoswapProxy is AppProxy {
             min_amounts
         );
 
-        // tokens to L2->L1 transfer (bridge)
+        // bridge tokens to TON
         TokenAmount[] memory tokensToBridge = new TokenAmount[](2);
         tokensToBridge[0] = TokenAmount(tokenA, amounts[0]);
         tokensToBridge[1] = TokenAmount(tokenB, amounts[1]);
 
-        // CCL L2->L1 callback
+        address crossChainLayer = getCrossChainLayerAddress();
+
+        // approve tokens to CCL
+        TransferHelper.safeApprove(tokenA, crossChainLayer, amounts[0]);
+        TransferHelper.safeApprove(tokenB, crossChainLayer, amounts[1]);
+
+        // CCL TAC->TON callback
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         OutMessage memory message = OutMessage({
-            queryId: 0,
-            timestamp: block.timestamp,
-            target: "",
-            methodName: "",
-            arguments: new bytes(0),
-            caller: address(this),
+            queryId: header.queryId,
+            tvmTarget: header.tvmCaller,
+            tvmPayload: "",
             toBridge: tokensToBridge
         });
         sendMessage(message, 0);
@@ -153,13 +157,11 @@ contract CurveLiteTwocryptoswapProxy is AppProxy {
      * @dev A proxy to exchange
      */
     function exchange(
-        address pool,
-        uint256 i,
-        uint256 j,
-        uint256 dx,
-        uint256 min_dy
-        
+        bytes calldata tacHeader,
+        bytes calldata arguments
     ) public {
+        (address pool, uint256 i, uint256 j, uint256 dx, uint256 min_dy) =
+                abi.decode(arguments, (address, uint256, uint256, uint256, uint256));
         // claim tokens addresses
         address tokenIn = ITwocryptoswapPool(pool).coins(i);
         address tokenOut = ITwocryptoswapPool(pool).coins(j);
@@ -174,21 +176,20 @@ contract CurveLiteTwocryptoswapProxy is AppProxy {
             min_dy
         );
 
-        // tokens to L2->L1 transfer (bridge)
+        // bridge tokens to TON
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(tokenOut, amountOut);
 
-        // CCL L2->L1 callback
+        TransferHelper.safeApprove(tokenOut, getCrossChainLayerAddress(), amountOut);
+
+        // CCL TAC->TON callback
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         OutMessage memory message = OutMessage({
-            queryId: 0,
-            timestamp: block.timestamp,
-            target: "",
-            methodName: "",
-            arguments: new bytes(0),
-            caller: address(this),
+            queryId: header.queryId,
+            tvmTarget: header.tvmCaller,
+            tvmPayload: "",
             toBridge: tokensToBridge
         });
         sendMessage(message, 0);
     }
-    
 }

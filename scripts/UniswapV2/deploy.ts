@@ -30,5 +30,4 @@ async function main() {
     saveContractAddress(addressesFilePath, 'uniswapV2Proxy', await uniswapV2Proxy.getAddress());
 }
 
-
 main();
