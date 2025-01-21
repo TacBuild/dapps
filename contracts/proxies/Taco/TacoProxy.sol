@@ -5,7 +5,7 @@ import { IUniswapV2Router02 } from '@uniswap/v2-periphery/contracts/interfaces/I
 import { TransferHelper } from '@uniswap/lib/contracts/libraries/TransferHelper.sol';
 
 import { AppProxy } from "contracts/L2/AppProxy.sol";
-import { OutMessage, TokenAmount } from "tac-l2-ccl/contracts/L2/Structs.sol";
+import { OutMessage, TokenAmount, TacHeaderV1 } from "tac-l2-ccl/contracts/L2/Structs.sol";
 import { UniswapV2Library } from "contracts/proxies/UniswapV2/CompilerVersionAdapters.sol";
 import { ICrossChainLayer } from "tac-l2-ccl/contracts/interfaces/ICrossChainLayer.sol";
 
@@ -90,6 +90,42 @@ interface IDODOApprove {
     function getDODOProxy() external view returns (address);
 }
 
+struct CreateDODOVendingMachineArguments {
+    address baseToken;
+    address quoteToken;
+    uint256 baseInAmount;
+    uint256 quoteInAmount;
+    uint256 lpFeeRate;
+    uint256 i;
+    uint256 k;
+    bool isOpenTWAP;
+    uint256 deadLine;
+}
+
+struct AddDVMLiquidityArguments {
+    address dvmAddress;
+    uint256 baseInAmount;
+    uint256 quoteInAmount;
+    uint256 baseMinAmount;
+    uint256 quoteMinAmount;
+    uint8 flag; //  0 - ERC20, 1 - baseInETH, 2 - quoteInETH
+    uint256 deadLine;
+}
+
+struct MixSwapArguments {
+    address fromToken;
+    address toToken;
+    uint256 fromTokenAmount;
+    uint256 expReturnAmount;
+    uint256 minReturnAmount;
+    address[] mixAdapters;
+    address[] mixPairs;
+    address[] assetTo;
+    uint256 directions;
+    bytes[] moreInfos;
+    bytes feeData;
+    uint256 deadLine;
+}
 
 /**
  * @title TacoProxy
@@ -98,57 +134,64 @@ interface IDODOApprove {
 contract TacoProxy is AppProxy {
 
     address public constant _ETH_ADDRESS_ = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+    address internal immutable _approveAddress;
+    address internal immutable _wethAddress;
+    address internal immutable _feeRouteProxyAddress;
 
     /**
      * @dev Constructor function to initialize the contract with initial state.
      * @param appAddress Application address.
      * @param settingsAddress Settings address.
      */
-    constructor(address appAddress, address settingsAddress) AppProxy(appAddress, settingsAddress) {
+    constructor(address appAddress, address feeRouteProxyAddress, address settingsAddress) AppProxy(appAddress, settingsAddress) {
+        address approveProxy = IDODOV2(appAddress)._DODO_APPROVE_PROXY_();
+        _approveAddress = IDODOV2(approveProxy)._DODO_APPROVE_();
+        _wethAddress = IDODOV2(appAddress)._WETH_();
+        _feeRouteProxyAddress = feeRouteProxyAddress;
+    }
+
+    function _createDODOVendingMachine(
+        CreateDODOVendingMachineArguments memory arguments
+    ) internal returns (address newVendingMachine, uint256 shares) {
+        // grant token approvals
+        if (arguments.baseToken == _ETH_ADDRESS_) {
+            TransferHelper.safeApprove(_wethAddress, _approveAddress, arguments.baseInAmount);
+        } else {
+            TransferHelper.safeApprove(arguments.baseToken, _approveAddress, arguments.baseInAmount);
+        }
+        if (arguments.quoteToken == _ETH_ADDRESS_) {
+            TransferHelper.safeApprove(_wethAddress, _approveAddress, arguments.quoteInAmount);
+        } else {
+            TransferHelper.safeApprove(arguments.quoteToken, _approveAddress, arguments.quoteInAmount);
+        }
+
+        // proxy call
+        (newVendingMachine, shares) = 
+            IDODOV2Proxy01(_appAddress).createDODOVendingMachine{value: msg.value}(
+                arguments.baseToken,
+                arguments.quoteToken,
+                arguments.baseInAmount,
+                arguments.quoteInAmount,
+                arguments.lpFeeRate,
+                arguments.i,
+                arguments.k,
+                arguments.isOpenTWAP,
+                arguments.deadLine
+            );
     }
 
     /**
      * @dev A proxy to DODOV2Proxy02.createDODOVendingMachine.
      */
     function createDODOVendingMachine(
-        address baseToken,
-        address quoteToken,
-        uint256 baseInAmount,
-        uint256 quoteInAmount,
-        uint256 lpFeeRate,
-        uint256 i,
-        uint256 k,
-        bool isOpenTWAP,
-        uint256 deadLine
+        bytes calldata tacHeader,
+        bytes calldata arguments
     ) public payable {
-        // grant token approvals
-        address approveProxy = IDODOV2(_appAddress)._DODO_APPROVE_PROXY_();
-        address approveContract = IDODOV2(approveProxy)._DODO_APPROVE_();
-        address wethToken = IDODOV2(_appAddress)._WETH_();
-        if (baseToken != _ETH_ADDRESS_) {
-            TransferHelper.safeApprove(baseToken, approveContract, baseInAmount);
-        } else {
-            TransferHelper.safeApprove(wethToken, approveContract, baseInAmount);
-        }
-        if (quoteToken != _ETH_ADDRESS_) {
-            TransferHelper.safeApprove(quoteToken, approveContract, quoteInAmount);
-        } else {
-            TransferHelper.safeApprove(wethToken, approveContract, quoteInAmount);
-        }
+        // decode arguments
+        CreateDODOVendingMachineArguments memory args = abi.decode(arguments, (CreateDODOVendingMachineArguments));
 
-        // proxy call
-        (address newVendingMachine, uint256 shares) = 
-            IDODOV2Proxy01(_appAddress).createDODOVendingMachine{value: msg.value}(
-                baseToken,
-                quoteToken,
-                baseInAmount,
-                quoteInAmount,
-                lpFeeRate,
-                i,
-                k,
-                isOpenTWAP,
-                deadLine
-            );
+        // call dApp
+        (address newVendingMachine, uint256 shares) = _createDODOVendingMachine(args);
 
         // tokens to L2->L1 transfer (bridge)
         TransferHelper.safeApprove(newVendingMachine, getCrossChainLayerAddress(), shares);
@@ -156,165 +199,166 @@ contract TacoProxy is AppProxy {
         tokensToBridge[0] = TokenAmount(newVendingMachine, shares);
 
         // CCL L2->L1 callback
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         OutMessage memory message = OutMessage({
-            queryId: 0,
-            timestamp: block.timestamp,
-            target: "",
-            methodName: "",
-            arguments: new bytes(0),
-            caller: address(this),
+            queryId: header.queryId,
+            tvmTarget: header.tvmCaller,
+            tvmPayload: "",
             toBridge: tokensToBridge
         });
         sendMessage(message, 0);
+    }
+
+    function _addDVMLiquidity(
+        AddDVMLiquidityArguments memory arguments
+    ) internal returns (uint256 shares, uint256 baseAdjustedInAmount, uint256 quoteAdjustedInAmount) {
+        // get token addresses from the pool
+        address baseToken = IDODOV2(arguments.dvmAddress)._BASE_TOKEN_();
+        address quoteToken = IDODOV2(arguments.dvmAddress)._QUOTE_TOKEN_();
+
+        // grant token approvals
+        if (baseToken == _ETH_ADDRESS_) {
+            TransferHelper.safeApprove(_wethAddress, _approveAddress, arguments.baseInAmount);
+        } else {
+            TransferHelper.safeApprove(baseToken, _approveAddress, arguments.baseInAmount);
+        }
+        if (quoteToken == _ETH_ADDRESS_) {
+            TransferHelper.safeApprove(_wethAddress, _approveAddress, arguments.quoteInAmount);
+        } else {
+            TransferHelper.safeApprove(quoteToken, _approveAddress, arguments.quoteInAmount);
+        }
+
+        // proxy call
+        (
+            shares,
+            baseAdjustedInAmount,
+            quoteAdjustedInAmount
+        ) = IDODOV2Proxy01(_appAddress).addDVMLiquidity{value: msg.value}(
+            arguments.dvmAddress,
+            arguments.baseInAmount,
+            arguments.quoteInAmount,
+            arguments.baseMinAmount,
+            arguments.quoteMinAmount,
+            arguments.flag, //  0 - ERC20, 1 - baseInETH, 2 - quoteInETH
+            arguments.deadLine
+        );
     }
 
     /**
      * @dev A proxy to DODOFeeRouteProxy.mixSwap.
      */
     function addDVMLiquidity(
-        address dvmAddress,
-        uint256 baseInAmount,
-        uint256 quoteInAmount,
-        uint256 baseMinAmount,
-        uint256 quoteMinAmount,
-        uint8 flag, //  0 - ERC20, 1 - baseInETH, 2 - quoteInETH
-        uint256 deadLine
+        bytes calldata tacHeader,
+        bytes calldata arguments
     ) public payable {
-        // get token addresses from the pool
-        address baseToken = IDODOV2(dvmAddress)._BASE_TOKEN_();
-        address quoteToken = IDODOV2(dvmAddress)._QUOTE_TOKEN_();
-        bool isBaseETH = baseToken == _ETH_ADDRESS_;
-        bool isQuoteETH = quoteToken == _ETH_ADDRESS_;
+        // decode arguments
+        AddDVMLiquidityArguments memory args = abi.decode(arguments, (AddDVMLiquidityArguments));
+
+        // call dApp
+        (uint256 shares, uint256 baseAdjustedInAmount, uint256 quoteAdjustedInAmount) = _addDVMLiquidity(args);
+
+        // approve share to CCL
+        TransferHelper.safeApprove(args.dvmAddress, getCrossChainLayerAddress(), shares);
+
+        // tokens to L2->L1 transfer (bridge)
+        address baseToken = IDODOV2(args.dvmAddress)._BASE_TOKEN_();
+        address quoteToken = IDODOV2(args.dvmAddress)._QUOTE_TOKEN_();
+        uint256 t = (baseToken == _ETH_ADDRESS_ ? 0 : 1) + (quoteToken == _ETH_ADDRESS_ ? 0 : 1) + 1;
+        TokenAmount[] memory tokensToBridge = new TokenAmount[](t);
+        uint256 value = 0;
+        uint256 i = 0;
+
+        if (baseToken == _ETH_ADDRESS_) {
+            value += args.baseInAmount - baseAdjustedInAmount;
+        } else {
+            tokensToBridge[i] = TokenAmount(baseToken, args.baseInAmount - baseAdjustedInAmount);
+            TransferHelper.safeApprove(baseToken, getCrossChainLayerAddress(), args.baseInAmount - baseAdjustedInAmount);
+            unchecked {
+                i++;
+            }
+        }
+        if (quoteToken == _ETH_ADDRESS_) {
+            value += args.quoteInAmount - quoteAdjustedInAmount;
+        } else {
+            tokensToBridge[i] = TokenAmount(quoteToken, args.quoteInAmount - quoteAdjustedInAmount);
+            TransferHelper.safeApprove(quoteToken, getCrossChainLayerAddress(), args.quoteInAmount - quoteAdjustedInAmount);
+            unchecked {
+                i++;
+            }
+        }
+        tokensToBridge[i] = TokenAmount(args.dvmAddress, shares);
+
+        // CCL L2->L1 callback
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
+        OutMessage memory message = OutMessage({
+            queryId: header.queryId,
+            tvmTarget: header.tvmCaller,
+            tvmPayload: "",
+            toBridge: new TokenAmount[](0)
+        });
+        sendMessage(message, value);
+    }
+
+    function _mixSwap(
+        MixSwapArguments memory arguments
+    ) internal returns (uint256 returnAmount) {
 
         // grant token approvals
-        address wethToken = IDODOV2(_appAddress)._WETH_();
-        address approveProxy = IDODOV2(_appAddress)._DODO_APPROVE_PROXY_();
-        address approveContract = IDODOV2(approveProxy)._DODO_APPROVE_();
-        if (!isBaseETH) {
-            TransferHelper.safeApprove(baseToken, approveContract, baseInAmount);
+        if (arguments.fromToken != _ETH_ADDRESS_) {
+            TransferHelper.safeApprove(arguments.fromToken, _approveAddress, arguments.fromTokenAmount);
         } else {
-            TransferHelper.safeApprove(wethToken, approveContract, baseInAmount);
-        }
-        if (!isQuoteETH) {
-            TransferHelper.safeApprove(quoteToken, approveContract, quoteInAmount);
-        } else {
-            TransferHelper.safeApprove(wethToken, approveContract, quoteInAmount);
+            TransferHelper.safeApprove(_wethAddress, _approveAddress, arguments.fromTokenAmount);
         }
 
         // proxy call
-        (
-            uint256 shares,
-            uint256 baseAdjustedInAmount,
-            uint256 quoteAdjustedInAmount
-        ) = IDODOV2Proxy01(_appAddress).addDVMLiquidity{value: msg.value}(
-            dvmAddress,
-            baseInAmount,
-            quoteInAmount,
-            baseMinAmount,
-            quoteMinAmount,
-            flag, //  0 - ERC20, 1 - baseInETH, 2 - quoteInETH
-            deadLine
+        returnAmount = IDODOFeeRouteProxy(_feeRouteProxyAddress).mixSwap{value: msg.value}(
+            arguments.fromToken,
+            arguments.toToken,
+            arguments.fromTokenAmount,
+            arguments.expReturnAmount,
+            arguments.minReturnAmount,
+            arguments.mixAdapters,
+            arguments.mixPairs,
+            arguments.assetTo,
+            arguments.directions,
+            arguments.moreInfos,
+            arguments.feeData,
+            arguments.deadLine
         );
-
-        // tokens to L2->L1 transfer (bridge)
-
-        uint256 bridgeLength = (isBaseETH ? 0 : 1) + (isQuoteETH ? 0 : 1) + 1;
-        TokenAmount[] memory tokensToBridge = new TokenAmount[](bridgeLength);
-        uint256 index = 0;
-        uint256 value = 0;
-
-        if (!isBaseETH) {
-            tokensToBridge[index] = TokenAmount(baseToken, baseInAmount - baseAdjustedInAmount);
-            index++;
-        } else {
-            value += baseInAmount - baseAdjustedInAmount;
-        }
-        if (!isQuoteETH) {
-            tokensToBridge[index] = TokenAmount(quoteToken, quoteInAmount - quoteAdjustedInAmount);
-            index++;
-        } else {
-            value += quoteInAmount - quoteAdjustedInAmount;
-        }
-        TransferHelper.safeApprove(dvmAddress, getCrossChainLayerAddress(), shares);
-        tokensToBridge[index] = TokenAmount(dvmAddress, shares);
-
-        // CCL L2->L1 callback
-        OutMessage memory message = OutMessage({
-            queryId: 0,
-            timestamp: block.timestamp,
-            target: "",
-            methodName: "",
-            arguments: new bytes(0),
-            caller: address(this),
-            toBridge: tokensToBridge
-        });
-        sendMessage(message, value);
     }
 
     /**
      * @dev A proxy to IUniswapV2Router02.swapExactTokensForTokens(...).
      */
     function mixSwap(
-        address feeRouteProxy,
-        address fromToken,
-        address toToken,
-        uint256 fromTokenAmount,
-        uint256 expReturnAmount,
-        uint256 minReturnAmount,
-        address[] memory mixAdapters,
-        address[] memory mixPairs,
-        address[] memory assetTo,
-        uint256 directions,
-        bytes[] memory moreInfos,
-        bytes memory feeData,
-        uint256 deadLine
+        bytes calldata tacHeader,
+        bytes calldata arguments
     ) public payable {
-        // grant token approvals
-        address wethToken = IDODOV2(_appAddress)._WETH_();
-        address approveProxy = IDODOV2(_appAddress)._DODO_APPROVE_PROXY_();
-        address approveContract = IDODOV2(approveProxy)._DODO_APPROVE_();
-        if (fromToken != _ETH_ADDRESS_) {
-            TransferHelper.safeApprove(fromToken, approveContract, fromTokenAmount);
-        } else {
-            TransferHelper.safeApprove(wethToken, approveContract, fromTokenAmount);
-        }
-
-        // proxy call
-        uint256 returnAmount = IDODOFeeRouteProxy(feeRouteProxy).mixSwap{value: msg.value}(
-            fromToken,
-            toToken,
-            fromTokenAmount,
-            expReturnAmount,
-            minReturnAmount,
-            mixAdapters,
-            mixPairs,
-            assetTo,
-            directions,
-            moreInfos,
-            feeData,
-            deadLine
-        );
+        // decode arguments
+        MixSwapArguments memory args = abi.decode(arguments, (MixSwapArguments));
+        
+        // call dApp
+        (uint256 returnAmount) = _mixSwap(args);
 
         // tokens to L2->L1 transfer (bridge )
         uint256 value;
         TokenAmount[] memory tokensToBridge;
-        if (toToken == _ETH_ADDRESS_) {
+        if (args.toToken == _ETH_ADDRESS_) {
             tokensToBridge = new TokenAmount[](0);
             value = returnAmount;
         } else {
             tokensToBridge = new TokenAmount[](1);
-            tokensToBridge[0] = TokenAmount(toToken, returnAmount);
+            tokensToBridge[0] = TokenAmount(args.toToken, returnAmount);
+            TransferHelper.safeApprove(args.toToken, getCrossChainLayerAddress(), returnAmount);
             value = 0;
         }
 
         // CCL L2->L1 callback
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         OutMessage memory message = OutMessage({
-            queryId: 0,
-            timestamp: block.timestamp,
-            target: "",
-            methodName: "",
-            arguments: new bytes(0),
-            caller: address(this),
+            queryId: header.queryId,
+            tvmTarget: header.tvmCaller,
+            tvmPayload: "",
             toBridge: tokensToBridge
         });
         sendMessage(message, value);

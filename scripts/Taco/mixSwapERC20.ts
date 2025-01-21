@@ -1,6 +1,5 @@
 import { ethers } from 'hardhat';
-import path from 'path';
-import { printEvents, printBalances, loadERC20FromFile } from '../utils';
+import { printEvents, printBalances } from '../utils';
 import { ERC20 } from 'tac-l2-ccl/dist/typechain-types';
 import { sendSimpleMessage } from 'tac-l2-ccl';
 import { InMessageStruct } from 'tac-l2-ccl/dist/typechain-types/contracts/L2/CrossChainLayer';
@@ -20,15 +19,11 @@ async function main(showEvents=false) {
         tacoDFMFactory,
         tacoApprove,
     } = await loadTacoTestEnv(sequencerSigner);
-    const addressesFilePath = path.resolve(__dirname, '../../addresses.json');
-    const tacoWETH = loadERC20FromFile(addressesFilePath, 'tacoWETH', sequencerSigner);
-    const tacNativeAddress = await tacContracts.crossChainLayer.NATIVE_TOKEN_ADDRESS();
 
-    let pools = await tacoDFMFactory.getDODOPool(await tokenA.getAddress(), await tacoWETH.getAddress());
+    let pools = await tacoDFMFactory.getDODOPool(await tokenA.getAddress(), await tokenB.getAddress());
     if (pools.length == 0) {
         throw new Error('pool doesn\'t exist');
     }
-    console.log(`use pool: ${pools[0]}`)
 
     const entitiesToPrintBalances = [
         {name: 'CrossChainLayer', address: await tacContracts.crossChainLayer.getAddress()},
@@ -39,41 +34,49 @@ async function main(showEvents=false) {
 
     await printBalances('\nBalances before operation', tokensToPrintBalances, entitiesToPrintBalances);
 
-    const dvmAddress = pools[0];
-    const baseInAmount = 5000n * 10n**9n;
-    const quoteInAmount = 1000n * 10n**9n;
-    const baseMinAmount = 0n;
-    const quoteMinAmount = 0n;
-    const flag = 2 // 0 - ERC20, 1 - baseInETH, 2 - quoteInETH
+    const fromToken = tokenA.getAddress()
+    const toToken = tokenB.getAddress()
+    const fromTokenAmount = 100n * 10n**9n;
+    const expReturnAmount = 1n;  // ?
+    const minReturnAmount = 1n;
+    const mixAdapters = [];  // ?
+    const mixPairs = [pools[0]];
+    const assetTo = [];  // ?
+    const directions = 0;
+    const moreInfos = [];  // ?
+    const feeData = 0; // ?
     const deadLine = 19010987500n;
 
     const message: InMessageStruct = {
         queryId: 5,
-        operationId: 'TACO test add TAC-ERC20 liquidity',
+        operationId: 'TACO test add ERC20-ERC20 liquidity',
         timestamp: BigInt(Math.floor(Date.now() / 1000)),
         target: await tacoProxy.getAddress(),
-        methodName: 'addDVMLiquidity(bytes,bytes)',
+        methodName: 'mixSwap(bytes,bytes)',
         arguments: new ethers.AbiCoder().encode(
-            ['tuple(address,uint256,uint256,uint256,uint256,uint8,uint256)'],
+            ['tuple(address,address,uint256,uint256,uint256,address[],address[],address[],uint256,bytes[],bytes,uint256)'],
             [
                 [
-                    dvmAddress,
-                    baseInAmount,
-                    quoteInAmount,
-                    baseMinAmount,
-                    quoteMinAmount,
-                    flag,
+                    fromToken,
+                    toToken,
+                    fromTokenAmount,
+                    expReturnAmount,
+                    minReturnAmount,
+                    mixAdapters,
+                    mixPairs,
+                    assetTo,
+                    directions,
+                    moreInfos,
+                    feeData,
                     deadLine,
                 ]
             ]
         ),
         caller: 'EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk',
         mint: [
-            {l2Address: await tokenA.getAddress(), amount: baseInAmount},
+            {l2Address: await tokenA.getAddress(), amount: fromTokenAmount},
         ],
-        unlock: [
-            {l2Address: tacNativeAddress, amount: quoteInAmount},
-        ],
+        unlock: [],
         meta: [],  // tokens are already exist, no need to fill meta
     };
 

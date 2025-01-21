@@ -107,7 +107,6 @@ contract CurveLiteTricryptoswapProxy is AppProxy {
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         OutMessage memory message = OutMessage({
             queryId: header.queryId,
-            timestamp: block.timestamp,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
             toBridge: tokensToBridge

@@ -22,7 +22,14 @@ async function main() {
     saveContractAddress(addressesFilePath, 'tacoWETH', tacoWETHAddress);
 
     // Proxy
-    const tacoProxy = await deploy<TacoProxy>(deployer, hre.artifacts.readArtifactSync('TacoProxy'), [tacoV2Proxy02Address, await tacContracts.settings.getAddress()], undefined, true);
+    const tacoProxy = await deploy<TacoProxy>(
+        deployer,
+        hre.artifacts.readArtifactSync('TacoProxy'), 
+        [tacoV2Proxy02Address, tacoFeeRouteProxyAddress, await tacContracts.settings.getAddress()],
+        undefined,
+        true
+    );
+
     saveContractAddress(addressesFilePath, 'tacoProxy', await tacoProxy.getAddress());
 }
 
