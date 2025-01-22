@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "compile": "npx hardhat compile",
+    "deposit-tac": "npx hardhat run scripts/depositTac.ts",
     "deploy-stton:localhost": "npx hardhat run --network localhost  scripts/common/deployStTON.ts",
     "deploy-tac:localhost": "npx hardhat run --network localhost  scripts/common/deployTAC.ts",
     "uniswap-deploy:localhost": "npx hardhat run --network localhost  scripts/UniswapV2/deploy.ts",
