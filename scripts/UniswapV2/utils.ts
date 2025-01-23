@@ -49,7 +49,7 @@ export async function loadUniswapTestEnv(signer: Signer) {
     const pairAddress = await uniswapV2Factory.getPair(await sttonToken.getAddress(), await tacToken.getAddress());
 
     const lpToken = new Contract(pairAddress, erc20Artifact.abi, signer) as unknown as ERC20;
-    
+
     const wtacToken = loadContractFromFile<WTAC>(addressesFilePath, 'wTAC', cclArtifacts.readArtifactSync('WTAC').abi, signer);
 
     await ensurePairs(signer, uniswapV2Factory, sttonToken, wtacToken);
