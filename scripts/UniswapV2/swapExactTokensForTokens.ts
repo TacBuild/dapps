@@ -32,7 +32,7 @@ async function main(showEvents=false) {
 
     const message: InMessageStruct = {
         queryId: 42,
-        operationId: "test swapExactTokensForTokens",
+        operationId: ethers.encodeBytes32String("test swapExactTokensForTokens"),
         timestamp: BigInt(Math.floor(Date.now() / 1000)),
         target: to,
         methodName: 'swapExactTokensForTokens(bytes,bytes)',
