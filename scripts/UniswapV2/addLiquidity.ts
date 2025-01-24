@@ -32,7 +32,7 @@ async function main(showEvents=false) {
 
     const message: InMessageStruct = {
         queryId: 5,
-        operationId: "test add liquidity",
+        operationId: ethers.encodeBytes32String("test addLiquidity"),
         timestamp: BigInt(Math.floor(Date.now() / 1000)),
         target: to,
         methodName: 'addLiquidity(bytes,bytes)',
