@@ -32,8 +32,8 @@ describe("TacLocalTestSDK", () => {
 
         // define query id
         const queryId = 1n;
-        // define operation id (it'll be created by tac infrasctaucture, but here you can define any string)
-        const operationId = "operationId";
+        // define operation id (it'll be created by tac infrasctaucture, but here you can define any bytes32 value)
+        const operationId = ethers.encodeBytes32String("operationId");
         // define untrusted extra data by executor (it's not implemented yet on tac infrasctaucture - just empty bytes)
         const extraData = "0x";
 
