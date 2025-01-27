@@ -96,11 +96,13 @@ contract CurveLiteTricryptoswapProxy is AppProxy {
         );
 
         // bridge LP tokens to TON
+        address tokenLiquidity = pool;
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
-        tokensToBridge[0] = TokenAmount(pool, liquidity);
+        tokensToBridge[0] = TokenAmount(tokenLiquidity, liquidity);
 
         // approve LP tokens to CCL
-        TransferHelper.safeApprove(pool, getCrossChainLayerAddress(), liquidity);
+        TransferHelper.safeApprove(tokenLiquidity, getCrossChainLayerAddress(), liquidity);
+
         // CCL TAC->TON callback
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         OutMessage memory message = OutMessage({
