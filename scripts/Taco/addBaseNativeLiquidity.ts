@@ -19,12 +19,12 @@ async function main(showEvents=false) {
         tacoFeeRouteProxy,
         tacoDFMFactory,
         tacoApprove,
-    } = await loadTacoTestEnv(sequencerSigner);
+    } = await loadTacoTestEnv(sequencerSigner, false);
     const addressesFilePath = path.resolve(__dirname, '../../addresses.json');
     const tacoWETH = loadERC20FromFile(addressesFilePath, 'tacoWETH', sequencerSigner);
     const tacNativeAddress = await tacContracts.crossChainLayer.NATIVE_TOKEN_ADDRESS();
 
-    let pools = await tacoDFMFactory.getDODOPool(await tacoWETH.getAddress(), await tokenB.getAddress());
+    let pools = await tacoDFMFactory.getDODOPool(await tacoWETH.getAddress(), await tokenA.getAddress());
     if (pools.length == 0) {
         throw new Error('pool doesn\'t exist');
     }
@@ -69,7 +69,7 @@ async function main(showEvents=false) {
         ),
         caller: 'EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk',
         mint: [
-            {l2Address: await tokenB.getAddress(), amount: quoteInAmount},
+            {l2Address: await tokenA.getAddress(), amount: quoteInAmount},
         ],
         unlock: [
             {l2Address: tacNativeAddress, amount: baseInAmount},

@@ -294,7 +294,7 @@ contract TacoProxy is AppProxy {
             queryId: header.queryId,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
-            toBridge: new TokenAmount[](0)
+            toBridge: tokensToBridge
         });
         sendMessage(message, value);
     }

@@ -19,7 +19,7 @@ async function main(showEvents=false) {
         tacoFeeRouteProxy,
         tacoDFMFactory,
         tacoApprove,
-    } = await loadTacoTestEnv(sequencerSigner);
+    } = await loadTacoTestEnv(sequencerSigner, false);
     const addressesFilePath = path.resolve(__dirname, '../../addresses.json');
     const tacoWETH = loadERC20FromFile(addressesFilePath, 'tacoWETH', sequencerSigner);
     const tacNativeAddress = await tacContracts.crossChainLayer.NATIVE_TOKEN_ADDRESS();

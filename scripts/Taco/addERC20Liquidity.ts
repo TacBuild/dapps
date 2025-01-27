@@ -18,7 +18,7 @@ async function main(showEvents=false) {
         tacoFeeRouteProxy,
         tacoDFMFactory,
         tacoApprove,
-    } = await loadTacoTestEnv(sequencerSigner);
+    } = await loadTacoTestEnv(sequencerSigner, false);
 
     let pools = await tacoDFMFactory.getDODOPool(await tokenA.getAddress(), await tokenB.getAddress());
     if (pools.length == 0) {
