@@ -40,8 +40,7 @@ const config: HardhatUserConfig = {
       url: "https://tac-dev-rpc.eu-north-2.gateway.fm"
     },
     tac_testnet: {
-      url: TAC_TESTNET_URL,
-      accounts: [process.env.SEQUENCER_PRIVATE_KEY_EVM!]
+      url: TAC_TESTNET_URL
     },
   },
   gasReporter: {
