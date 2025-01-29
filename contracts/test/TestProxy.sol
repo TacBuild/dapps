@@ -14,8 +14,8 @@ contract TestProxy is TacProxyV1 {
     IERC20 token;
 
     event Receive(uint256 value);
-    event Invoke(uint256 value, uint64 queryId, uint256 timestamp, string operationId, string tvmCaller, bytes extraData);
-    event InvokeWithCallback(uint64 queryId, uint256 timestamp, string operationId, string tvmCaller, bytes extraData, TokenAmount[] receivedTokens);
+    event Invoke(uint256 value, uint64 queryId, uint256 timestamp, bytes32 operationId, string tvmCaller, bytes extraData);
+    event InvokeWithCallback(uint64 queryId, uint256 timestamp, bytes32 operationId, string tvmCaller, bytes extraData, TokenAmount[] receivedTokens);
 
     error MockError(string message);
 
