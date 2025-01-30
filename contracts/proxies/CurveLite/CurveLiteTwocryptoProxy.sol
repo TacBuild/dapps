@@ -30,7 +30,7 @@ interface ITwocryptoswapPool {
     function remove_liquidity(
         uint256 amount,
         uint256[2] calldata min_amounts
-    ) external returns (uint256[2] calldata);
+    ) external returns (uint256[2] memory);
     /**
      * @notice Exchange tokens 
      * @param i Index value for the input coin
@@ -52,7 +52,7 @@ interface ITwocryptoswapPool {
      */
     function coins(
         uint256 arg0
-    ) external returns (address);
+    ) external view returns (address);
 }
 
 
