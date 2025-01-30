@@ -16,8 +16,6 @@ async function main() {
         "stTON",
         "stTON",
         9n,
-        "Staked TON",
-        "http://sample/stton.png",
         process.env.TVM_TKA_ADDRESS!,
         true
     );

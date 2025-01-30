@@ -16,8 +16,6 @@ async function main() {
         "TAC",
         "TAC",
         9n,
-        "TON Application Chain",
-        "http://sample/tac.png",
         process.env.TVM_TKB_ADDRESS!,
         true
     );

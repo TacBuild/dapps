@@ -47,9 +47,7 @@ describe("TacLocalTestSDK", () => {
             tvmAddress: "JettonMinterAddress", // jetton minter contract address
             name: "Jetton1",
             symbol: "JET1",
-            decimals: 9n,
-            description: "Jetton1 description",
-            image: "https://jetton1.com/image.png",
+            decimals: 9n
         };
 
         // how much jetton to mint
