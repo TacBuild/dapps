@@ -91,16 +91,18 @@ contract CurveLiteTricryptoswapProxy is AppProxy {
         TransferHelper.safeApprove(tokenC, pool, amounts[2]);
 
         uint liquidity = ITricryptoswapPool(pool).add_liquidity(
-            [amounts[0],amounts[1],amounts[2]],
+            [amounts[0], amounts[1], amounts[2]],
             minMintAmount
         );
 
         // bridge LP tokens to TON
+        address tokenLiquidity = pool;
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
-        tokensToBridge[0] = TokenAmount(pool, liquidity);
+        tokensToBridge[0] = TokenAmount(tokenLiquidity, liquidity);
 
         // approve LP tokens to CCL
-        TransferHelper.safeApprove(pool, getCrossChainLayerAddress(), liquidity);
+        TransferHelper.safeApprove(tokenLiquidity, getCrossChainLayerAddress(), liquidity);
+
         // CCL TAC->TON callback
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         OutMessage memory message = OutMessage({
@@ -138,7 +140,7 @@ contract CurveLiteTricryptoswapProxy is AppProxy {
         TokenAmount[] memory tokensToBridge = new TokenAmount[](3);
         tokensToBridge[0] = TokenAmount(tokenA, amounts[0]);
         tokensToBridge[1] = TokenAmount(tokenB, amounts[1]);
-        tokensToBridge[1] = TokenAmount(tokenC, amounts[2]);
+        tokensToBridge[2] = TokenAmount(tokenC, amounts[2]);
 
         address crossChainLayerAddress = getCrossChainLayerAddress();
 

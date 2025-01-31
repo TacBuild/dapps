@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "compile": "npx hardhat compile",
-    "deposit-tac": "npx hardhat run scripts/depositTac.ts",
+    "deposit-tac": "npx hardhat run scripts/common/depositTAC.ts",
     "deploy-stton:localhost": "npx hardhat run --network localhost  scripts/common/deployStTON.ts",
     "deploy-tac:localhost": "npx hardhat run --network localhost  scripts/common/deployTAC.ts",
     "uniswap-deploy:localhost": "npx hardhat run --network localhost  scripts/UniswapV2/deploy.ts",
@@ -44,13 +44,15 @@
     "@uniswap/v2-core": "^1.0.1",
     "@uniswap/v2-periphery": "^1.1.0-beta.0",
     "dotenv": "^16.4.5",
-    "ethers": "^6.13.2",
     "hardhat": "^2.22.5",
     "hardhat-gas-reporter": "^1.0.10",
     "jest": "^29.7.0",
     "tac-l2-ccl": "0.9.1",
     "ts-node": "^10.9.2",
     "typechain": "^8.3.2",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "@ton/core": "^0.59.1",
+    "ethers": "^6.13.5",
+    "tac-sdk": "0.3.6-rc-4"
   }
 }
