@@ -18,7 +18,7 @@ async function main() {
 
     const tx = await tacContracts.crossChainLayer.connect(signer).sendMessage(
         message,
-        { value: ethers.parseEther("5") }
+        { value: ethers.parseEther("2") }
     );
     await tx.wait();
 }
