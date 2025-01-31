@@ -186,7 +186,7 @@ contract TacoProxy is AppProxy {
     function createDODOVendingMachine(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) public payable {
+    ) public payable onlyCrossChainLayer {
         // decode arguments
         CreateDODOVendingMachineArguments memory args = abi.decode(arguments, (CreateDODOVendingMachineArguments));
 
@@ -250,7 +250,7 @@ contract TacoProxy is AppProxy {
     function addDVMLiquidity(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) public payable {
+    ) public payable onlyCrossChainLayer {
         // decode arguments
         AddDVMLiquidityArguments memory args = abi.decode(arguments, (AddDVMLiquidityArguments));
 
@@ -333,7 +333,7 @@ contract TacoProxy is AppProxy {
     function mixSwap(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) public payable {
+    ) public payable onlyCrossChainLayer {
         // decode arguments
         MixSwapArguments memory args = abi.decode(arguments, (MixSwapArguments));
         
