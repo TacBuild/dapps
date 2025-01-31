@@ -19,7 +19,7 @@ async function main(showEvents=false) {
 
     const message: InMessageStruct = {
         queryId: 42,
-        operationId: "test swapExactTokensForETH",
+        operationId: ethers.encodeBytes32String("test swapExactTokensForETH"),
         timestamp: BigInt(Math.floor(Date.now() / 1000)),
         target: to,
         methodName: 'swapExactTokensForETH(bytes,bytes)',
@@ -43,7 +43,7 @@ async function main(showEvents=false) {
         meta: [],  // tokens are already exist, no need to fill meta
     };
 
-    const receipt = await sendSimpleMessage([sequencerSigner], message, [tacContracts, groups], true);
+    const receipt = await sendSimpleMessage([sequencerSigner], message, [tacContracts, groups], "0x", true);
 
     if (showEvents) {
         printEvents(receipt!, tacContracts.crossChainLayer);

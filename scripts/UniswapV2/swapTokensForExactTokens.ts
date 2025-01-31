@@ -29,7 +29,7 @@ async function main(showEvents=false) {
     const deadline = 19010987500n;
     const message: InMessageStruct = {
         queryId: 46,
-        operationId: "test swapTokensForExactTokens",
+        operationId: ethers.encodeBytes32String("test swapTokensForExactTokens"),
         timestamp: BigInt(Math.floor(Date.now() / 1000)),
         target: await uniswapV2Proxy.getAddress(),
         methodName: 'swapTokensForExactTokens(bytes,bytes)',
@@ -53,7 +53,7 @@ async function main(showEvents=false) {
         meta: [],  // tokens are already exist, no need to fill meta
     };
 
-    const receipt = await sendSimpleMessage([sequencerSigner], message, [tacContracts, groups], true);
+    const receipt = await sendSimpleMessage([sequencerSigner], message, [tacContracts, groups], "0x", true);
 
     await printBalances('\nBalances after operation', tokensToPrintBalances, entitiesToPrintBalances);
 

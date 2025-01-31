@@ -30,7 +30,7 @@ async function main(showEvents=false) {
 
     const message: InMessageStruct = {
         queryId: 5,
-        operationId: "test add liquidity",
+        operationId: ethers.encodeBytes32String("test addLiquidity"),
         timestamp: BigInt(Math.floor(Date.now() / 1000)),
         target: to,
         methodName: 'addLiquidity(bytes,bytes)',
@@ -58,7 +58,7 @@ async function main(showEvents=false) {
         meta: [],  // tokens are already exist, no need to fill meta
     };
 
-    const receipt = await sendSimpleMessage([sequencerSigner], message, [tacContracts, groups], true);
+    const receipt = await sendSimpleMessage([sequencerSigner], message, [tacContracts, groups], "0x", true);
 
     await printBalances('\nBalances after operation', tokensToPrintBalances, entitiesToPrintBalances);
 
