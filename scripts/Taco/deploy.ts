@@ -24,8 +24,8 @@ async function main() {
     // Proxy
     const tacoProxy = await deploy<TacoProxy>(
         deployer,
-        hre.artifacts.readArtifactSync('TacoProxy'), 
-        [tacoV2Proxy02Address, tacoFeeRouteProxyAddress, await tacContracts.settings.getAddress()],
+        hre.artifacts.readArtifactSync('TacoProxy'),
+        [tacoV2Proxy02Address, tacoFeeRouteProxyAddress, await tacContracts.crossChainLayer.getAddress()],
         undefined,
         true
     );
