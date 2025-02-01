@@ -2,7 +2,7 @@ import { ethers } from "hardhat";
 import { printBalances, printEvents } from "../utils";
 import { loadUniswapTestEnv } from "./utils";
 import { sendSimpleMessageV1 } from "tac-l2-ccl";
-import { InMessageV1Struct } from "tac-l2-ccl/dist/typechain-types/contracts/L2/CrossChainLayer";
+import { InMessageV1Struct } from 'tac-l2-ccl/dist/typechain-types/contracts/L2/Structs.sol/IStructsInterface';
 import { ERC20 } from "tac-l2-ccl/dist/typechain-types";
 
 const abiCoder = ethers.AbiCoder.defaultAbiCoder();

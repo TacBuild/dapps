@@ -2,7 +2,7 @@ import hre, { ethers } from 'hardhat';
 import { printEvents, printBalances } from '../utils';
 import { ERC20 } from 'tac-l2-ccl/dist/typechain-types';
 import { sendSimpleMessageV1 } from 'tac-l2-ccl';
-import { InMessageV1Struct } from 'tac-l2-ccl/dist/typechain-types/contracts/L2/CrossChainLayer';
+import { InMessageV1Struct } from 'tac-l2-ccl/dist/typechain-types/contracts/L2/Structs.sol/IStructsInterface';
 import { loadUniswapTestEnv } from './utils';
 
 
