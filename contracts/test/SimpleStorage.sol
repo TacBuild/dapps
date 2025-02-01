@@ -5,6 +5,8 @@ import { TacProxyV1 } from "tac-l2-ccl/contracts/proxies/TacProxyV1.sol";
 contract SimpleStorage is TacProxyV1 {
     uint256 private storedData;
 
+    constructor() TacProxyV1(address(0)) {}
+
     // Function to set a value
     function set(bytes calldata, bytes calldata arguments) public {
         uint256 value = abi.decode(arguments, (uint256));

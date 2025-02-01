@@ -3,7 +3,7 @@ pragma solidity ^0.8.25;
 
 import { TransferHelper } from 'contracts/helpers/TransferHelper.sol';
 import { AppProxy } from "contracts/L2/AppProxy.sol";
-import { OutMessage, TokenAmount, TacHeaderV1 } from "tac-l2-ccl/contracts/L2/Structs.sol";
+import { OutMessageV1, TokenAmount, TacHeaderV1 } from "tac-l2-ccl/contracts/L2/Structs.sol";
 
 /**
  * @title ITricryptoswapPool Interface
@@ -63,11 +63,11 @@ interface ITricryptoswapPool {
 contract CurveLiteTricryptoswapProxy is AppProxy {
     /**
      * @dev Constructor function to initialize the contract with initial state. 
-     * @param settingsAddress Settings address.
+     * @param crossChainLayer Cross chain layer contract address.
      * The decentralized application (dApp) operates as a dynamic pool
      * The initial parameter, appAddress, of the AppProxy is not required. Consequently, we assign an empty address to it.
      */
-    constructor(address settingsAddress) AppProxy(address(0), settingsAddress) {
+    constructor(address crossChainLayer) AppProxy(address(0), crossChainLayer) {
     }
 
     /**
@@ -78,7 +78,7 @@ contract CurveLiteTricryptoswapProxy is AppProxy {
     function addLiquidity(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) public {
+    ) public _onlyCrossChainLayer {
         (address pool, uint256[3] memory amounts, uint256 minMintAmount) =
                 abi.decode(arguments, (address, uint256[3], uint256));
         // claim tokens addresses
@@ -101,17 +101,16 @@ contract CurveLiteTricryptoswapProxy is AppProxy {
         tokensToBridge[0] = TokenAmount(tokenLiquidity, liquidity);
 
         // approve LP tokens to CCL
-        TransferHelper.safeApprove(tokenLiquidity, getCrossChainLayerAddress(), liquidity);
-
+        TransferHelper.safeApprove(pool, _getCrossChainLayerAddress(), liquidity);
         // CCL TAC->TON callback
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
-        OutMessage memory message = OutMessage({
+        OutMessageV1 memory message = OutMessageV1({
             queryId: header.queryId,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
             toBridge: tokensToBridge
         });
-        sendMessage(message, 0);
+        _sendMessageV1(message, 0);
     }
 
     /**
@@ -120,7 +119,7 @@ contract CurveLiteTricryptoswapProxy is AppProxy {
     function removeLiquidity(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) public {
+    ) public _onlyCrossChainLayer {
         (address pool, uint256 amount, uint256[3] memory min_amounts) =
                 abi.decode(arguments, (address, uint256, uint256[3]));
         // claim tokens addresses
@@ -142,7 +141,7 @@ contract CurveLiteTricryptoswapProxy is AppProxy {
         tokensToBridge[1] = TokenAmount(tokenB, amounts[1]);
         tokensToBridge[2] = TokenAmount(tokenC, amounts[2]);
 
-        address crossChainLayerAddress = getCrossChainLayerAddress();
+        address crossChainLayerAddress = _getCrossChainLayerAddress();
 
         TransferHelper.safeApprove(tokenA, crossChainLayerAddress, amounts[0]);
         TransferHelper.safeApprove(tokenB, crossChainLayerAddress, amounts[1]);
@@ -150,13 +149,13 @@ contract CurveLiteTricryptoswapProxy is AppProxy {
 
         // CCL TAC->TON callback
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
-        OutMessage memory message = OutMessage({
+        OutMessageV1 memory message = OutMessageV1({
             queryId: header.queryId,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
             toBridge: tokensToBridge
         });
-        sendMessage(message, 0);
+        _sendMessageV1(message, 0);
     }
 
     /**
@@ -165,7 +164,7 @@ contract CurveLiteTricryptoswapProxy is AppProxy {
     function exchange(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) public {
+    ) public _onlyCrossChainLayer {
         (address pool, uint256 i, uint256 j, uint256 dx, uint256 min_dy) =
                 abi.decode(arguments, (address, uint256, uint256, uint256, uint256));
         // claim tokens addresses
@@ -186,16 +185,16 @@ contract CurveLiteTricryptoswapProxy is AppProxy {
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(tokenOut, amountOut);
 
-        TransferHelper.safeApprove(tokenOut, getCrossChainLayerAddress(), amountOut);
+        TransferHelper.safeApprove(tokenOut, _getCrossChainLayerAddress(), amountOut);
 
         // CCL TAC->TON callback
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
-        OutMessage memory message = OutMessage({
+        OutMessageV1 memory message = OutMessageV1({
             queryId: header.queryId,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
             toBridge: tokensToBridge
         });
-        sendMessage(message, 0);
+        _sendMessageV1(message, 0);
     }
 }
