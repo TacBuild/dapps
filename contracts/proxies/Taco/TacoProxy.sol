@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 
+import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+
 import { IUniswapV2Router02 } from '@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol';
 import { TransferHelper } from '@uniswap/lib/contracts/libraries/TransferHelper.sol';
 
@@ -9,15 +11,16 @@ import { OutMessageV1, TokenAmount, TacHeaderV1 } from "tac-l2-ccl/contracts/L2/
 import { UniswapV2Library } from "contracts/proxies/UniswapV2/CompilerVersionAdapters.sol";
 import { ICrossChainLayer } from "tac-l2-ccl/contracts/interfaces/ICrossChainLayer.sol";
 
+
 /**
- * @title IDODOV2Proxy01 Interface (from https://github.com/DODOEX/contractV2)
+ * @title DVM pool interface (from https://github.com/DODOEX/contractV2/blob/main/contracts/DODOVendingMachine/intf/IDVM.sol)
  */
-interface IDODOV2 {
-    function _DODO_APPROVE_PROXY_() external view returns (address);
-    function _DODO_APPROVE_() external view returns (address);
-    function _BASE_TOKEN_() external view returns (address);
-    function _QUOTE_TOKEN_() external view returns (address);
-    function _WETH_() external view returns (address);
+interface IDVM is IERC20 {
+    function _BASE_TOKEN_() external returns (address);
+    function _QUOTE_TOKEN_() external returns (address);
+    function _MT_FEE_RATE_MODEL_() external returns (address);
+    function getVaultReserve() external returns (uint256 baseReserve, uint256 quoteReserve);
+    function getMidPrice() external view returns (uint256 midPrice);
 }
 
 /**
@@ -32,6 +35,11 @@ interface IDVMFactory {
  * @title IDODOV2Proxy01 Interface (from https://github.com/DODOEX/contractV2)
  */
 interface IDODOV2Proxy01 {
+
+    function _DODO_APPROVE_PROXY_() external view returns (address);
+    function _DODO_APPROVE_() external view returns (address);
+    function _WETH_() external view returns (address);
+
     function createDODOVendingMachine(
         address baseToken,
         address quoteToken,
@@ -144,9 +152,9 @@ contract TacoProxy is AppProxy {
      * @param crossChainLayer Cross-chain layer contract address.
      */
     constructor(address appAddress, address feeRouteProxyAddress, address crossChainLayer) AppProxy(appAddress, crossChainLayer) {
-        address approveProxy = IDODOV2(appAddress)._DODO_APPROVE_PROXY_();
-        _approveAddress = IDODOV2(approveProxy)._DODO_APPROVE_();
-        _wethAddress = IDODOV2(appAddress)._WETH_();
+        address approveProxy = IDODOV2Proxy01(appAddress)._DODO_APPROVE_PROXY_();
+        _approveAddress = IDODOV2Proxy01(approveProxy)._DODO_APPROVE_();
+        _wethAddress = IDODOV2Proxy01(appAddress)._WETH_();
         _feeRouteProxyAddress = feeRouteProxyAddress;
     }
 
@@ -213,8 +221,8 @@ contract TacoProxy is AppProxy {
         AddDVMLiquidityArguments memory arguments
     ) internal returns (uint256 shares, uint256 baseAdjustedInAmount, uint256 quoteAdjustedInAmount) {
         // get token addresses from the pool
-        address baseToken = IDODOV2(arguments.dvmAddress)._BASE_TOKEN_();
-        address quoteToken = IDODOV2(arguments.dvmAddress)._QUOTE_TOKEN_();
+        address baseToken = IDVM(arguments.dvmAddress)._BASE_TOKEN_();
+        address quoteToken = IDVM(arguments.dvmAddress)._QUOTE_TOKEN_();
 
         // grant token approvals
         if (baseToken == _ETH_ADDRESS_) {
@@ -261,8 +269,8 @@ contract TacoProxy is AppProxy {
         TransferHelper.safeApprove(args.dvmAddress, _getCrossChainLayerAddress(), shares);
 
         // tokens to L2->L1 transfer (bridge)
-        address baseToken = IDODOV2(args.dvmAddress)._BASE_TOKEN_();
-        address quoteToken = IDODOV2(args.dvmAddress)._QUOTE_TOKEN_();
+        address baseToken = IDVM(args.dvmAddress)._BASE_TOKEN_();
+        address quoteToken = IDVM(args.dvmAddress)._QUOTE_TOKEN_();
         uint256 t = (baseToken == _ETH_ADDRESS_ ? 0 : 1) + (quoteToken == _ETH_ADDRESS_ ? 0 : 1) + 1;
         TokenAmount[] memory tokensToBridge = new TokenAmount[](t);
         uint256 value = 0;

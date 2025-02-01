@@ -137,6 +137,7 @@ describe('UniswapV2Proxy', () => {
         expect(outMessage.queryId).to.be.equal(queryId);
         expect(outMessage.callerAddress).to.be.equal(await uniswapV2Proxy.getAddress());
         expect(outMessage.targetAddress).to.be.equal(tvmWalletCaller);
+        expect(outMessage.payload).to.be.equal("");
 
         expect(outMessage.tokensBurned.length).to.be.equal(0);
         // lp token locked
@@ -223,6 +224,7 @@ describe('UniswapV2Proxy', () => {
         expect(outMessage.queryId).to.be.equal(queryId);
         expect(outMessage.callerAddress).to.be.equal(await uniswapV2Proxy.getAddress());
         expect(outMessage.targetAddress).to.be.equal(tvmWalletCaller);
+        expect(outMessage.payload).to.be.equal("");
 
         expect(outMessage.tokensBurned.length).to.be.equal(0);
 
@@ -296,6 +298,7 @@ describe('UniswapV2Proxy', () => {
         expect(outMessage.queryId).to.be.equal(queryId);
         expect(outMessage.callerAddress).to.be.equal(await uniswapV2Proxy.getAddress());
         expect(outMessage.targetAddress).to.be.equal(tvmWalletCaller);
+        expect(outMessage.payload).to.be.equal("");
 
         expect(outMessage.tokensBurned.length).to.be.equal(1);
         expect(outMessage.tokensBurned[0].evmAddress).to.be.equal(await tacToken.getAddress());
@@ -368,6 +371,7 @@ describe('UniswapV2Proxy', () => {
         expect(outMessage.queryId).to.be.equal(queryId);
         expect(outMessage.callerAddress).to.be.equal(await uniswapV2Proxy.getAddress());
         expect(outMessage.targetAddress).to.be.equal(tvmWalletCaller);
+        expect(outMessage.payload).to.be.equal("");
 
         expect(outMessage.tokensBurned.length).to.be.equal(1);
         expect(outMessage.tokensBurned[0].evmAddress).to.be.equal(await tacToken.getAddress());
@@ -439,6 +443,7 @@ describe('UniswapV2Proxy', () => {
         expect(outMessage.queryId).to.be.equal(queryId);
         expect(outMessage.callerAddress).to.be.equal(await uniswapV2Proxy.getAddress());
         expect(outMessage.targetAddress).to.be.equal(tvmWalletCaller);
+        expect(outMessage.payload).to.be.equal("");
 
         expect(outMessage.tokensBurned.length).to.be.equal(0);
 
@@ -520,6 +525,7 @@ describe('UniswapV2Proxy', () => {
         expect(outMessage.queryId).to.be.equal(queryId);
         expect(outMessage.callerAddress).to.be.equal(await uniswapV2Proxy.getAddress());
         expect(outMessage.targetAddress).to.be.equal(tvmWalletCaller);
+        expect(outMessage.payload).to.be.equal("");
 
         expect(outMessage.tokensBurned.length).to.be.equal(2);
         expect(outMessage.tokensBurned[0].evmAddress).to.be.equal(await sttonToken.getAddress());
@@ -600,6 +606,7 @@ describe('UniswapV2Proxy', () => {
         expect(outMessage.queryId).to.be.equal(queryId);
         expect(outMessage.callerAddress).to.be.equal(await uniswapV2Proxy.getAddress());
         expect(outMessage.targetAddress).to.be.equal(tvmWalletCaller);
+        expect(outMessage.payload).to.be.equal("");
 
         expect(outMessage.tokensBurned.length).to.be.equal(1);
         expect(outMessage.tokensBurned[0].evmAddress).to.be.equal(sttonEVMTokenAddress);
