@@ -30,6 +30,15 @@ struct RemoveLiquidityArguments {
     uint deadline;
 }
 
+struct RemoveLiquidityETHArguments {
+    address token;
+    uint liquidity;
+    uint amountTokenMin;
+    uint amountETHMin;
+    address to;
+    uint deadline;
+}
+
 struct SwapExactTokensForTokensArguments {
     uint amountIn;
     uint amountOutMin;
@@ -360,6 +369,58 @@ contract UniswapV2Proxy is AppProxy {
             toBridge: tokensToBridge
         });
         _sendMessageV1(message, 0);
+    }
+
+    function _removeLiquidityETH(
+        RemoveLiquidityETHArguments memory arguments
+    ) internal returns (TokenAmount[] memory, uint256 ethAmount) {
+
+        // grant token approvals
+        address tokenLiquidity = UniswapV2Library.pairFor(IUniswapV2Router02(_appAddress).factory(), arguments.token, IUniswapV2Router02(_appAddress).WETH());
+        TransferHelper.safeApprove(tokenLiquidity, _appAddress, arguments.liquidity);
+
+        // proxy call
+        (uint amountToken, uint amountETH) = IUniswapV2Router02(_appAddress).removeLiquidityETH(
+            arguments.token,
+            arguments.liquidity,
+            arguments.amountTokenMin,
+            arguments.amountETHMin,
+            arguments.to,
+            arguments.deadline
+        );
+
+        // bridge tokens to TON
+        TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
+        tokensToBridge[0] = TokenAmount(arguments.token, amountToken);
+
+        return (tokensToBridge, amountETH);
+    }
+
+    function removeLiquidityETH(
+        bytes calldata tacHeader,
+        bytes calldata arguments
+    ) external _onlyCrossChainLayer {
+
+        RemoveLiquidityETHArguments memory args = abi.decode(arguments, (RemoveLiquidityETHArguments));
+        (TokenAmount[] memory tokensToBridge, uint256 ethAmount) = _removeLiquidityETH(args);
+
+        uint i;
+        for (; i < tokensToBridge.length;) {
+            TransferHelper.safeApprove(tokensToBridge[i].l2Address, _getCrossChainLayerAddress(), tokensToBridge[i].amount);
+            unchecked {
+                i++;
+            }
+        }
+
+        // CCL TAC->TON callback
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
+        OutMessageV1 memory message = OutMessageV1({
+            queryId: header.queryId,
+            tvmTarget: header.tvmCaller,
+            tvmPayload: "",
+            toBridge: tokensToBridge
+        });
+        _sendMessageV1(message, ethAmount);
     }
 
     function _swapExactTokensForTokens(

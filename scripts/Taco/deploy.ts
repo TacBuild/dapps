@@ -1,23 +1,11 @@
 import hre, { ethers } from 'hardhat';
 import path from 'path';
-import { TacoProxy } from '../../typechain-types/';
-import { deploy, loadTacContracts, saveContractAddress } from "tac-l2-ccl";
-import { Signer } from 'ethers';
+import { loadTacContracts, saveContractAddress } from "tac-l2-ccl";
+import { deployTacoProxy } from './deployTacoProxy';
 import { tacoTestnetConfig } from './config/testnetConfig';
 import { tacoMainnetConfig } from './config/mainnetConfig';
 
-export async function deployTacoProxy(deployer: Signer, tacoConfig: TacoConfig, crossChainLayerAddress: string): Promise<TacoProxy> {
-    // Proxy
-    const tacoProxy = await deploy<TacoProxy>(
-        deployer,
-        hre.artifacts.readArtifactSync('TacoProxy'),
-        [tacoConfig.tacoV2Proxy02, tacoConfig.tacoFeeRouteProxy, crossChainLayerAddress],
-        undefined,
-        true
-    );
 
-    return tacoProxy;
-}
 
 async function main() {
     const deployer = new ethers.Wallet(process.env.DEPLOYER_PRIVATE_KEY!, ethers.provider);

@@ -31,13 +31,16 @@ const config: HardhatUserConfig = {
       accounts: {
         count: 50
       },
-      allowBlocksWithSameTimestamp: true
+      allowBlocksWithSameTimestamp: true,
+      forking: {
+        enabled: false,
+        url: TAC_TESTNET_URL,
+        blockNumber: 2153000,
+      },
     },
     localhost: {
 	    url:  "http://127.0.0.1:8545",
-    },
-    polygon: {
-      url: "https://tac-dev-rpc.eu-north-2.gateway.fm"
+      timeout: 3600000
     },
     tac_testnet: {
       url: TAC_TESTNET_URL
