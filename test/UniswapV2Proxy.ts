@@ -18,7 +18,6 @@ import uniswapPairArtifact from '../artifacts/@uniswap/v2-core/contracts/interfa
 
 describe('UniswapV2Proxy', () => {
     let admin: Signer;
-    let user: Signer;
     let testSdk: TacLocalTestSdk;
     let uniswapV2Factory: IUniswapV2Factory
     let uniswapV2Router02: IUniswapV2Router02;
@@ -31,13 +30,6 @@ describe('UniswapV2Proxy', () => {
     before(async () => {
         // setup
         [admin] = await ethers.getSigners();
-        user = ethers.Wallet.createRandom();
-
-        // send tac to user
-        await (await admin.sendTransaction({
-            to: await user.getAddress(),
-            value: ethers.parseEther("10")
-        })).wait();
 
         testSdk = new TacLocalTestSdk();
         const crossChainLayerAddress = await testSdk.create(ethers.provider);
