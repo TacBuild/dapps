@@ -471,11 +471,14 @@ describe('UniswapV2Proxy', () => {
             unlockAmount: liquidity,
         };
 
-        const reserves = await lpToken.getReserves();
+        const poolBalance0 = await sttonToken.balanceOf(pairAddress);
+        const poolBalance1 = await tacToken.balanceOf(pairAddress);
 
-        // 2% less than reserves
-        const sttonAmountMin = reserves[0] * 98n / 100n;
-        const tacAmountMin = reserves[1] * 98n / 100n;
+        const lpTotalSupply = await lpToken.totalSupply();
+
+
+        const sttonAmountMin = liquidity * poolBalance0 / lpTotalSupply;
+        const tacAmountMin = liquidity * poolBalance1 / lpTotalSupply;
 
         const deadline = 19010987500n;
 
@@ -528,7 +531,7 @@ describe('UniswapV2Proxy', () => {
     });
 
     it ("Test removeLiquidityETH", async function () {
-        
+
         const queryId = 1n;
         const operationId = ethers.encodeBytes32String("Test removeLiquidityETH");
         const extraData = "0x";
@@ -550,11 +553,13 @@ describe('UniswapV2Proxy', () => {
             unlockAmount: liquidity,
         };
 
-        const reserves = await lpToken.getReserves();
+        const poolBalance0 = await sttonToken.balanceOf(pairAddress);
+        const poolBalance1 = await wTAC.balanceOf(pairAddress);
 
-        // 2% less than reserves
-        const sttonAmountMin = reserves[0] * 98n / 100n;
-        const ethAmountMin = reserves[1] * 98n / 100n;
+        const lpTotalSupply = await lpToken.totalSupply();
+
+        const sttonAmountMin = liquidity * poolBalance0 / lpTotalSupply;
+        const ethAmountMin = liquidity * poolBalance1 / lpTotalSupply;
 
         const deadline = 19010987500n;
 
