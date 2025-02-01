@@ -26,7 +26,7 @@ async function main() {
     saveContractAddress(addressesFilePath, 'uniswapV2Router02', await uniswapV2Router02.getAddress());
 
     // Proxy
-    const uniswapV2Proxy = await deploy<UniswapV2Proxy>(deployer, hre.artifacts.readArtifactSync('UniswapV2Proxy'), [await uniswapV2Router02.getAddress(), await tacContracts.settings.getAddress()], undefined, true);
+    const uniswapV2Proxy = await deploy<UniswapV2Proxy>(deployer, hre.artifacts.readArtifactSync('UniswapV2Proxy'), [await uniswapV2Router02.getAddress(), await tacContracts.crossChainLayer.getAddress()], undefined, true);
     saveContractAddress(addressesFilePath, 'uniswapV2Proxy', await uniswapV2Proxy.getAddress());
 }
 

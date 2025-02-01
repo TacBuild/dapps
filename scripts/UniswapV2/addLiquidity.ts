@@ -1,8 +1,8 @@
 import hre, { ethers } from 'hardhat';
 import { printEvents, printBalances } from '../utils';
 import { ERC20 } from 'tac-l2-ccl/dist/typechain-types';
-import { sendSimpleMessage } from 'tac-l2-ccl';
-import { InMessageStruct } from 'tac-l2-ccl/dist/typechain-types/contracts/L2/CrossChainLayer';
+import { sendSimpleMessageV1 } from 'tac-l2-ccl';
+import { InMessageV1Struct } from 'tac-l2-ccl/dist/typechain-types/contracts/L2/CrossChainLayer';
 import { loadUniswapTestEnv } from './utils';
 
 
@@ -29,7 +29,7 @@ async function main(showEvents=false) {
     const to = await uniswapV2Proxy.getAddress();
     const deadline = 19010987500n;
 
-    const message: InMessageStruct = {
+    const message: InMessageV1Struct = {
         queryId: 5,
         operationId: ethers.encodeBytes32String("test addLiquidity"),
         timestamp: BigInt(Math.floor(Date.now() / 1000)),
@@ -59,7 +59,7 @@ async function main(showEvents=false) {
         meta: [],  // tokens are already exist, no need to fill meta
     };
 
-    const receipt = await sendSimpleMessage([sequencerSigner], message, [tacContracts, groups], "0x", true);
+    const receipt = await sendSimpleMessageV1([sequencerSigner], message, [tacContracts, groups], "0x", true);
 
     await printBalances('\nBalances after operation', tokensToPrintBalances, entitiesToPrintBalances);
 
