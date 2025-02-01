@@ -24,7 +24,7 @@ describe("TacLocalTestSDK", () => {
         const crossChainLayerAddress = testSdk.create(ethers.provider);
 
         existedToken = await deploy<TestToken>(admin, hre.artifacts.readArtifactSync("TestToken"), ["ExistedToken", "TokenE"], undefined, false);
-        proxyContract = await deploy<TestProxy>(admin, hre.artifacts.readArtifactSync("TestProxy"), [crossChainLayerAddress, await existedToken.getAddress()], undefined, false);
+        proxyContract = await deploy<TestProxy>(admin, hre.artifacts.readArtifactSync("TestProxy"), [crossChainLayerAddress], undefined, false);
 
     });
 
