@@ -16,10 +16,10 @@ import { ICrossChainLayer } from "tac-l2-ccl/contracts/interfaces/ICrossChainLay
  * @title DVM pool interface (from https://github.com/DODOEX/contractV2/blob/main/contracts/DODOVendingMachine/intf/IDVM.sol)
  */
 interface IDVM is IERC20 {
-    function _BASE_TOKEN_() external returns (address);
-    function _QUOTE_TOKEN_() external returns (address);
-    function _MT_FEE_RATE_MODEL_() external returns (address);
-    function getVaultReserve() external returns (uint256 baseReserve, uint256 quoteReserve);
+    function _BASE_TOKEN_() external view returns (address);
+    function _QUOTE_TOKEN_() external view returns (address);
+    function _MT_FEE_RATE_MODEL_() external view returns (address);
+    function getVaultReserve() external view returns (uint256 baseReserve, uint256 quoteReserve);
     function getMidPrice() external view returns (uint256 midPrice);
 }
 
