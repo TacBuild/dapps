@@ -34,6 +34,7 @@ abstract contract AppProxy is TacProxyV1 {
     /**
      * @dev Sens a callback message to Cross-Chain Layer.
      * @param message Callback message to send via Cross-Chain Layer.
+     * @param value Native value to send to Cross-Chain Layer.
      */
     function sendMessage(OutMessage memory message, uint256 value) internal {
         ICrossChainLayer(getCrossChainLayerAddress()).sendMessage{value: value}(message);
