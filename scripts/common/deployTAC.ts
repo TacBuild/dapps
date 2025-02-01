@@ -1,6 +1,7 @@
 import { deployToken, loadGroupContracts, loadTacContracts, saveContractAddress } from "tac-l2-ccl";
 import { ethers } from "hardhat";
 import path from 'path';
+import { tacTokenInfo } from "./info/tokensInfo";{ }
 
 
 async function main() {
@@ -13,10 +14,10 @@ async function main() {
     const tokenB = await deployToken(
         [sequencerSigner],
         [tacContracts, groups],
-        "TAC",
-        "TAC",
-        9n,
-        process.env.TVM_TKB_ADDRESS!,
+        tacTokenInfo.name,
+        tacTokenInfo.symbol,
+        tacTokenInfo.decimals,
+        tacTokenInfo.tvmAddress,
         true
     );
 
