@@ -1,5 +1,5 @@
 import hre, { ethers } from "hardhat";
-import { Signer } from "ethers";
+import { AddressLike, BytesLike, Signer } from "ethers";
 import { expect } from "chai";
 
 import { deployTacoProxy } from "../scripts/Taco/deployTacoProxy";
@@ -759,6 +759,90 @@ describe("TacoProxy", function () {
             expect(outMessage.tokensBurned[0].evmAddress).to.be.equal(await sttonToken.getAddress());
             expect(outMessage.tokensBurned[0].amount).to.be.equal(baseChange);
         }
+    });
+
+    it ("TACO test mix swap ERC20", async function () {
+        const queryId = 7n;
+        const operationId = ethers.encodeBytes32String("mix swap ERC20");
+        const extraData = "0x";
+        const timestamp = BigInt(Math.floor(Date.now() / 1000));
+        const tvmWalletCaller = "EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk";
+
+        const target = await tacoProxy.getAddress();
+        const methodName = "mixSwap(bytes,bytes)";
+
+        const sttonEVMAddress = testSdk.getEVMJettonAddress(sttonTokenInfo.tvmAddress);
+        const tacEVMAddress = testSdk.getEVMJettonAddress(tacTokenInfo.tvmAddress);
+
+        let pools = await tacoDVMFactory.getDODOPool(sttonEVMAddress, tacEVMAddress);
+        expect(pools.length).to.be.equal(1);
+
+        const dvmPool = (new ethers.Contract(pools[0], dvmPoolAbi, admin)) as unknown as IDVM;
+
+        // pool balances
+        const baseBalanceBefore = await sttonToken.balanceOf(await dvmPool.getAddress());
+        const quoteBalanceBefore = await tacToken.balanceOf(await dvmPool.getAddress());
+
+        const fromToken = sttonEVMAddress;
+        const toToken = tacEVMAddress;
+        const fromTokenAmount = 100n * 10n**9n;
+        const expReturnAmount = 1n;  // ?
+        const minReturnAmount = 1n;
+        const mixAdapters: AddressLike[] = [];  // ?
+        const mixPairs = [pools[0]];
+        const assetTo: AddressLike[] = [];  // ?
+        const directions = 0;
+        const moreInfos: BytesLike[] = [];  // ?
+        const feeData = 0; // ?
+        const deadLine = 19010987500n;
+
+        // mint base token
+        const sttonTokenMintInfo: TokenMintInfo = {
+            info: sttonTokenInfo,
+            mintAmount: fromTokenAmount,
+        }
+
+        const encodedArguments = new ethers.AbiCoder().encode(
+            ['tuple(address,address,uint256,uint256,uint256,address[],address[],address[],uint256,bytes[],bytes,uint256)'],
+            [
+                [
+                    fromToken,
+                    toToken,
+                    fromTokenAmount,
+                    expReturnAmount,
+                    minReturnAmount,
+                    mixAdapters,
+                    mixPairs,
+                    assetTo,
+                    directions,
+                    moreInfos,
+                    feeData,
+                    deadLine,
+                ]
+            ]
+        );
+
+        // send message
+        const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
+            queryId, // queryId
+            target, // proxy address
+            methodName, // method name
+            encodedArguments, // encoded arguments
+            tvmWalletCaller, // tvm caller
+            [sttonTokenMintInfo], // mint tokens
+            [], // unlock tokens
+            0n, // native tac amount to unlock
+            extraData,
+            operationId,
+            timestamp
+        );
+
+        // check pool balances
+        const baseBalanceAfter = await sttonToken.balanceOf(await dvmPool.getAddress());
+        const quoteBalanceAfter = await tacToken.balanceOf(await dvmPool.getAddress());
+
+
+
     });
 
 
