@@ -43,7 +43,7 @@ async function main() {
         meta: [],  // tokens are already exist, no need to fill meta
     };
 
-    await sendSimpleMessage([signer], message, [tacContracts, groups], true);
+    await sendSimpleMessage([signer], message, [tacContracts, groups]);
 
     console.log('After:');
     console.log('token', await tacToken.getAddress(), 'balance:', await tacToken.balanceOf(await signer.getAddress()));

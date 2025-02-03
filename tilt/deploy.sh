@@ -2,8 +2,6 @@
 
 npx hardhat test
 
-export $(cat .env | xargs)
-
 NETWORK=""
 if [ -z "$DEPLOY_ENV" ]; then
     echo "DEPLOY_ENV undefined in env"
@@ -18,7 +16,6 @@ fi
 
 npx hardhat --network $NETWORK run ./scripts/common/deployStTON.ts
 npx hardhat --network $NETWORK run ./scripts/common/deployTAC.ts
-npx hardhat --network $NETWORK run ./scripts/common/depositERC20.ts
 npx hardhat --network $NETWORK run ./scripts/common/depositTAC.ts
 npx hardhat --network $NETWORK run ./scripts/UniswapV2/deploy.ts
 npx hardhat --network $NETWORK run ./scripts/UniswapV2/addLiquidityWithNative.ts
