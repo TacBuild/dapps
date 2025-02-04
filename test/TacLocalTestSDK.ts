@@ -22,9 +22,7 @@ describe("TacLocalTestSDK", () => {
         [admin] = await ethers.getSigners();
         testSdk = new TacLocalTestSdk();
         const crossChainLayerAddress = testSdk.create(ethers.provider);
-
-        const settingsAddress = testSdk.getSettingsAddress()
-
+        
         existedToken = await deploy<TestToken>(admin, hre.artifacts.readArtifactSync("TestToken"), ["ExistedToken", "TokenE"], undefined, false);
         proxyContract = await deploy<TestProxy>(admin, hre.artifacts.readArtifactSync("TestProxy"), [crossChainLayerAddress, await existedToken.getAddress()], undefined, false);
 
