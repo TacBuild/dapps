@@ -15,15 +15,15 @@ async function main(proxyAddress: string, poolAddress: string, amount: bigint, m
         operationId: ethers.encodeBytes32String("test exchange Curve"),
         timestamp: BigInt(Math.floor(Date.now() / 1000)),
         target: proxyAddress,
-        methodName: 'exchange(address,uint256,uint256,uint256,uint256)',
+        methodName: 'exchange(bytes,bytes)',
         arguments: new ethers.AbiCoder().encode(
-            ['address', 'uint256', 'uint256', 'uint256', 'uint256'],
+            ['tuple(address, uint256, uint256, uint256, uint256)'],
             [
-                poolAddress,
+                [poolAddress,
                 0, // Token index could be 0,1,2 
                 1, // Token index could be 0,1,2 
                 amount,
-                0
+                0]
             ]
         ),
         caller: 'EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk',

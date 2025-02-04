@@ -14,13 +14,13 @@ async function main(proxyAddress: string, poolAddress: string, amount: bigint) {
         operationId: ethers.encodeBytes32String("test removeLiquidity Curve"),
         timestamp: BigInt(Math.floor(Date.now() / 1000)),
         target: proxyAddress,
-        methodName: 'removeLiquidity(address,uint256,uint256[3])',
+        methodName: 'removeLiquidity(bytes,bytes)',
         arguments: new ethers.AbiCoder().encode(
-            ['address', 'uint256', 'uint256[3]'],
+            ['tuple(address, uint256, uint256[3])'],
             [
-                poolAddress,
+                [poolAddress,
                 amount,
-                [0, 0, 0]
+                [0, 0, 0]]
             ]
         ),
         caller: 'EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk',
