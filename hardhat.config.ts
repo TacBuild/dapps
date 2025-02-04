@@ -31,7 +31,11 @@ const config: HardhatUserConfig = {
       accounts: {
         count: 50
       },
-      allowBlocksWithSameTimestamp: true
+      allowBlocksWithSameTimestamp: true,
+      forking: {
+        url: "https://turin.rpc.tac.build",
+      }
+  
     },
     localhost: {
 	    url:  "http://127.0.0.1:8545",

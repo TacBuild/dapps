@@ -21,9 +21,10 @@ interface IStableswapPool {
         uint256[2] calldata amounts,
         uint256 min_mint_amount
     ) external returns (uint256);
+
     /**
      * @notice Removes liquidity to the pool
-     * @param amount Amount of LP tokens to burn 
+     * @param burn_amount Amount of LP tokens to burn 
      * @param min_amounts Minimum amounts of tokens to withdraw
      * @return uint256[2] Amount of pool tokens received by the receiver
      */
@@ -31,6 +32,7 @@ interface IStableswapPool {
         uint256 burn_amount,
         uint256[2] calldata min_amounts
     ) external returns (uint256[2] memory);
+
     /**
      * @notice Exchange tokens 
      * @param i Index value for the input coin
@@ -45,6 +47,7 @@ interface IStableswapPool {
         uint256 dx,
         uint256 min_dy
     ) external returns (uint256);
+
     /**
      * @notice Get token address in pool by index
      * @param arg0 Token index
