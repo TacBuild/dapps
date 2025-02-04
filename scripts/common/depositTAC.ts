@@ -1,14 +1,14 @@
-import hre, { ethers } from 'hardhat';
-import { loadContractFromFile } from './utils';
+import { ethers } from "hardhat";
 import path from 'path';
-import { ICrossChainLayer } from '../typechain-types';
+import { loadTacContracts } from "tac-l2-ccl";
 import { OutMessageStruct } from 'tac-l2-ccl/dist/typechain-types/contracts/L2/CrossChainLayer';
 
 async function main() {
-
     const signer = new ethers.Wallet(process.env.DEPLOYER_PRIVATE_KEY!, ethers.provider);
-    const addressesFilePath = path.resolve(__dirname, '../addresses.json');
-    const ccl = loadContractFromFile<ICrossChainLayer>(addressesFilePath, 'crossChainLayer', hre.artifacts.readArtifactSync('ICrossChainLayer').abi, signer);
+
+    const addressesFilePath = path.resolve(__dirname, '../../addresses.json');
+    const tacContracts = await loadTacContracts(addressesFilePath, signer);
+
     const message: OutMessageStruct = {
         queryId: 5,
         tvmTarget: 'EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk',
@@ -16,9 +16,9 @@ async function main() {
         toBridge: [],
     };
 
-    const tx = await ccl.connect(signer).sendMessage(
+    const tx = await tacContracts.crossChainLayer.connect(signer).sendMessage(
         message,
-        { value: ethers.parseEther("5") }
+        { value: ethers.parseEther("2") }
     );
     await tx.wait();
 }

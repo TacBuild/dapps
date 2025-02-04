@@ -88,13 +88,14 @@ contract CurveLiteTwocryptoswapProxy is AppProxy {
         TransferHelper.safeApprove(tokenB, pool, amounts[1]);
 
         uint liquidity = ITwocryptoswapPool(pool).add_liquidity(
-            [amounts[0],amounts[1]],
+            [amounts[0], amounts[1]],
             minMintAmount
         );
 
         // bridge LP tokens to TON
+        address tokenLiquidity = pool;
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
-        tokensToBridge[0] = TokenAmount(pool, liquidity);
+        tokensToBridge[0] = TokenAmount(tokenLiquidity, liquidity);
 
         TransferHelper.safeApprove(pool, getCrossChainLayerAddress(), liquidity);
 
