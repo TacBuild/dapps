@@ -1,7 +1,7 @@
 import { ethers } from "hardhat";
 import { deployToken, loadGroupContracts, loadTacContracts, saveContractAddress } from "tac-l2-ccl";
 import path from 'path';
-
+import { sttonTokenInfo } from "./info/tokensInfo";
 
 async function main() {
     const [signer] = await ethers.getSigners();
@@ -13,10 +13,10 @@ async function main() {
     const tokenA = await deployToken(
         [sequencerSigner],
         [tacContracts, groups],
-        "stTON",
-        "stTON",
-        9n,
-        process.env.TVM_TKA_ADDRESS!,
+        sttonTokenInfo.name,
+        sttonTokenInfo.symbol,
+        sttonTokenInfo.decimals,
+        sttonTokenInfo.tvmAddress,
         true
     );
 

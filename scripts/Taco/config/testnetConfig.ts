@@ -1,0 +1,7 @@
+export const tacoTestnetConfig: TacoConfig = {
+    tacoV2Proxy02: "0x286c2D4c9BDC464027021Bdab32B2750a02a355B",
+    tacoFeeRouteProxy: "0x819829e5CF6e19F9fED92F6b4CC1edF45a2cC4A2",
+    tacoDVMFactory: "0x0f9053E174c123098C17e60A2B1FAb3b303f9e29",
+    tacoApprove: "0x09da628Df009Ad300e8e299497eebD8694AfBe95",
+    tacoWETH: "0x0246DffDa649e877CFd0951837332B4690fAD1EB"
+}

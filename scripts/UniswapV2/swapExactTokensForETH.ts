@@ -1,8 +1,8 @@
 import hre, { ethers } from "hardhat";
 import { printBalances, printEvents } from "../utils";
 import { loadUniswapTestEnv } from "./utils";
-import { sendSimpleMessage } from "tac-l2-ccl";
-import { InMessageStruct } from "tac-l2-ccl/dist/typechain-types/contracts/L2/CrossChainLayer";
+import { sendSimpleMessageV1 } from "tac-l2-ccl";
+import { InMessageV1Struct } from 'tac-l2-ccl/dist/typechain-types/contracts/L2/Structs.sol/IStructsInterface';
 import { ERC20 } from "tac-l2-ccl/dist/typechain-types";
 
 async function main(showEvents=false) {
@@ -17,7 +17,7 @@ async function main(showEvents=false) {
     const to = await uniswapV2Proxy.getAddress();
     const deadline = 19010987500n;
 
-    const message: InMessageStruct = {
+    const message: InMessageV1Struct = {
         queryId: 42,
         operationId: ethers.encodeBytes32String("test swapExactTokensForETH"),
         timestamp: BigInt(Math.floor(Date.now() / 1000)),
@@ -43,7 +43,7 @@ async function main(showEvents=false) {
         meta: [],  // tokens are already exist, no need to fill meta
     };
 
-    const receipt = await sendSimpleMessage([sequencerSigner], message, [tacContracts, groups], "0x", true);
+    const receipt = await sendSimpleMessageV1([sequencerSigner], message, [tacContracts, groups], "0x", true);
 
     if (showEvents) {
         printEvents(receipt!, tacContracts.crossChainLayer);

@@ -1,23 +1,26 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 
+import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+
 import { IUniswapV2Router02 } from '@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol';
 import { TransferHelper } from '@uniswap/lib/contracts/libraries/TransferHelper.sol';
 
 import { AppProxy } from "contracts/L2/AppProxy.sol";
-import { OutMessage, TokenAmount, TacHeaderV1 } from "tac-l2-ccl/contracts/L2/Structs.sol";
+import { OutMessageV1, TokenAmount, TacHeaderV1 } from "tac-l2-ccl/contracts/L2/Structs.sol";
 import { UniswapV2Library } from "contracts/proxies/UniswapV2/CompilerVersionAdapters.sol";
 import { ICrossChainLayer } from "tac-l2-ccl/contracts/interfaces/ICrossChainLayer.sol";
 
+
 /**
- * @title IDODOV2Proxy01 Interface (from https://github.com/DODOEX/contractV2)
+ * @title DVM pool interface (from https://github.com/DODOEX/contractV2/blob/main/contracts/DODOVendingMachine/intf/IDVM.sol)
  */
-interface IDODOV2 {
-    function _DODO_APPROVE_PROXY_() external view returns (address);
-    function _DODO_APPROVE_() external view returns (address);
+interface IDVM is IERC20 {
     function _BASE_TOKEN_() external view returns (address);
     function _QUOTE_TOKEN_() external view returns (address);
-    function _WETH_() external view returns (address);
+    function _MT_FEE_RATE_MODEL_() external view returns (address);
+    function getVaultReserve() external view returns (uint256 baseReserve, uint256 quoteReserve);
+    function getMidPrice() external view returns (uint256 midPrice);
 }
 
 /**
@@ -32,6 +35,11 @@ interface IDVMFactory {
  * @title IDODOV2Proxy01 Interface (from https://github.com/DODOEX/contractV2)
  */
 interface IDODOV2Proxy01 {
+
+    function _DODO_APPROVE_PROXY_() external view returns (address);
+    function _DODO_APPROVE_() external view returns (address);
+    function _WETH_() external view returns (address);
+
     function createDODOVendingMachine(
         address baseToken,
         address quoteToken,
@@ -141,12 +149,12 @@ contract TacoProxy is AppProxy {
     /**
      * @dev Constructor function to initialize the contract with initial state.
      * @param appAddress Application address.
-     * @param settingsAddress Settings address.
+     * @param crossChainLayer Cross-chain layer contract address.
      */
-    constructor(address appAddress, address feeRouteProxyAddress, address settingsAddress) AppProxy(appAddress, settingsAddress) {
-        address approveProxy = IDODOV2(appAddress)._DODO_APPROVE_PROXY_();
-        _approveAddress = IDODOV2(approveProxy)._DODO_APPROVE_();
-        _wethAddress = IDODOV2(appAddress)._WETH_();
+    constructor(address appAddress, address feeRouteProxyAddress, address crossChainLayer) AppProxy(appAddress, crossChainLayer) {
+        address approveProxy = IDODOV2Proxy01(appAddress)._DODO_APPROVE_PROXY_();
+        _approveAddress = IDODOV2Proxy01(approveProxy)._DODO_APPROVE_();
+        _wethAddress = IDODOV2Proxy01(appAddress)._WETH_();
         _feeRouteProxyAddress = feeRouteProxyAddress;
     }
 
@@ -186,7 +194,7 @@ contract TacoProxy is AppProxy {
     function createDODOVendingMachine(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) public payable onlyCrossChainLayer {
+    ) public payable _onlyCrossChainLayer {
         // decode arguments
         CreateDODOVendingMachineArguments memory args = abi.decode(arguments, (CreateDODOVendingMachineArguments));
 
@@ -194,27 +202,27 @@ contract TacoProxy is AppProxy {
         (address newVendingMachine, uint256 shares) = _createDODOVendingMachine(args);
 
         // tokens to L2->L1 transfer (bridge)
-        TransferHelper.safeApprove(newVendingMachine, getCrossChainLayerAddress(), shares);
+        TransferHelper.safeApprove(newVendingMachine, _getCrossChainLayerAddress(), shares);
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(newVendingMachine, shares);
 
         // CCL L2->L1 callback
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
-        OutMessage memory message = OutMessage({
+        OutMessageV1 memory message = OutMessageV1({
             queryId: header.queryId,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
             toBridge: tokensToBridge
         });
-        sendMessage(message, 0);
+        _sendMessageV1(message, 0);
     }
 
     function _addDVMLiquidity(
         AddDVMLiquidityArguments memory arguments
     ) internal returns (uint256 shares, uint256 baseAdjustedInAmount, uint256 quoteAdjustedInAmount) {
         // get token addresses from the pool
-        address baseToken = IDODOV2(arguments.dvmAddress)._BASE_TOKEN_();
-        address quoteToken = IDODOV2(arguments.dvmAddress)._QUOTE_TOKEN_();
+        address baseToken = IDVM(arguments.dvmAddress)._BASE_TOKEN_();
+        address quoteToken = IDVM(arguments.dvmAddress)._QUOTE_TOKEN_();
 
         // grant token approvals
         if (baseToken == _ETH_ADDRESS_) {
@@ -250,7 +258,7 @@ contract TacoProxy is AppProxy {
     function addDVMLiquidity(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) public payable onlyCrossChainLayer {
+    ) public payable _onlyCrossChainLayer {
         // decode arguments
         AddDVMLiquidityArguments memory args = abi.decode(arguments, (AddDVMLiquidityArguments));
 
@@ -258,11 +266,11 @@ contract TacoProxy is AppProxy {
         (uint256 shares, uint256 baseAdjustedInAmount, uint256 quoteAdjustedInAmount) = _addDVMLiquidity(args);
 
         // approve share to CCL
-        TransferHelper.safeApprove(args.dvmAddress, getCrossChainLayerAddress(), shares);
+        TransferHelper.safeApprove(args.dvmAddress, _getCrossChainLayerAddress(), shares);
 
         // tokens to L2->L1 transfer (bridge)
-        address baseToken = IDODOV2(args.dvmAddress)._BASE_TOKEN_();
-        address quoteToken = IDODOV2(args.dvmAddress)._QUOTE_TOKEN_();
+        address baseToken = IDVM(args.dvmAddress)._BASE_TOKEN_();
+        address quoteToken = IDVM(args.dvmAddress)._QUOTE_TOKEN_();
         uint256 t = (baseToken == _ETH_ADDRESS_ ? 0 : 1) + (quoteToken == _ETH_ADDRESS_ ? 0 : 1) + 1;
         TokenAmount[] memory tokensToBridge = new TokenAmount[](t);
         uint256 value = 0;
@@ -272,7 +280,7 @@ contract TacoProxy is AppProxy {
             value += args.baseInAmount - baseAdjustedInAmount;
         } else {
             tokensToBridge[i] = TokenAmount(baseToken, args.baseInAmount - baseAdjustedInAmount);
-            TransferHelper.safeApprove(baseToken, getCrossChainLayerAddress(), args.baseInAmount - baseAdjustedInAmount);
+            TransferHelper.safeApprove(baseToken, _getCrossChainLayerAddress(), args.baseInAmount - baseAdjustedInAmount);
             unchecked {
                 i++;
             }
@@ -281,7 +289,7 @@ contract TacoProxy is AppProxy {
             value += args.quoteInAmount - quoteAdjustedInAmount;
         } else {
             tokensToBridge[i] = TokenAmount(quoteToken, args.quoteInAmount - quoteAdjustedInAmount);
-            TransferHelper.safeApprove(quoteToken, getCrossChainLayerAddress(), args.quoteInAmount - quoteAdjustedInAmount);
+            TransferHelper.safeApprove(quoteToken, _getCrossChainLayerAddress(), args.quoteInAmount - quoteAdjustedInAmount);
             unchecked {
                 i++;
             }
@@ -290,13 +298,13 @@ contract TacoProxy is AppProxy {
 
         // CCL L2->L1 callback
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
-        OutMessage memory message = OutMessage({
+        OutMessageV1 memory message = OutMessageV1({
             queryId: header.queryId,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
             toBridge: tokensToBridge
         });
-        sendMessage(message, value);
+        _sendMessageV1(message, value);
     }
 
     function _mixSwap(
@@ -333,7 +341,7 @@ contract TacoProxy is AppProxy {
     function mixSwap(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) public payable onlyCrossChainLayer {
+    ) public payable _onlyCrossChainLayer {
         // decode arguments
         MixSwapArguments memory args = abi.decode(arguments, (MixSwapArguments));
         
@@ -349,18 +357,18 @@ contract TacoProxy is AppProxy {
         } else {
             tokensToBridge = new TokenAmount[](1);
             tokensToBridge[0] = TokenAmount(args.toToken, returnAmount);
-            TransferHelper.safeApprove(args.toToken, getCrossChainLayerAddress(), returnAmount);
+            TransferHelper.safeApprove(args.toToken, _getCrossChainLayerAddress(), returnAmount);
             value = 0;
         }
 
         // CCL L2->L1 callback
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
-        OutMessage memory message = OutMessage({
+        OutMessageV1 memory message = OutMessageV1({
             queryId: header.queryId,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
             toBridge: tokensToBridge
         });
-        sendMessage(message, value);
+        _sendMessageV1(message, value);
     }
 }

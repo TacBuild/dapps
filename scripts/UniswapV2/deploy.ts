@@ -1,10 +1,7 @@
-import hre, { ethers } from 'hardhat';
-import { deploy, loadTacContracts, saveContractAddress } from "tac-l2-ccl";
+import { ethers } from 'hardhat';
+import { loadTacContracts, saveContractAddress } from "tac-l2-ccl";
+import { deployUniswapV2 } from './deployUniswapV2';
 import path from 'path';
-import factoryArtifact from "@uniswap/v2-core/build/UniswapV2Factory.json";
-import routerArtifact from "@uniswap/v2-periphery/build/UniswapV2Router02.json";
-import { BaseContract, ContractFactory } from 'ethers';
-import { UniswapV2Proxy } from '../../typechain-types/';
 
 
 async function main() {
@@ -15,18 +12,10 @@ async function main() {
 
     const tacContracts = await loadTacContracts(addressesFilePath, deployer);
 
-    // Factory
-    const uniswapV2Factory_factory = new ContractFactory(factoryArtifact.abi, factoryArtifact.bytecode, deployer);
-    const uniswapV2Factory = (await uniswapV2Factory_factory.deploy(await deployer.getAddress())) as BaseContract;
+    const { uniswapV2Factory, uniswapV2Router02, uniswapV2Proxy } = await deployUniswapV2(deployer, await tacContracts.wTAC.getAddress(), await  tacContracts.crossChainLayer.getAddress());
+
     saveContractAddress(addressesFilePath, 'uniswapV2Factory', await uniswapV2Factory.getAddress());
-
-    // Router
-    const uniswapV2Router02_factory = new ContractFactory(routerArtifact.abi, routerArtifact.bytecode, deployer);
-    const uniswapV2Router02 = (await uniswapV2Router02_factory.deploy(await uniswapV2Factory.getAddress(), await tacContracts.wTAC.getAddress())) as BaseContract;
     saveContractAddress(addressesFilePath, 'uniswapV2Router02', await uniswapV2Router02.getAddress());
-
-    // Proxy
-    const uniswapV2Proxy = await deploy<UniswapV2Proxy>(deployer, hre.artifacts.readArtifactSync('UniswapV2Proxy'), [await uniswapV2Router02.getAddress(), await tacContracts.settings.getAddress()], undefined, true);
     saveContractAddress(addressesFilePath, 'uniswapV2Proxy', await uniswapV2Proxy.getAddress());
 }
 
