@@ -102,7 +102,7 @@ contract CurveLiteTwocryptoswapProxy is AppProxy {
         // CCL TAC->TON callback
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         OutMessageV1 memory message = OutMessageV1({
-            shardedId: header.shardedId,
+            shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
             toBridge: tokensToBridge
@@ -145,7 +145,7 @@ contract CurveLiteTwocryptoswapProxy is AppProxy {
         // CCL TAC->TON callback
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         OutMessageV1 memory message = OutMessageV1({
-            shardedId: header.shardedId,
+            shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
             toBridge: tokensToBridge
@@ -185,7 +185,7 @@ contract CurveLiteTwocryptoswapProxy is AppProxy {
         // CCL TAC->TON callback
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         OutMessageV1 memory message = OutMessageV1({
-            shardedId: header.shardedId,
+            shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
             toBridge: tokensToBridge
