@@ -10,7 +10,7 @@ async function main() {
     const addressesFilePath = path.resolve(__dirname, '../../addresses.json');
     const tacContracts = await loadTacContracts(addressesFilePath, signer);
     const message: OutMessageV1Struct = {
-        queryId: 5,
+        shardedId: 5,
         tvmTarget: 'EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk',
         tvmPayload: '',
         toBridge: [],

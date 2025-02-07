@@ -28,7 +28,7 @@ async function main(showEvents=false) {
     const to = await uniswapV2Proxy.getAddress();
     const deadline = 19010987500n;
     const message: InMessageV1Struct = {
-        queryId: 46,
+        shardedId: 46,
         operationId: ethers.encodeBytes32String("test swapTokensForExactTokens"),
         timestamp: BigInt(Math.floor(Date.now() / 1000)),
         target: await uniswapV2Proxy.getAddress(),

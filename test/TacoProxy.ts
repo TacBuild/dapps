@@ -42,7 +42,7 @@ describe("TacoProxy", function () {
     });
 
     it ("TACO test add ERC20 DVM", async function () {
-        const queryId = 1n;
+        const shardedId = 1n;
         const operationId = ethers.encodeBytes32String("add ERC20 DVM");
         const extraData = "0x";
         const timestamp = BigInt(Math.floor(Date.now() / 1000));
@@ -101,7 +101,7 @@ describe("TacoProxy", function () {
 
         // send message
         const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
-            queryId, // queryId
+            shardedId, // shardedId
             target, // proxy address
             methodName, // method name
             encodedArguments, // encoded arguments
@@ -144,7 +144,7 @@ describe("TacoProxy", function () {
         expect(outMessages.length).to.be.equal(1);
         const outMessage = outMessages[0];
         expect(outMessage.operationId).to.be.equal(operationId);
-        expect(outMessage.queryId).to.be.equal(queryId);
+        expect(outMessage.shardedId).to.be.equal(shardedId);
         expect(outMessage.callerAddress).to.be.equal(await tacoProxy.getAddress());
         expect(outMessage.targetAddress).to.be.equal(tvmWalletCaller);
         expect(outMessage.payload).to.be.equal("");
@@ -157,7 +157,7 @@ describe("TacoProxy", function () {
     });
 
     it ("TACO test add base ETH DVM", async function () {
-        const queryId = 2n;
+        const shardedId = 2n;
         const operationId = ethers.encodeBytes32String("add base ETH DVM");
         const extraData = "0x";
         const timestamp = BigInt(Math.floor(Date.now() / 1000));
@@ -211,7 +211,7 @@ describe("TacoProxy", function () {
 
         // send message
         const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
-            queryId, // queryId
+            shardedId, // shardedId
             target, // proxy address
             methodName, // method name
             encodedArguments, // encoded arguments
@@ -242,7 +242,7 @@ describe("TacoProxy", function () {
 
         // check bridge lp back to user
         expect(outMessage.operationId).to.be.equal(operationId);
-        expect(outMessage.queryId).to.be.equal(queryId);
+        expect(outMessage.shardedId).to.be.equal(shardedId);
         expect(outMessage.callerAddress).to.be.equal(await tacoProxy.getAddress());
         expect(outMessage.targetAddress).to.be.equal(tvmWalletCaller);
         expect(outMessage.payload).to.be.equal("");
@@ -253,7 +253,7 @@ describe("TacoProxy", function () {
     });
 
     it ("TACO test add quote ETH DVM", async function () {
-        const queryId = 3n;
+        const shardedId = 3n;
         const operationId = ethers.encodeBytes32String("add quote ETH DVM");
         const extraData = "0x";
         const timestamp = BigInt(Math.floor(Date.now() / 1000));
@@ -309,7 +309,7 @@ describe("TacoProxy", function () {
 
         // send message
         const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
-            queryId, // queryId
+            shardedId, // shardedId
             target, // proxy address
             methodName, // method name
             encodedArguments, // encoded arguments
@@ -340,7 +340,7 @@ describe("TacoProxy", function () {
 
         // check bridge lp back to user
         expect(outMessage.operationId).to.be.equal(operationId);
-        expect(outMessage.queryId).to.be.equal(queryId);
+        expect(outMessage.shardedId).to.be.equal(shardedId);
         expect(outMessage.callerAddress).to.be.equal(await tacoProxy.getAddress());
         expect(outMessage.targetAddress).to.be.equal(tvmWalletCaller);
         expect(outMessage.payload).to.be.equal("");
@@ -351,7 +351,7 @@ describe("TacoProxy", function () {
     });
 
     it ("TACO add ERC20 liquidity", async function () {
-        const queryId = 4n;
+        const shardedId = 4n;
         const operationId = ethers.encodeBytes32String("add ERC20 liquidity");
         const extraData = "0x";
         const timestamp = BigInt(Math.floor(Date.now() / 1000));
@@ -432,7 +432,7 @@ describe("TacoProxy", function () {
 
         // send message
         const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
-            queryId, // queryId
+            shardedId, // shardedId
             target, // proxy address
             methodName, // method name
             encodedArguments, // encoded arguments
@@ -458,7 +458,7 @@ describe("TacoProxy", function () {
         expect(outMessages.length).to.be.equal(1);
         const outMessage = outMessages[0];
         expect(outMessage.operationId).to.be.equal(operationId);
-        expect(outMessage.queryId).to.be.equal(queryId);
+        expect(outMessage.shardedId).to.be.equal(shardedId);
         expect(outMessage.callerAddress).to.be.equal(await tacoProxy.getAddress());
         expect(outMessage.targetAddress).to.be.equal(tvmWalletCaller);
         expect(outMessage.payload).to.be.equal("");
@@ -492,7 +492,7 @@ describe("TacoProxy", function () {
     });
 
     it ("TACO test add base ETH liquidity", async function () {
-        const queryId = 5n;
+        const shardedId = 5n;
         const operationId = ethers.encodeBytes32String("add base ETH liquidity");
         const extraData = "0x";
         const timestamp = BigInt(Math.floor(Date.now() / 1000));
@@ -567,7 +567,7 @@ describe("TacoProxy", function () {
         // send message
 
         const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
-            queryId, // queryId
+            shardedId, // shardedId
             target, // proxy address
             methodName, // method name
             encodedArguments, // encoded arguments
@@ -593,7 +593,7 @@ describe("TacoProxy", function () {
         expect(outMessages.length).to.be.equal(1);
         const outMessage = outMessages[0];
         expect(outMessage.operationId).to.be.equal(operationId);
-        expect(outMessage.queryId).to.be.equal(queryId);
+        expect(outMessage.shardedId).to.be.equal(shardedId);
         expect(outMessage.callerAddress).to.be.equal(await tacoProxy.getAddress());
         expect(outMessage.targetAddress).to.be.equal(tvmWalletCaller);
         expect(outMessage.payload).to.be.equal("");
@@ -625,7 +625,7 @@ describe("TacoProxy", function () {
     });
 
     it ("TACO test add quote ETH liquidity", async function () {
-        const queryId = 6n;
+        const shardedId = 6n;
         const operationId = ethers.encodeBytes32String("add quote ETH liquidity");
         const extraData = "0x";
         const timestamp = BigInt(Math.floor(Date.now() / 1000));
@@ -704,7 +704,7 @@ describe("TacoProxy", function () {
 
         // send message
         const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
-            queryId, // queryId
+            shardedId, // shardedId
             target, // proxy address
             methodName, // method name
             encodedArguments, // encoded arguments
@@ -731,7 +731,7 @@ describe("TacoProxy", function () {
         expect(outMessages.length).to.be.equal(1);
         const outMessage = outMessages[0];
         expect(outMessage.operationId).to.be.equal(operationId);
-        expect(outMessage.queryId).to.be.equal(queryId);
+        expect(outMessage.shardedId).to.be.equal(shardedId);
         expect(outMessage.callerAddress).to.be.equal(await tacoProxy.getAddress());
         expect(outMessage.targetAddress).to.be.equal(tvmWalletCaller);
         expect(outMessage.payload).to.be.equal("");
@@ -762,7 +762,7 @@ describe("TacoProxy", function () {
     });
 
     it ("TACO test mix swap ERC20", async function () {
-        const queryId = 7n;
+        const shardedId = 7n;
         const operationId = ethers.encodeBytes32String("mix swap ERC20");
         const extraData = "0x";
         const timestamp = BigInt(Math.floor(Date.now() / 1000));
@@ -824,7 +824,7 @@ describe("TacoProxy", function () {
 
         // send message
         const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
-            queryId, // queryId
+            shardedId, // shardedId
             target, // proxy address
             methodName, // method name
             encodedArguments, // encoded arguments

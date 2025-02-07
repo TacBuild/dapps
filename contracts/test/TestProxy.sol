@@ -9,7 +9,7 @@ import { OutMessageV1, TacHeaderV1, TokenAmount } from "tac-l2-ccl/contracts/L2/
 
 contract TestProxy is TacProxyV1 {
 
-    event InvokeWithCallback(uint64 queryId, uint256 timestamp, bytes32 operationId, string tvmCaller, bytes extraData, TokenAmount[] receivedTokens);
+    event InvokeWithCallback(uint64 shardedId, uint256 timestamp, bytes32 operationId, string tvmCaller, bytes extraData, TokenAmount[] receivedTokens);
 
     constructor(address crossChainLayer) TacProxyV1(crossChainLayer) {}
 
@@ -19,7 +19,7 @@ contract TestProxy is TacProxyV1 {
         // decode arguments
         TokenAmount[] memory receivedTokens = abi.decode(arguments, (TokenAmount[]));
 
-        emit InvokeWithCallback(header.queryId, header.timestamp, header.operationId, header.tvmCaller, header.extraData, receivedTokens);
+        emit InvokeWithCallback(header.shardedId, header.timestamp, header.operationId, header.tvmCaller, header.extraData, receivedTokens);
 
         // approve to bridge
         for (uint i = 0; i < receivedTokens.length; i++) {
@@ -29,7 +29,7 @@ contract TestProxy is TacProxyV1 {
         // bridge received tokens back to TON
         _sendMessageV1(
             OutMessageV1(
-                header.queryId,
+                header.shardedId,
                 header.tvmCaller,
                 "",
                 receivedTokens

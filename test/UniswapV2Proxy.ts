@@ -42,7 +42,7 @@ describe('UniswapV2Proxy', () => {
 
     it('Test addLiquidity', async function () {
 
-        const queryId = 1n;
+        const shardedId = 1n;
         const operationId = ethers.encodeBytes32String("Test addLiquidity");
         const extraData = "0x";
         const timestamp = BigInt(Math.floor(Date.now() / 1000));
@@ -90,7 +90,7 @@ describe('UniswapV2Proxy', () => {
         )
         // send message
         const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
-            queryId, // queryId
+            shardedId, // shardedId
             target, // proxy address
             methodName, // method name
             encodedArguments, // encoded arguments
@@ -134,7 +134,7 @@ describe('UniswapV2Proxy', () => {
         expect(outMessages.length).to.be.equal(1);
         const outMessage = outMessages[0];
         expect(outMessage.operationId).to.be.equal(operationId);
-        expect(outMessage.queryId).to.be.equal(queryId);
+        expect(outMessage.shardedId).to.be.equal(shardedId);
         expect(outMessage.callerAddress).to.be.equal(await uniswapV2Proxy.getAddress());
         expect(outMessage.targetAddress).to.be.equal(tvmWalletCaller);
         expect(outMessage.payload).to.be.equal("");
@@ -148,7 +148,7 @@ describe('UniswapV2Proxy', () => {
 
     it ('Test addLiquidityETH', async function () {
 
-        const queryId = 1n;
+        const shardedId = 1n;
         const operationId = ethers.encodeBytes32String("Test addLiquidityETH");
         const extraData = "0x";
         const timestamp = BigInt(Math.floor(Date.now() / 1000));
@@ -191,7 +191,7 @@ describe('UniswapV2Proxy', () => {
         )
         // send message
         const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
-            queryId,
+            shardedId,
             target,
             methodName,
             encodedArguments,
@@ -221,7 +221,7 @@ describe('UniswapV2Proxy', () => {
         expect(outMessages.length).to.be.equal(1);
         const outMessage = outMessages[0];
         expect(outMessage.operationId).to.be.equal(operationId);
-        expect(outMessage.queryId).to.be.equal(queryId);
+        expect(outMessage.shardedId).to.be.equal(shardedId);
         expect(outMessage.callerAddress).to.be.equal(await uniswapV2Proxy.getAddress());
         expect(outMessage.targetAddress).to.be.equal(tvmWalletCaller);
         expect(outMessage.payload).to.be.equal("");
@@ -237,7 +237,7 @@ describe('UniswapV2Proxy', () => {
 
     it ("Test swapExactTokensForTokens", async function () {
 
-        const queryId = 1n;
+        const shardedId = 1n;
         const operationId = ethers.encodeBytes32String("Test swapExactTokensForTokens");
         const extraData = "0x";
         const timestamp = BigInt(Math.floor(Date.now() / 1000));
@@ -278,7 +278,7 @@ describe('UniswapV2Proxy', () => {
 
         // send message
         const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
-            queryId,
+            shardedId,
             target,
             methodName,
             encodedArguments,
@@ -295,7 +295,7 @@ describe('UniswapV2Proxy', () => {
         expect(outMessages.length).to.be.equal(1);
         const outMessage = outMessages[0];
         expect(outMessage.operationId).to.be.equal(operationId);
-        expect(outMessage.queryId).to.be.equal(queryId);
+        expect(outMessage.shardedId).to.be.equal(shardedId);
         expect(outMessage.callerAddress).to.be.equal(await uniswapV2Proxy.getAddress());
         expect(outMessage.targetAddress).to.be.equal(tvmWalletCaller);
         expect(outMessage.payload).to.be.equal("");
@@ -309,7 +309,7 @@ describe('UniswapV2Proxy', () => {
 
     it ("Test swapTokensForExactTokens", async function () {
 
-        const queryId = 1n;
+        const shardedId = 1n;
         const operationId = ethers.encodeBytes32String("Test swapTokensForExactTokens");
         const extraData = "0x";
         const timestamp = BigInt(Math.floor(Date.now() / 1000));
@@ -351,7 +351,7 @@ describe('UniswapV2Proxy', () => {
 
         // send message
         const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
-            queryId,
+            shardedId,
             target,
             methodName,
             encodedArguments,
@@ -368,7 +368,7 @@ describe('UniswapV2Proxy', () => {
         expect(outMessages.length).to.be.equal(1);
         const outMessage = outMessages[0];
         expect(outMessage.operationId).to.be.equal(operationId);
-        expect(outMessage.queryId).to.be.equal(queryId);
+        expect(outMessage.shardedId).to.be.equal(shardedId);
         expect(outMessage.callerAddress).to.be.equal(await uniswapV2Proxy.getAddress());
         expect(outMessage.targetAddress).to.be.equal(tvmWalletCaller);
         expect(outMessage.payload).to.be.equal("");
@@ -383,7 +383,7 @@ describe('UniswapV2Proxy', () => {
 
     it ("Test swapExactTokensForETH", async function () {
 
-        const queryId = 1n;
+        const shardedId = 1n;
         const operationId = ethers.encodeBytes32String("Test swapExactTokensForETH");
         const extraData = "0x";
         const timestamp = BigInt(Math.floor(Date.now() / 1000));
@@ -423,7 +423,7 @@ describe('UniswapV2Proxy', () => {
 
         // send message
         const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
-            queryId,
+            shardedId,
             target,
             methodName,
             encodedArguments,
@@ -440,7 +440,7 @@ describe('UniswapV2Proxy', () => {
         expect(outMessages.length).to.be.equal(1);
         const outMessage = outMessages[0];
         expect(outMessage.operationId).to.be.equal(operationId);
-        expect(outMessage.queryId).to.be.equal(queryId);
+        expect(outMessage.shardedId).to.be.equal(shardedId);
         expect(outMessage.callerAddress).to.be.equal(await uniswapV2Proxy.getAddress());
         expect(outMessage.targetAddress).to.be.equal(tvmWalletCaller);
         expect(outMessage.payload).to.be.equal("");
@@ -454,7 +454,7 @@ describe('UniswapV2Proxy', () => {
 
     it ("Test removeLiquidity", async function () {
 
-        const queryId = 1n;
+        const shardedId = 1n;
         const operationId = ethers.encodeBytes32String("Test removeLiquidity");
         const extraData = "0x";
         const timestamp = BigInt(Math.floor(Date.now() / 1000));
@@ -505,7 +505,7 @@ describe('UniswapV2Proxy', () => {
 
         // send message
         const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
-            queryId,
+            shardedId,
             target,
             methodName,
             encodedArguments,
@@ -522,7 +522,7 @@ describe('UniswapV2Proxy', () => {
         expect(outMessages.length).to.be.equal(1);
         const outMessage = outMessages[0];
         expect(outMessage.operationId).to.be.equal(operationId);
-        expect(outMessage.queryId).to.be.equal(queryId);
+        expect(outMessage.shardedId).to.be.equal(shardedId);
         expect(outMessage.callerAddress).to.be.equal(await uniswapV2Proxy.getAddress());
         expect(outMessage.targetAddress).to.be.equal(tvmWalletCaller);
         expect(outMessage.payload).to.be.equal("");
@@ -538,7 +538,7 @@ describe('UniswapV2Proxy', () => {
 
     it ("Test removeLiquidityETH", async function () {
 
-        const queryId = 1n;
+        const shardedId = 1n;
         const operationId = ethers.encodeBytes32String("Test removeLiquidityETH");
         const extraData = "0x";
         const timestamp = BigInt(Math.floor(Date.now() / 1000));
@@ -586,7 +586,7 @@ describe('UniswapV2Proxy', () => {
 
         // send message
         const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
-            queryId,
+            shardedId,
             target,
             methodName,
             encodedArguments,
@@ -603,7 +603,7 @@ describe('UniswapV2Proxy', () => {
         expect(outMessages.length).to.be.equal(1);
         const outMessage = outMessages[0];
         expect(outMessage.operationId).to.be.equal(operationId);
-        expect(outMessage.queryId).to.be.equal(queryId);
+        expect(outMessage.shardedId).to.be.equal(shardedId);
         expect(outMessage.callerAddress).to.be.equal(await uniswapV2Proxy.getAddress());
         expect(outMessage.targetAddress).to.be.equal(tvmWalletCaller);
         expect(outMessage.payload).to.be.equal("");
