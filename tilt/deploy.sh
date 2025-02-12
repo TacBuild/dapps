@@ -1,4 +1,5 @@
 #!/bin/sh
+export $(grep -v '^#' .env | xargs)
 
 NETWORK=""
 if [ -z "$DEPLOY_ENV" ]; then
