@@ -27,7 +27,7 @@ async function main() {
     console.log('native balance:', await (signer.provider!).getBalance(await signer.getAddress()));
 
     const message: InMessageV1Struct = {
-        queryId: 5,
+        shardsKey: 5,
         operationId: ethers.encodeBytes32String('deposit'),
         timestamp: BigInt(Math.floor(Date.now() / 1000)),
         target: await signer.getAddress(),

@@ -30,7 +30,7 @@ async function main(showEvents=false) {
     const deadline = 19010987500n;
 
     const message: InMessageV1Struct = {
-        queryId: 42,
+        shardsKey: 42,
         gasLimit: 0n,
         operationId: ethers.encodeBytes32String("test swapExactTokensForTokens"),
         timestamp: BigInt(Math.floor(Date.now() / 1000)),
