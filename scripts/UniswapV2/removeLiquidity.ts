@@ -30,7 +30,7 @@ async function main(showEvents=false) {
     const deadline = 19010987500n;
 
     const message: InMessageV1Struct = {
-        queryId: 1337n,
+        shardsKey: 1337n,
         operationId: ethers.encodeBytes32String("test removeLiquidity"),
         timestamp: BigInt(Math.floor(Date.now() / 1000)),
         target: await uniswapV2Proxy.getAddress(),
