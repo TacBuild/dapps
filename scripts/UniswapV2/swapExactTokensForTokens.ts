@@ -63,7 +63,7 @@ async function main(showEvents=false) {
     }
 
     // set esimtated gas limit
-    message.gasLimit = simulationResult.gasLimit * BigInt(120) / BigInt(100);
+    message.gasLimit = simulationResult.gasLimit * 120n / 100n;
 
     const receipt = await sendSimpleMessageV1([sequencerSigner], message, [tacContracts, groups], "0x", true);
 
