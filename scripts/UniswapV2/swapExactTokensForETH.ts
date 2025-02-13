@@ -20,7 +20,7 @@ async function main(showEvents=false) {
     const message: InMessageV1Struct = {
         queryId: 42,
         operationId: ethers.encodeBytes32String("test swapExactTokensForETH"),
-        gasLimit: 0,
+        gasLimit: 0n,
         timestamp: BigInt(Math.floor(Date.now() / 1000)),
         target: to,
         methodName: 'swapExactTokensForETH(bytes,bytes)',
@@ -52,7 +52,7 @@ async function main(showEvents=false) {
     }
 
     // set esimtated gas limit
-    message.gasLimit = simulationResult.gasLimit * BigInt(120) / BigInt(100);
+    message.gasLimit = simulationResult.gasLimit * 120n / 100n;
 
     const receipt = await sendSimpleMessageV1([sequencerSigner], message, [tacContracts, groups], "0x", true);
 

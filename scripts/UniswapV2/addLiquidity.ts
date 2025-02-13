@@ -31,8 +31,8 @@ async function main(showEvents=false) {
 
     const message: InMessageV1Struct = {
         queryId: 5,
+        gasLimit: 0n,
         operationId: ethers.encodeBytes32String("test addLiquidity"),
-        gasLimit: 0,
         timestamp: BigInt(Math.floor(Date.now() / 1000)),
         target: to,
         methodName: 'addLiquidity(bytes,bytes)',

@@ -31,8 +31,8 @@ async function main(showEvents=false) {
 
     const message: InMessageV1Struct = {
         queryId: 1337n,
+        gasLimit: 0n,
         operationId: ethers.encodeBytes32String("test removeLiquidity"),
-        gasLimit: 0,
         timestamp: BigInt(Math.floor(Date.now() / 1000)),
         target: await uniswapV2Proxy.getAddress(),
         methodName: 'removeLiquidity(bytes,bytes)',
