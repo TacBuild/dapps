@@ -9,7 +9,7 @@ async function main(showEvents=false) {
     const [signer] = await ethers.getSigners();
     const sequencerSigner = new ethers.Wallet(process.env.SEQUENCER_PRIVATE_KEY_EVM!, ethers.provider);
 
-    const { sttonToken, tacContracts, groups, uniswapV2Proxy, wtacToken } = await loadUniswapTestEnv(sequencerSigner);
+    const { sttonToken, tacContracts, uniswapV2Proxy, wtacToken } = await loadUniswapTestEnv(sequencerSigner);
 
     const amountIn = 500n * 10n**9n;
     const amountOutMin = 100n * 10n**9n;
@@ -43,7 +43,7 @@ async function main(showEvents=false) {
         meta: [],  // tokens are already exist, no need to fill meta
     };
 
-    const receipt = await sendSimpleMessageV1([sequencerSigner], message, [tacContracts, groups], "0x", true);
+    const receipt = await sendSimpleMessageV1([sequencerSigner], message, tacContracts, "0x", true);
 
     if (showEvents) {
         printEvents(receipt!, tacContracts.crossChainLayer);

@@ -1,7 +1,6 @@
 import { ethers } from "hardhat";
 import path from 'path';
 import { loadTacContracts } from "tac-l2-ccl";
-import { ICrossChainLayer } from "../../typechain-types";
 import { OutMessageV1Struct } from "../../typechain-types/tac-l2-ccl/contracts/L2/Structs.sol/IStructsInterface";
 import { encodeOutMessageV1 } from 'tac-l2-ccl';
 
