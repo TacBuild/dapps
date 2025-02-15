@@ -1,7 +1,7 @@
 import { ethers } from "hardhat";
 import { printBalances, printEvents } from "../utils";
 import { loadUniswapTestEnv } from "./utils";
-import { sendSimpleMessageV1 } from "tac-l2-ccl";
+import { sendSimpleMessageV1, simulateReceiveMessageV1, decodeCrossChainLayerErrorData } from 'tac-l2-ccl';
 import { InMessageV1Struct } from 'tac-l2-ccl/dist/typechain-types/contracts/L2/Structs.sol/IStructsInterface';
 import { ERC20 } from "tac-l2-ccl/dist/typechain-types";
 
@@ -31,6 +31,7 @@ async function main(showEvents=false) {
 
     const message: InMessageV1Struct = {
         shardsKey: 42,
+        gasLimit: 0n,
         operationId: ethers.encodeBytes32String("test swapExactTokensForTokens"),
         timestamp: BigInt(Math.floor(Date.now() / 1000)),
         target: to,
@@ -53,6 +54,16 @@ async function main(showEvents=false) {
         unlock: [],
         meta: [],  // tokens are already exist, no need to fill meta
     };
+
+    const simulationResult = await simulateReceiveMessageV1([tacContracts, groups], message, "0x", 10);
+    
+    if (!simulationResult.simulationStatus) {
+        const decodedError = decodeCrossChainLayerErrorData(simulationResult.errorReason);
+        throw new Error(`Error while sending message: ${decodedError}`);
+    }
+
+    // set esimtated gas limit
+    message.gasLimit = simulationResult.gasLimit * 120n / 100n;
 
     const receipt = await sendSimpleMessageV1([sequencerSigner], message, [tacContracts, groups], "0x", true);
 
