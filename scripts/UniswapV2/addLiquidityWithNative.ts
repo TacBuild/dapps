@@ -9,7 +9,7 @@ async function main(showEvents=false) {
     const [signer] = await ethers.getSigners();
     const sequencerSigner = new ethers.Wallet(process.env.SEQUENCER_PRIVATE_KEY_EVM!, ethers.provider);
 
-    const { tacToken, sttonToken, tacContracts, groups, uniswapV2Proxy, uniswapV2Router02, uniswapV2Factory, lpToken, lpTokenTacAndStTon } = await loadUniswapTestEnv(sequencerSigner);
+    const { tacToken, sttonToken, tacContracts, uniswapV2Proxy, uniswapV2Router02, uniswapV2Factory, lpToken, lpTokenTacAndStTon } = await loadUniswapTestEnv(sequencerSigner);
 
     const amountTokenDesired = 1000n * 10n**9n;
     const amountETHDesired = 2000n * 10n**9n;
@@ -48,8 +48,8 @@ async function main(showEvents=false) {
         meta: [],  // tokens are already exist, no need to fill meta
     };
 
-    const simulationResult = await simulateReceiveMessageV1([tacContracts, groups], message, "0x", 10);
-    
+    const simulationResult = await simulateReceiveMessageV1(tacContracts, message, "0x", 10);
+
     if (!simulationResult.simulationStatus) {
         const decodedError = decodeCrossChainLayerErrorData(simulationResult.errorReason);
         throw new Error(`Error while sending message: ${decodedError}`);
@@ -58,7 +58,7 @@ async function main(showEvents=false) {
     // set esimtated gas limit
     message.gasLimit = simulationResult.gasLimit * 120n / 100n;
 
-    const receipt = await sendSimpleMessageV1([sequencerSigner], message, [tacContracts, groups], "0x", true);
+    const receipt = await sendSimpleMessageV1([sequencerSigner], message, tacContracts, "0x", true);
 
     if (showEvents) {
         printEvents(receipt!, tacContracts.crossChainLayer);
