@@ -1,7 +1,7 @@
 import hre, { ethers } from 'hardhat';
 import { printEvents, printBalances } from '../utils';
 import { ERC20 } from 'tac-l2-ccl/dist/typechain-types';
-import { sendSimpleMessageV1 } from 'tac-l2-ccl';
+import { sendSimpleMessageV1, simulateReceiveMessageV1, decodeCrossChainLayerErrorData } from 'tac-l2-ccl';
 import { InMessageV1Struct } from 'tac-l2-ccl/dist/typechain-types/contracts/L2/Structs.sol/IStructsInterface';
 import { loadUniswapTestEnv } from './utils';
 
@@ -10,7 +10,7 @@ async function main(showEvents=false) {
     const [signer] = await ethers.getSigners();
     const sequencerSigner = new ethers.Wallet(process.env.SEQUENCER_PRIVATE_KEY_EVM!, ethers.provider);
 
-    const { tacToken, sttonToken, tacContracts, groups, uniswapV2Proxy, uniswapV2Router02, uniswapV2Factory, lpToken } = await loadUniswapTestEnv(sequencerSigner);
+    const { tacToken, sttonToken, tacContracts, uniswapV2Proxy, uniswapV2Router02, uniswapV2Factory, lpToken } = await loadUniswapTestEnv(sequencerSigner);
 
     const entitiesToPrintBalances = [
         {name: "CrossChainLayer", address: await tacContracts.crossChainLayer.getAddress()},
@@ -30,7 +30,8 @@ async function main(showEvents=false) {
     const deadline = 19010987500n;
 
     const message: InMessageV1Struct = {
-        queryId: 5,
+        shardsKey: 5,
+        gasLimit: 0n,
         operationId: ethers.encodeBytes32String("test addLiquidity"),
         timestamp: BigInt(Math.floor(Date.now() / 1000)),
         target: to,
@@ -59,7 +60,17 @@ async function main(showEvents=false) {
         meta: [],  // tokens are already exist, no need to fill meta
     };
 
-    const receipt = await sendSimpleMessageV1([sequencerSigner], message, [tacContracts, groups], "0x", true);
+    const simulationResult = await simulateReceiveMessageV1(tacContracts, message, "0x", 10);
+
+    if (!simulationResult.simulationStatus) {
+        const decodedError = decodeCrossChainLayerErrorData(simulationResult.errorReason);
+        throw new Error(`Error while sending message: ${decodedError}`);
+    }
+
+    // set esimtated gas limit
+    message.gasLimit = simulationResult.gasLimit * 120n / 100n;
+
+    const receipt = await sendSimpleMessageV1([sequencerSigner], message, tacContracts, "0x", true);
 
     await printBalances('\nBalances after operation', tokensToPrintBalances, entitiesToPrintBalances);
 

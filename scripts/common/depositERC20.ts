@@ -1,6 +1,6 @@
 import { ethers } from "hardhat";
 import path from 'path';
-import { getCCLArtifacts, loadTacContracts, loadGroupContracts } from "tac-l2-ccl";
+import { getCCLArtifacts, loadTacContracts } from "tac-l2-ccl";
 import { CrossChainLayerToken } from "tac-l2-ccl/dist/typechain-types";
 import { loadContractFromFile } from "../utils";
 import { sendSimpleMessageV1 } from 'tac-l2-ccl';
@@ -17,7 +17,6 @@ async function main() {
     const sttonToken = loadContractFromFile<CrossChainLayerToken>(addressesFilePath, 'stTON', cclArtifacts.readArtifactSync('CrossChainLayerToken').abi, signer);
 
     const tacContracts = await loadTacContracts(addressesFilePath, signer);
-    const groups = await loadGroupContracts(addressesFilePath, signer, ["Group-0"]);
 
     console.log('signer:', await signer.getAddress());
 
@@ -27,7 +26,7 @@ async function main() {
     console.log('native balance:', await (signer.provider!).getBalance(await signer.getAddress()));
 
     const message: InMessageV1Struct = {
-        queryId: 5,
+        shardsKey: 5,
         operationId: ethers.encodeBytes32String('deposit'),
         timestamp: BigInt(Math.floor(Date.now() / 1000)),
         target: await signer.getAddress(),
@@ -43,7 +42,7 @@ async function main() {
         meta: [],  // tokens are already exist, no need to fill meta
     };
 
-    await sendSimpleMessageV1([signer], message, [tacContracts, groups]);
+    await sendSimpleMessageV1([signer], message, tacContracts);
 
     console.log('After:');
     console.log('token', await tacToken.getAddress(), 'balance:', await tacToken.balanceOf(await signer.getAddress()));

@@ -13,7 +13,6 @@ async function main(showEvents=false) {
         tokenA,
         tokenB,
         tacContracts,
-        groups,
         tacoProxy,
         tacoV2Proxy02,
         tacoFeeRouteProxy,
@@ -49,7 +48,7 @@ async function main(showEvents=false) {
     const deadLine = 19010987500n;
 
     const message: InMessageV1Struct = {
-        queryId: 5,
+        shardsKey: 5,
         operationId: 'TACO test add ERC20-ERC20 liquidity',
         timestamp: BigInt(Math.floor(Date.now() / 1000)),
         target: await tacoProxy.getAddress(),
@@ -81,7 +80,7 @@ async function main(showEvents=false) {
         meta: [],  // tokens are already exist, no need to fill meta
     };
 
-    const receipt = await sendSimpleMessageV1([sequencerSigner], message, [tacContracts, groups], "0x", true);
+    const receipt = await sendSimpleMessageV1([sequencerSigner], message, tacContracts, "0x", true);
 
     await printBalances('\nBalances after operation', tokensToPrintBalances, entitiesToPrintBalances);
 

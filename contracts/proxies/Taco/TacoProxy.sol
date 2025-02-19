@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.25;
+pragma solidity ^0.8.28;
 
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
@@ -209,7 +209,7 @@ contract TacoProxy is AppProxy {
         // CCL L2->L1 callback
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         OutMessageV1 memory message = OutMessageV1({
-            queryId: header.queryId,
+            shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
             toBridge: tokensToBridge
@@ -299,7 +299,7 @@ contract TacoProxy is AppProxy {
         // CCL L2->L1 callback
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         OutMessageV1 memory message = OutMessageV1({
-            queryId: header.queryId,
+            shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
             toBridge: tokensToBridge
@@ -364,7 +364,7 @@ contract TacoProxy is AppProxy {
         // CCL L2->L1 callback
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         OutMessageV1 memory message = OutMessageV1({
-            queryId: header.queryId,
+            shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
             toBridge: tokensToBridge

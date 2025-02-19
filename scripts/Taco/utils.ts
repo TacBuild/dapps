@@ -1,6 +1,6 @@
 import hre from "hardhat";
 import path from 'path';
-import { getCCLArtifacts, loadTacContracts, loadGroupContracts } from "tac-l2-ccl";
+import { getCCLArtifacts, loadTacContracts } from "tac-l2-ccl";
 import { CrossChainLayerToken } from "tac-l2-ccl/dist/typechain-types";
 import { loadContractFromFile, loadERC20FromFile } from "../utils";
 import { Signer } from "ethers";
@@ -123,7 +123,6 @@ export async function loadTacoTestEnv(signer: Signer, ensure: boolean = true) {
     const cclArtifacts = await getCCLArtifacts();
     const tokenA = loadContractFromFile<CrossChainLayerToken>(addressesFilePath, 'stTON', cclArtifacts.readArtifactSync('CrossChainLayerToken').abi, signer);
     const tokenB = loadContractFromFile<CrossChainLayerToken>(addressesFilePath, 'TAC', cclArtifacts.readArtifactSync('CrossChainLayerToken').abi, signer);
-    const groups = await loadGroupContracts(addressesFilePath, signer, ["Group-0"]);
 
     const tacContracts = await loadTacContracts(addressesFilePath, signer);
     const tacoProxy = loadContractFromFile<TacoProxy>(addressesFilePath, 'tacoProxy', hre.artifacts.readArtifactSync('TacoProxy').abi, signer);
@@ -137,15 +136,14 @@ export async function loadTacoTestEnv(signer: Signer, ensure: boolean = true) {
         await ensurePairs(signer, tacoProxy, tacoV2Proxy02, tacoDFMFactory, tacoApprove, tacoWETH, tokenA, tokenB);
     }
 
-    return { 
-        tokenA, 
-        tokenB, 
-        tacContracts, 
-        groups, 
-        tacoProxy, 
-        tacoV2Proxy02, 
-        tacoFeeRouteProxy, 
-        tacoDFMFactory, 
+    return {
+        tokenA,
+        tokenB,
+        tacContracts,
+        tacoProxy,
+        tacoV2Proxy02,
+        tacoFeeRouteProxy,
+        tacoDFMFactory,
         tacoApprove,
     }
 }

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.25;
+pragma solidity ^0.8.28;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -9,7 +9,7 @@ import { OutMessageV1, TacHeaderV1, TokenAmount } from "tac-l2-ccl/contracts/L2/
 
 contract TestProxy is TacProxyV1 {
 
-    event InvokeWithCallback(uint64 queryId, uint256 timestamp, bytes32 operationId, string tvmCaller, bytes extraData, TokenAmount[] receivedTokens);
+    event InvokeWithCallback(uint64 shardsKey, uint256 timestamp, bytes32 operationId, string tvmCaller, bytes extraData, TokenAmount[] receivedTokens);
 
     constructor(address crossChainLayer) TacProxyV1(crossChainLayer) {}
 
@@ -19,7 +19,7 @@ contract TestProxy is TacProxyV1 {
         // decode arguments
         TokenAmount[] memory receivedTokens = abi.decode(arguments, (TokenAmount[]));
 
-        emit InvokeWithCallback(header.queryId, header.timestamp, header.operationId, header.tvmCaller, header.extraData, receivedTokens);
+        emit InvokeWithCallback(header.shardsKey, header.timestamp, header.operationId, header.tvmCaller, header.extraData, receivedTokens);
 
         // approve to bridge
         for (uint i = 0; i < receivedTokens.length; i++) {
@@ -29,7 +29,7 @@ contract TestProxy is TacProxyV1 {
         // bridge received tokens back to TON
         _sendMessageV1(
             OutMessageV1(
-                header.queryId,
+                header.shardsKey,
                 header.tvmCaller,
                 "",
                 receivedTokens

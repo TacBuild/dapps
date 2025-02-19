@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.25;
+pragma solidity ^0.8.28;
 
 import { TransferHelper } from 'contracts/helpers/TransferHelper.sol';
 import { AppProxy } from "contracts/L2/AppProxy.sol";
@@ -105,7 +105,7 @@ contract CurveLiteTricryptoswapProxy is AppProxy {
         // CCL TAC->TON callback
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         OutMessageV1 memory message = OutMessageV1({
-            queryId: header.queryId,
+            shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
             toBridge: tokensToBridge
@@ -150,7 +150,7 @@ contract CurveLiteTricryptoswapProxy is AppProxy {
         // CCL TAC->TON callback
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         OutMessageV1 memory message = OutMessageV1({
-            queryId: header.queryId,
+            shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
             toBridge: tokensToBridge
@@ -190,7 +190,7 @@ contract CurveLiteTricryptoswapProxy is AppProxy {
         // CCL TAC->TON callback
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         OutMessageV1 memory message = OutMessageV1({
-            queryId: header.queryId,
+            shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
             toBridge: tokensToBridge
