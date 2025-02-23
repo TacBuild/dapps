@@ -3,10 +3,15 @@ pragma solidity ^0.8.28;
 
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+
 import { IUniswapV2Router02 } from '@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol';
 import { TransferHelper } from '@uniswap/lib/contracts/libraries/TransferHelper.sol';
 
-import { AppProxy } from "contracts/L2/AppProxy.sol";
+import { TacProxyV1Upgradeable } from "tac-l2-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
+
 import { OutMessageV1, TokenAmount, TacHeaderV1 } from "tac-l2-ccl/contracts/L2/Structs.sol";
 import { UniswapV2Library } from "contracts/proxies/UniswapV2/CompilerVersionAdapters.sol";
 import { ICrossChainLayer } from "tac-l2-ccl/contracts/interfaces/ICrossChainLayer.sol";
@@ -139,23 +144,42 @@ struct MixSwapArguments {
  * @title TacoProxy
  * @dev Proxy contract Taco Protocol, namely DODOV2Proxy02(createDODOVendingMachine, addDVMLiquidity) and DODOFeeRouteProxy
  */
-contract TacoProxy is AppProxy {
+contract TacoProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
 
     address public constant _ETH_ADDRESS_ = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
-    address internal immutable _approveAddress;
-    address internal immutable _wethAddress;
-    address internal immutable _feeRouteProxyAddress;
+    address internal  _approveAddress;
+    address internal  _wethAddress;
+    address internal  _feeRouteProxyAddress;
+    address internal _appAddress;
 
     /**
-     * @dev Constructor function to initialize the contract with initial state.
-     * @param appAddress Application address.
-     * @param crossChainLayer Cross-chain layer contract address.
+     * @dev Initialize the contract.
      */
-    constructor(address appAddress, address feeRouteProxyAddress, address crossChainLayer) AppProxy(appAddress, crossChainLayer) {
-        address approveProxy = IDODOV2Proxy01(appAddress)._DODO_APPROVE_PROXY_();
-        _approveAddress = IDODOV2Proxy01(approveProxy)._DODO_APPROVE_();
+    function initialize(address adminAddress, address feeRouteProxyAddress, address appAddress, address crossChainLayer) public initializer {
+        __Ownable_init(adminAddress);
+        __UUPSUpgradeable_init();
+        __TacProxyV1Upgradeable_init(crossChainLayer); 
+        _appAddress = appAddress;
+        _approveAddress = IDODOV2Proxy01(IDODOV2Proxy01(appAddress)._DODO_APPROVE_PROXY_())._DODO_APPROVE_();
         _wethAddress = IDODOV2Proxy01(appAddress)._WETH_();
         _feeRouteProxyAddress = feeRouteProxyAddress;
+        transferOwnership(adminAddress);
+    }
+    
+   
+
+
+    /**
+     * @dev Upgrades the contract.
+     */
+    function _authorizeUpgrade(address) internal override onlyOwner {}
+
+    /**
+     * @dev Returns the application address.
+     * @return address The application address.
+     */
+    function getAppAddress() external view returns (address) {
+        return _appAddress;
     }
 
     function _createDODOVendingMachine(

@@ -1,8 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+
 import { TransferHelper } from 'contracts/helpers/TransferHelper.sol';
-import { AppProxy } from "contracts/L2/AppProxy.sol";
+import { TacProxyV1Upgradeable } from "tac-l2-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
 import { OutMessageV1, TokenAmount, TacHeaderV1 } from "tac-l2-ccl/contracts/L2/Structs.sol";
 
 /**
@@ -60,15 +64,22 @@ interface ITwocryptoswapPool {
  * @title CurveLiteTwocryptoswapProxy
  * @dev Proxy contract CurveLite, working with twocryptoswap pools contracts directly
  */
-contract CurveLiteTwocryptoswapProxy is AppProxy {
+contract CurveLiteTwocryptoswapProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
     /**
-     * @dev Constructor function to initialize the contract with initial state. 
-     * @param crossChainLayer Cross chain layer contract address.
-     * The decentralized application (dApp) operates as a dynamic pool
-     * The initial parameter, appAddress, of the AppProxy is not required. Consequently, we assign an empty address to it.
+     * @dev Initialize the contract.
      */
-    constructor(address crossChainLayer) AppProxy(address(0), crossChainLayer) {
+    function initialize(address adminAddress, address crossChainLayer) public initializer {
+        __Ownable_init(adminAddress);
+        __UUPSUpgradeable_init();
+        __TacProxyV1Upgradeable_init(crossChainLayer);
+        transferOwnership(adminAddress);
     }
+
+    /**
+     * @dev Upgrades the contract.
+     */
+    function _authorizeUpgrade(address) internal override onlyOwner {}
+
 
     /**
      * @dev A proxy to addLiquidity
