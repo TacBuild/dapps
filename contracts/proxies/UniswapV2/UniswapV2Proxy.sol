@@ -100,7 +100,6 @@ contract UniswapV2Proxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgrad
         __UUPSUpgradeable_init();
         __TacProxyV1Upgradeable_init(crossChainLayer);
         _appAddress = appAddress;
-        transferOwnership(adminAddress);
     }
 
     /**

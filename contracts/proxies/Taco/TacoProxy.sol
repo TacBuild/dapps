@@ -163,7 +163,6 @@ contract TacoProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable
         _approveAddress = IDODOV2Proxy01(IDODOV2Proxy01(appAddress)._DODO_APPROVE_PROXY_())._DODO_APPROVE_();
         _wethAddress = IDODOV2Proxy01(appAddress)._WETH_();
         _feeRouteProxyAddress = feeRouteProxyAddress;
-        transferOwnership(adminAddress);
     }
     
    
