@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 
-import { TransferHelper } from 'contracts/helpers/TransferHelper.sol';
-import { AppProxy } from "contracts/L2/AppProxy.sol";
-import { OutMessage, TokenAmount, TacHeaderV1 } from "tac-l2-ccl/contracts/L2/Structs.sol";
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
+import { TransferHelper } from 'contracts/helpers/TransferHelper.sol';
+import { TacProxyV1Upgradeable } from "tac-l2-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
+import { OutMessageV1, TokenAmount, TacHeaderV1 } from "tac-l2-ccl/contracts/L2/Structs.sol";
 /**
  * @title IStableswapPool Interface
  * @notice This interface defines the core functionalities for a stable liquidity pool in a CurveLite.
@@ -63,15 +66,20 @@ interface IStableswapPool {
  * @title CurveLiteStableswapProxy
  * @dev Proxy contract CurveLite, working with Stableswap pools contracts directly
  */
-contract CurveLiteStableswapProxy is AppProxy {
+contract CurveLiteStableswapProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
     /**
-     * @dev Constructor function to initialize the contract with initial state. 
-     * @param settingsAddress Settings address.
-     * The decentralized application (dApp) operates as a dynamic pool
-     * The initial parameter, appAddress, of the AppProxy is not required. Consequently, we assign an empty address to it.
+     * @dev Initialize the contract.
      */
-    constructor(address settingsAddress) AppProxy(address(0), settingsAddress) {
+    function initialize(address adminAddress, address crossChainLayer) public initializer {
+        __Ownable_init(adminAddress);
+        __UUPSUpgradeable_init();
+        __TacProxyV1Upgradeable_init(crossChainLayer);
     }
+
+    /**
+     * @dev Upgrades the contract.
+     */
+    function _authorizeUpgrade(address) internal override onlyOwner {}
 
     /**
      * @dev A proxy to addLiquidity
@@ -99,17 +107,17 @@ contract CurveLiteStableswapProxy is AppProxy {
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(pool, liquidity);
 
-        TransferHelper.safeApprove(pool, getCrossChainLayerAddress(), liquidity);
+        TransferHelper.safeApprove(pool, _getCrossChainLayerAddress(), liquidity);
 
         // CCL TAC->TON callback
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
-        OutMessage memory message = OutMessage({
-            queryId: header.queryId,
+        OutMessageV1 memory message = OutMessageV1({
+            shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
             toBridge: tokensToBridge
         });
-        sendMessage(message, 0);
+        _sendMessageV1(message, 0);
     }
 
     /**
@@ -138,7 +146,7 @@ contract CurveLiteStableswapProxy is AppProxy {
         tokensToBridge[0] = TokenAmount(tokenA, amounts[0]);
         tokensToBridge[1] = TokenAmount(tokenB, amounts[1]);
 
-        address crossChainLayer = getCrossChainLayerAddress();
+        address crossChainLayer = _getCrossChainLayerAddress();
 
         // approve tokens to CCL
         TransferHelper.safeApprove(tokenA, crossChainLayer, amounts[0]);
@@ -146,13 +154,13 @@ contract CurveLiteStableswapProxy is AppProxy {
 
         // CCL TAC->TON callback
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
-        OutMessage memory message = OutMessage({
-            queryId: header.queryId,
+        OutMessageV1 memory message = OutMessageV1({
+            shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
             toBridge: tokensToBridge
         });
-        sendMessage(message, 0);
+        _sendMessageV1(message, 0);
     }
 
     /**
@@ -182,16 +190,16 @@ contract CurveLiteStableswapProxy is AppProxy {
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(tokenOut, amountOut);
 
-        TransferHelper.safeApprove(tokenOut, getCrossChainLayerAddress(), amountOut);
+        TransferHelper.safeApprove(tokenOut, _getCrossChainLayerAddress(), amountOut);
 
         // CCL TAC->TON callback
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
-        OutMessage memory message = OutMessage({
-            queryId: header.queryId,
+        OutMessageV1 memory message = OutMessageV1({
+            shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
             toBridge: tokensToBridge
         });
-        sendMessage(message, 0);
+        _sendMessageV1(message, 0);
     }
 }
