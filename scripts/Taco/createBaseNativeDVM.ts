@@ -2,8 +2,8 @@ import { ethers } from 'hardhat';
 import path from 'path';
 import { printEvents, loadERC20FromFile } from '../utils';
 import { loadTacoTestEnv } from './utils';
-import { sendSimpleMessage } from 'tac-l2-ccl';
-import { InMessageStruct } from 'tac-l2-ccl/dist/typechain-types/contracts/L2/CrossChainLayer';
+import { sendSimpleMessageV1 } from 'tac-l2-ccl';
+import { InMessageV1Struct } from 'tac-l2-ccl/dist/typechain-types/contracts/L2/Structs.sol/IStructsInterface';
 
 
 async function main(showEvents=false) {
@@ -13,7 +13,6 @@ async function main(showEvents=false) {
         tokenA,
         tokenB,
         tacContracts,
-        groups,
         tacoProxy,
         tacoV2Proxy02,
         tacoFeeRouteProxy,
@@ -43,8 +42,8 @@ async function main(showEvents=false) {
     const isOpenTWAP = false;
     const deadLine = 19010987500n;
 
-    const message: InMessageStruct = {
-        queryId: 5,
+    const message: InMessageV1Struct = {
+        shardsKey: 5,
         operationId: 'TACO test add ERC20 DVM',
         timestamp: BigInt(Math.floor(Date.now() / 1000)),
         target: await tacoProxy.getAddress(),
@@ -75,7 +74,7 @@ async function main(showEvents=false) {
         meta: [],  // tokens are already exist, no need to fill meta
     };
 
-    const receipt = await sendSimpleMessage([sequencerSigner], message, [tacContracts, groups], true);
+    const receipt = await sendSimpleMessageV1([sequencerSigner], message, tacContracts, "0x", true);
 
     pools = await tacoDFMFactory.getDODOPool(await tacoWETH.getAddress(), await tokenA.getAddress());
     console.log('pool successfully created:', pools.length != 0);

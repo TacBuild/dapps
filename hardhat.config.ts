@@ -12,7 +12,7 @@ const config: HardhatUserConfig = {
   solidity: {
     compilers: [
       {
-        version: "0.8.25",
+        version: "0.8.28",
         settings: {
           optimizer: {
             enabled: true,
@@ -33,15 +33,13 @@ const config: HardhatUserConfig = {
       },
       allowBlocksWithSameTimestamp: true,
       forking: {
-        url: "https://turin.rpc.tac.build",
-      }
-  
+        url: TAC_TESTNET_URL,
+        blockNumber: 2153000,
+      },
     },
     localhost: {
 	    url:  "http://127.0.0.1:8545",
-    },
-    polygon: {
-      url: "https://tac-dev-rpc.eu-north-2.gateway.fm"
+      timeout: 3600000
     },
     tac_testnet: {
       url: TAC_TESTNET_URL

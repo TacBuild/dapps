@@ -1,9 +1,13 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.25;
+pragma solidity ^0.8.28;
+
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import { TransferHelper } from 'contracts/helpers/TransferHelper.sol';
-import { AppProxy } from "contracts/L2/AppProxy.sol";
-import { OutMessage, TokenAmount, TacHeaderV1 } from "tac-l2-ccl/contracts/L2/Structs.sol";
+import { TacProxyV1Upgradeable } from "tac-l2-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
+import { OutMessageV1, TokenAmount, TacHeaderV1 } from "tac-l2-ccl/contracts/L2/Structs.sol";
 
 /**
  * @title ITricryptoswapPool Interface
@@ -60,15 +64,23 @@ interface ITricryptoswapPool {
  * @title CurveLiteTricryptoswapProxy
  * @dev Proxy contract CurveLite, working with tricryptoswap pools contracts directly
  */
-contract CurveLiteTricryptoswapProxy is AppProxy {
+contract CurveLiteTricryptoswapProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
+  
     /**
-     * @dev Constructor function to initialize the contract with initial state. 
-     * @param settingsAddress Settings address.
-     * The decentralized application (dApp) operates as a dynamic pool
-     * The initial parameter, appAddress, of the AppProxy is not required. Consequently, we assign an empty address to it.
+     * @dev Initialize the contract.
      */
-    constructor(address settingsAddress) AppProxy(address(0), settingsAddress) {
+    function initialize(address adminAddress, address crossChainLayer) public initializer {
+        __Ownable_init(adminAddress);
+        __UUPSUpgradeable_init();
+        __TacProxyV1Upgradeable_init(crossChainLayer);
+        transferOwnership(adminAddress);
     }
+
+    /**
+     * @dev Upgrades the contract.
+     */
+    function _authorizeUpgrade(address) internal override onlyOwner {}
+
 
     /**
      * @dev A proxy to addLiquidity
@@ -78,7 +90,7 @@ contract CurveLiteTricryptoswapProxy is AppProxy {
     function addLiquidity(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) public {
+    ) public _onlyCrossChainLayer {
         (address pool, uint256[3] memory amounts, uint256 minMintAmount) =
                 abi.decode(arguments, (address, uint256[3], uint256));
         // claim tokens addresses
@@ -101,17 +113,16 @@ contract CurveLiteTricryptoswapProxy is AppProxy {
         tokensToBridge[0] = TokenAmount(tokenLiquidity, liquidity);
 
         // approve LP tokens to CCL
-        TransferHelper.safeApprove(tokenLiquidity, getCrossChainLayerAddress(), liquidity);
-
+        TransferHelper.safeApprove(pool, _getCrossChainLayerAddress(), liquidity);
         // CCL TAC->TON callback
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
-        OutMessage memory message = OutMessage({
-            queryId: header.queryId,
+        OutMessageV1 memory message = OutMessageV1({
+            shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
             toBridge: tokensToBridge
         });
-        sendMessage(message, 0);
+        _sendMessageV1(message, 0);
     }
 
     /**
@@ -120,7 +131,7 @@ contract CurveLiteTricryptoswapProxy is AppProxy {
     function removeLiquidity(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) public {
+    ) public _onlyCrossChainLayer {
         (address pool, uint256 amount, uint256[3] memory min_amounts) =
                 abi.decode(arguments, (address, uint256, uint256[3]));
         // claim tokens addresses
@@ -142,7 +153,7 @@ contract CurveLiteTricryptoswapProxy is AppProxy {
         tokensToBridge[1] = TokenAmount(tokenB, amounts[1]);
         tokensToBridge[2] = TokenAmount(tokenC, amounts[2]);
 
-        address crossChainLayerAddress = getCrossChainLayerAddress();
+        address crossChainLayerAddress = _getCrossChainLayerAddress();
 
         TransferHelper.safeApprove(tokenA, crossChainLayerAddress, amounts[0]);
         TransferHelper.safeApprove(tokenB, crossChainLayerAddress, amounts[1]);
@@ -150,13 +161,13 @@ contract CurveLiteTricryptoswapProxy is AppProxy {
 
         // CCL TAC->TON callback
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
-        OutMessage memory message = OutMessage({
-            queryId: header.queryId,
+        OutMessageV1 memory message = OutMessageV1({
+            shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
             toBridge: tokensToBridge
         });
-        sendMessage(message, 0);
+        _sendMessageV1(message, 0);
     }
 
     /**
@@ -165,7 +176,7 @@ contract CurveLiteTricryptoswapProxy is AppProxy {
     function exchange(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) public {
+    ) public _onlyCrossChainLayer {
         (address pool, uint256 i, uint256 j, uint256 dx, uint256 min_dy) =
                 abi.decode(arguments, (address, uint256, uint256, uint256, uint256));
         // claim tokens addresses
@@ -186,16 +197,16 @@ contract CurveLiteTricryptoswapProxy is AppProxy {
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(tokenOut, amountOut);
 
-        TransferHelper.safeApprove(tokenOut, getCrossChainLayerAddress(), amountOut);
+        TransferHelper.safeApprove(tokenOut, _getCrossChainLayerAddress(), amountOut);
 
         // CCL TAC->TON callback
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
-        OutMessage memory message = OutMessage({
-            queryId: header.queryId,
+        OutMessageV1 memory message = OutMessageV1({
+            shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
             toBridge: tokensToBridge
         });
-        sendMessage(message, 0);
+        _sendMessageV1(message, 0);
     }
 }

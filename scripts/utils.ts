@@ -2,13 +2,16 @@ import { ethers } from "hardhat";
 import fs from 'fs';
 import { BaseContract, Signer, TransactionReceipt } from "ethers";
 import { ERC20, ERC20__factory } from "tac-l2-ccl/dist/typechain-types";
-import assert from "assert";
+
+
 
 export function loadContractFromFile<T>(addressesFilePath: string, entryName: string, contractAbi: any[], signer: Signer): T {
     const addresses: {
         [entryName: string]: string;
     } = JSON.parse(fs.readFileSync(addressesFilePath, 'utf8'));
-    assert(addresses[entryName] !== undefined, `Contract address for ${entryName} not found in ${addressesFilePath}`);
+    if (addresses[entryName] === undefined) {
+        throw new Error(`Contract address for ${entryName} not found in ${addressesFilePath}`);
+    }
     return new ethers.Contract(addresses[entryName], contractAbi, signer) as unknown as T;
 }
 
@@ -16,8 +19,9 @@ export function loadERC20FromFile(addressesFilePath: string, entryName: string, 
     const addresses: {
         [entryName: string]: string;
     } = JSON.parse(fs.readFileSync(addressesFilePath, 'utf8'));
-    assert(addresses[entryName] !== undefined, `Token address for ${entryName} not found in ${addressesFilePath}`);
-    
+    if (addresses[entryName] === undefined) {
+        throw new Error(`Token contract address for ${entryName} not found in ${addressesFilePath}`);
+    }
     return ERC20__factory.connect(addresses[entryName], signer);
 }
 

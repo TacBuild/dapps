@@ -2,8 +2,8 @@ import { ethers } from 'hardhat';
 import path from 'path';
 import { printEvents, printBalances, loadERC20FromFile } from '../utils';
 import { ERC20 } from 'tac-l2-ccl/dist/typechain-types';
-import { sendSimpleMessage } from 'tac-l2-ccl';
-import { InMessageStruct } from 'tac-l2-ccl/dist/typechain-types/contracts/L2/CrossChainLayer';
+import { sendSimpleMessageV1 } from 'tac-l2-ccl';
+import { InMessageV1Struct } from 'tac-l2-ccl/dist/typechain-types/contracts/L2/Structs.sol/IStructsInterface';
 import { loadTacoTestEnv } from './utils';
 
 async function main(showEvents=false) {
@@ -13,7 +13,6 @@ async function main(showEvents=false) {
         tokenA,
         tokenB,
         tacContracts,
-        groups,
         tacoProxy,
         tacoV2Proxy02,
         tacoFeeRouteProxy,
@@ -47,8 +46,8 @@ async function main(showEvents=false) {
     const flag = 1 // 0 - ERC20, 1 - baseInETH, 2 - quoteInETH
     const deadLine = 19010987500n;
 
-    const message: InMessageStruct = {
-        queryId: 5,
+    const message: InMessageV1Struct = {
+        shardsKey: 5,
         operationId: 'TACO test add TAC-ERC20 liquidity',
         timestamp: BigInt(Math.floor(Date.now() / 1000)),
         target: await tacoProxy.getAddress(),
@@ -77,7 +76,7 @@ async function main(showEvents=false) {
         meta: [],  // tokens are already exist, no need to fill meta
     };
 
-    const receipt = await sendSimpleMessage([sequencerSigner], message, [tacContracts, groups], true);
+    const receipt = await sendSimpleMessageV1([sequencerSigner], message, tacContracts, "0x", true);
 
     await printBalances('\nBalances after operation', tokensToPrintBalances, entitiesToPrintBalances);
 

@@ -24,14 +24,14 @@ describe("TacLocalTestSDK", () => {
         const crossChainLayerAddress = testSdk.create(ethers.provider);
         
         existedToken = await deploy<TestToken>(admin, hre.artifacts.readArtifactSync("TestToken"), ["ExistedToken", "TokenE"], undefined, false);
-        proxyContract = await deploy<TestProxy>(admin, hre.artifacts.readArtifactSync("TestProxy"), [crossChainLayerAddress, await existedToken.getAddress()], undefined, false);
+        proxyContract = await deploy<TestProxy>(admin, hre.artifacts.readArtifactSync("TestProxy"), [crossChainLayerAddress], undefined, false);
 
     });
 
     it('Test send message', async () => {
 
         // define query id
-        const queryId = 1n;
+        const shardsKey = 1n;
         // define operation id (it'll be created by tac infrasctaucture, but here you can define any bytes32 value)
         const operationId = ethers.encodeBytes32String("operationId");
         // define untrusted extra data by executor (it's not implemented yet on tac infrasctaucture - just empty bytes)
@@ -85,7 +85,7 @@ describe("TacLocalTestSDK", () => {
 
         // send message
         const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
-            queryId,
+            shardsKey,
             target,
             methodName,
             encodedArguments,
@@ -108,7 +108,7 @@ describe("TacLocalTestSDK", () => {
         // check out messages
         expect(outMessages.length).to.be.eq(1);
         const outMessage = outMessages[0];
-        expect(outMessage.queryId).to.be.eq(queryId);
+        expect(outMessage.shardsKey).to.be.eq(shardsKey);
         expect(outMessage.operationId).to.be.eq(operationId);
         expect(outMessage.callerAddress).to.be.eq(await proxyContract.getAddress());
         expect(outMessage.targetAddress).to.be.eq(tvmWalletCaller);
@@ -129,9 +129,9 @@ describe("TacLocalTestSDK", () => {
             const event = proxyContract.interface.parseLog(log);
             if (event && event.name === "InvokeWithCallback") {
                 found = true;
-                // event InvokeWithCallback(uint64 queryId, uint256 timestamp, string operationId, string tvmCaller, bytes extraData, TokenAmount[] receivedTokens);
+                // event InvokeWithCallback(uint64 shardsKey, uint256 timestamp, string operationId, string tvmCaller, bytes extraData, TokenAmount[] receivedTokens);
                 const typedEvent = event as unknown as InvokeWithCallbackEvent.LogDescription;
-                expect(typedEvent.args.queryId).to.be.eq(queryId);
+                expect(typedEvent.args.shardsKey).to.be.eq(shardsKey);
                 expect(typedEvent.args.timestamp).to.be.eq(timestamp);
                 expect(typedEvent.args.operationId).to.be.eq(operationId);
                 expect(typedEvent.args.tvmCaller).to.be.eq(tvmWalletCaller);
