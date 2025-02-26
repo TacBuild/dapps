@@ -156,9 +156,10 @@ contract TacoProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable
      * @dev Initialize the contract.
      */
     function initialize(address adminAddress, address feeRouteProxyAddress, address appAddress, address crossChainLayer) public initializer {
+        __TacProxyV1Upgradeable_init(crossChainLayer); 
         __Ownable_init(adminAddress);
         __UUPSUpgradeable_init();
-        __TacProxyV1Upgradeable_init(crossChainLayer); 
+        
         _appAddress = appAddress;
         _approveAddress = IDODOV2Proxy01(IDODOV2Proxy01(appAddress)._DODO_APPROVE_PROXY_())._DODO_APPROVE_();
         _wethAddress = IDODOV2Proxy01(appAddress)._WETH_();

@@ -1,7 +1,9 @@
-import { ethers } from "hardhat";
 import fs from 'fs';
 import { BaseContract, Signer, TransactionReceipt } from "ethers";
 import { ERC20, ERC20__factory } from "tac-l2-ccl/dist/typechain-types";
+import hre, { ethers, upgrades } from "hardhat";
+import { Artifact, Libraries } from "hardhat/types";
+
 
 
 
@@ -43,4 +45,37 @@ export async function printBalances(printString: string, tokens: { contract: ERC
             console.log(`${ token.name ? token.name : await token.contract.symbol() }: ${ethers.formatEther(balance)}`);
         }
     }
+}
+
+
+
+
+export async function deployUpgradableLocal<T>(deployer: Signer, contractArtifact: Artifact, args: any[], libs: Libraries | undefined = undefined, verbose: boolean = false): Promise<T> {
+    const factory = (await ethers.getContractFactoryFromArtifact(contractArtifact, { libraries: libs })).connect(deployer);
+
+    // deploy without consctructor params
+    const contract = await factory.deploy();
+    await contract.waitForDeployment();
+    // init contract
+    const tx = await contract.initialize(...args);
+    await tx.wait();
+
+    if (verbose) {
+        console.log(`[${contractArtifact.contractName} : ${contractArtifact.contractName}] Deployment upgradable in local node successfull:`, await contract.getAddress());
+    }
+
+    return contract as unknown as T;
+}
+
+export async function deployUpgradable<T>(deployer: Signer, contractArtifact: Artifact, args: any[], libs: Libraries | undefined = undefined, verbose: boolean = false): Promise<T> {
+    const factory = (await ethers.getContractFactoryFromArtifact(contractArtifact, { libraries: libs })).connect(deployer);
+
+    const contract = await upgrades.deployProxy(factory, args, { kind: "uups" });
+    await contract.waitForDeployment();
+
+    if (verbose) {
+        console.log(`[${contractArtifact.contractName} : ${contractArtifact.contractName}] Deployment upgradable successfull:`, await contract.getAddress());
+    }
+
+    return contract as unknown as T;
 }

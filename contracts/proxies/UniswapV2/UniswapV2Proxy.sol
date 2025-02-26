@@ -96,9 +96,10 @@ contract UniswapV2Proxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgrad
      * @dev Initialize the contract.
      */
     function initialize(address adminAddress,address appAddress, address crossChainLayer) public initializer {
+        __TacProxyV1Upgradeable_init(crossChainLayer);
         __Ownable_init(adminAddress);
         __UUPSUpgradeable_init();
-        __TacProxyV1Upgradeable_init(crossChainLayer);
+        
         _appAddress = appAddress;
     }
 
