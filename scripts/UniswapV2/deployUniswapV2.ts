@@ -5,7 +5,7 @@ import routerArtifact from "@uniswap/v2-periphery/build/UniswapV2Router02.json";
 import { ContractFactory, Signer } from 'ethers';
 import { UniswapV2Proxy } from '../../typechain-types';
 import { IUniswapV2Router02, IUniswapV2Factory } from '../../typechain-types';
-import {deployUpgradableLocal, deployUpgradable} from '../utils'
+import { deployUpgradable } from 'tac-l2-ccl'
 
 type UniswapContracts = {
     uniswapV2Factory: IUniswapV2Factory,
@@ -23,15 +23,7 @@ export async function deployUniswapV2(deployer: Signer, wTACAddress: string, cro
     const uniswapV2Router02 = (await uniswapV2Router02_factory.deploy(await uniswapV2Factory.getAddress(), wTACAddress)) as IUniswapV2Router02;
     console.log(`UniswapV2Router02 deployed at: ${await uniswapV2Router02.getAddress()}`);
     // Proxy
-    let deployFunc;
-    if (localTest) {
-        deployFunc = deployUpgradableLocal;
-    } else {
-        deployFunc = deployUpgradable;
-    }
-    
-    
-    const uniswapV2Proxy = await deployFunc<UniswapV2Proxy>(deployer, hre.artifacts.readArtifactSync('UniswapV2Proxy'), [await deployer.getAddress(), await uniswapV2Router02.getAddress(), crossChainLayerAddress], undefined, true);
+    const uniswapV2Proxy = await deployUpgradable<UniswapV2Proxy>(deployer, hre.artifacts.readArtifactSync('UniswapV2Proxy'), [await deployer.getAddress(), await uniswapV2Router02.getAddress(), crossChainLayerAddress], undefined, true);
 
     return { uniswapV2Factory, uniswapV2Router02, uniswapV2Proxy };
 }

@@ -2,19 +2,11 @@ import hre from 'hardhat';
 import { TacoProxy } from '../../typechain-types/';
 import { deploy } from "tac-l2-ccl";
 import { Signer } from 'ethers';
-import {deployUpgradableLocal, deployUpgradable} from '../utils'
+import { deployUpgradable } from 'tac-l2-ccl'
 
 export async function deployTacoProxy(deployer: Signer, tacoConfig: TacoConfig, crossChainLayerAddress: string, localTest: boolean = false): Promise<TacoProxy> {
-    // Proxy
-    let deployFunc;
-    if (localTest) {
-        deployFunc = deployUpgradableLocal;
-    } else {
-        deployFunc = deployUpgradable;
-    }
-    
-    
-    const tacoProxy = await deployFunc<TacoProxy>(
+    // Proxy 
+    const tacoProxy = await deployUpgradable<TacoProxy>(
         deployer,
         hre.artifacts.readArtifactSync('TacoProxy'),
         [await deployer.getAddress(), tacoConfig.tacoV2Proxy02, tacoConfig.tacoFeeRouteProxy, crossChainLayerAddress],
