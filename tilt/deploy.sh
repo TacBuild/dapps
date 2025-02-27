@@ -1,26 +1,37 @@
 #!/bin/sh
 
-NETWORK=""
-if [ -z "$DEPLOY_ENV" ]; then
-    echo "DEPLOY_ENV undefined in env"
-    exit 1
-elif [ "$DEPLOY_ENV" = "localhost" ]; then
-    NETWORK="localhost"
-elif [ "$DEPLOY_ENV" = "testnet" ]; then
-        NETWORK="tac_testnet"
-elif [ "$DEPLOY_ENV" = "mainnet" ]; then
-    NETWORK="tac_mainnet"
+# parse cli args to find useTilt flag
+useTilt=false
+for arg in "$@"; do
+  case $arg in
+    --useTilt)
+      useTilt=true
+      shift
+      ;;
+  esac
+done
+
+if [ "$useTilt" = false ]; then
+  # use env vars from local ".env" file
+  export "$(grep -v '^#' .env | xargs)"
+  NETWORK=""
+  if [ -z "$DEPLOY_ENV" ]; then
+      echo "DEPLOY_ENV undefined in .env"
+      exit 1
+  elif [ "$DEPLOY_ENV" = "localhost" ]; then
+      NETWORK="localhost"
+  elif [ "$DEPLOY_ENV" = "testnet" ]; then
+      NETWORK="tac_testnet"
+  elif [ "$DEPLOY_ENV" = "mainnet" ]; then
+      NETWORK="tac_mainnet"
+  fi
+  npx hardhat --network $NETWORK run ./scripts/UniswapV2/deploy.ts
+  echo "------------------DEPLOY FINISHED------------------"
+
+elif [ "$useTilt" = true ]; then
+  npx hardhat --network localhost run ./scripts/UniswapV2/deploy.ts
+  npx hardhat --network localhost run ./scripts/common/deploySimpleStorage.ts
+  echo "------------------DEPLOY FINISHED------------------"
+  touch /tmp/DEPLOY_FINISHED
+  sleep infinity
 fi
-
-npx hardhat --network $NETWORK run ./scripts/common/deployStTON.ts
-npx hardhat --network $NETWORK run ./scripts/common/deployTAC.ts
-npx hardhat --network $NETWORK run ./scripts/common/depositTAC.ts
-npx hardhat --network $NETWORK run ./scripts/UniswapV2/deploy.ts
-npx hardhat --network $NETWORK run ./scripts/UniswapV2/addLiquidityWithNative.ts
-npx hardhat --network $NETWORK run ./scripts/UniswapV2/swapExactTokensForETH.ts
-npx hardhat --network $NETWORK run ./scripts/UniswapV2/addLiquidity.ts
-npx hardhat --network $NETWORK run ./scripts/common/deploySimpleStorage.ts
-
-echo "------------------DEPLOY FINISHED------------------"
-# Keep container running
-sleep infinity
