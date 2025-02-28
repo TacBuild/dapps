@@ -72,7 +72,6 @@ contract CurveLiteTwocryptoswapProxy is TacProxyV1Upgradeable, OwnableUpgradeabl
         __TacProxyV1Upgradeable_init(crossChainLayer);
         __Ownable_init(adminAddress);
         __UUPSUpgradeable_init();
-        
     }
 
     /**

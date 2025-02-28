@@ -390,27 +390,6 @@
             {
                 "name": "_to",
                 "type": "address"
-            }
-        ],
-        "outputs": [
-            {
-                "name": "",
-                "type": "address"
-            }
-        ]
-    },
-    {
-        "stateMutability": "view",
-        "type": "function",
-        "name": "find_pool_for_coins",
-        "inputs": [
-            {
-                "name": "_from",
-                "type": "address"
-            },
-            {
-                "name": "_to",
-                "type": "address"
             },
             {
                 "name": "i",

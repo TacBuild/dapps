@@ -1,6 +1,6 @@
 import hre, { ethers } from 'hardhat';
 import factoryAbi from "./factoryAbi.json"
-
+import {CurveLiteTwocryptoswapTestnetConfig} from "./config/testnetConfig"
 
 const poolPresetParams = {
     implementation_id: 0,
@@ -17,9 +17,9 @@ const poolPresetParams = {
 
 
 export async function deployPoolTwocryptoswap(tokenAddress1: string, tokenAddress2: string, name: string, symbol: string): Promise<string> {
-    const signer = (await ethers.getSigners())[0];
-    
-    const factoryContract = new ethers.Contract(process.env.CURVE_LITE_TWOCRYPTOSWAP_FACTORY_ADDRESS as string, factoryAbi, signer);
+    const sequencerSigner = new ethers.Wallet(process.env.SEQUENCER_PRIVATE_KEY_EVM!, ethers.provider);
+
+    const factoryContract = new ethers.Contract(CurveLiteTwocryptoswapTestnetConfig.CurveLiteTwocryptoswapFactory, factoryAbi, sequencerSigner);
     const gasPrice = ethers.parseUnits("50", "gwei");
 
     const tx = await factoryContract.deploy_pool(name, symbol, [tokenAddress1, tokenAddress2], ...Object.values(poolPresetParams),
