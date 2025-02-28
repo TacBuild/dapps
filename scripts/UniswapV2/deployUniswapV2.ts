@@ -1,5 +1,5 @@
 import hre from "hardhat";
-import { deploy } from "tac-l2-ccl";
+import { deploy } from "@tonappchain/evm-ccl";
 import factoryArtifact from "@uniswap/v2-core/build/UniswapV2Factory.json";
 import routerArtifact from "@uniswap/v2-periphery/build/UniswapV2Router02.json";
 import { ContractFactory, Signer } from 'ethers';

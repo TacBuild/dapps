@@ -1,8 +1,8 @@
 import { ethers } from "hardhat";
 import path from 'path';
-import { loadTacContracts } from "tac-l2-ccl";
-import { OutMessageV1Struct } from "../../typechain-types/tac-l2-ccl/contracts/L2/Structs.sol/IStructsInterface";
-import { encodeOutMessageV1 } from 'tac-l2-ccl';
+import { loadTacContracts } from "@tonappchain/evm-ccl";
+import { OutMessageV1Struct } from "../../typechain-types/@tonappchain/evm-ccl/contracts/L2/Structs.sol/IStructsInterface";
+import { encodeOutMessageV1 } from '@tonappchain/evm-ccl';
 
 async function main() {
     const signer = new ethers.Wallet(process.env.DEPLOYER_PRIVATE_KEY!, ethers.provider);

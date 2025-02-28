@@ -1,5 +1,5 @@
 import { ethers } from 'hardhat';
-import { loadTacContracts, saveContractAddress } from "tac-l2-ccl";
+import { loadTacContracts, saveContractAddress } from "@tonappchain/evm-ccl";
 import { deployUniswapV2 } from './deployUniswapV2';
 import path from 'path';
 
