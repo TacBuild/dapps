@@ -1,6 +1,6 @@
 pragma solidity ^0.8.0;
 
-import { TacProxyV1 } from "tac-l2-ccl/contracts/proxies/TacProxyV1.sol";
+import { TacProxyV1 } from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1.sol";
 
 contract SimpleStorage is TacProxyV1 {
     uint256 private storedData;

@@ -1,10 +1,10 @@
 import hre from "hardhat";
 import path from 'path';
-import { getCCLArtifacts, loadTacContracts } from "tac-l2-ccl";
-import { CrossChainLayerToken } from "tac-l2-ccl/dist/typechain-types";
+import { getCCLArtifacts, loadTacContracts } from "@tonappchain/evm-ccl";
+import { CrossChainLayerToken } from "@tonappchain/evm-ccl/dist/typechain-types";
 import { loadContractFromFile, loadERC20FromFile } from "../utils";
 import { Signer } from "ethers";
-import { ERC20 } from "tac-l2-ccl/dist/typechain-types";
+import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types";
 import { TacoProxy, IDODOV2Proxy01, IDODOFeeRouteProxy, IDVMFactory, IDODOApprove } from "../../typechain-types";
 
 
