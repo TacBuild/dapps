@@ -16,7 +16,6 @@ import { OutMessageV1, TokenAmount, TacHeaderV1 } from "tac-l2-ccl/contracts/L2/
 import { UniswapV2Library } from "contracts/proxies/UniswapV2/CompilerVersionAdapters.sol";
 import { ICrossChainLayer } from "tac-l2-ccl/contracts/interfaces/ICrossChainLayer.sol";
 
-
 /**
  * @title DVM pool interface (from https://github.com/DODOEX/contractV2/blob/main/contracts/DODOVendingMachine/intf/IDVM.sol)
  */
@@ -155,19 +154,16 @@ contract TacoProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable
     /**
      * @dev Initialize the contract.
      */
-    function initialize(address adminAddress, address feeRouteProxyAddress, address appAddress, address crossChainLayer) public initializer {
-        __TacProxyV1Upgradeable_init(crossChainLayer); 
+    function initialize(address adminAddress, address appAddress, address feeRouteProxyAddress, address crossChainLayer) public initializer {
+        __TacProxyV1Upgradeable_init(crossChainLayer);
         __Ownable_init(adminAddress);
         __UUPSUpgradeable_init();
-        
+
         _appAddress = appAddress;
         _approveAddress = IDODOV2Proxy01(IDODOV2Proxy01(appAddress)._DODO_APPROVE_PROXY_())._DODO_APPROVE_();
         _wethAddress = IDODOV2Proxy01(appAddress)._WETH_();
         _feeRouteProxyAddress = feeRouteProxyAddress;
     }
-    
-   
-
 
     /**
      * @dev Upgrades the contract.
@@ -219,6 +215,7 @@ contract TacoProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable
         bytes calldata tacHeader,
         bytes calldata arguments
     ) public payable _onlyCrossChainLayer {
+
         // decode arguments
         CreateDODOVendingMachineArguments memory args = abi.decode(arguments, (CreateDODOVendingMachineArguments));
 
