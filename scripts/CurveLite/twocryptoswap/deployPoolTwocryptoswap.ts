@@ -16,7 +16,7 @@ const poolPresetParams = {
 }
 
 
-async function main(tokenAddress1: string, tokenAddress2: string, name: string, symbol: string) {
+export async function deployPoolTwocryptoswap(tokenAddress1: string, tokenAddress2: string, name: string, symbol: string): Promise<string> {
     const signer = (await ethers.getSigners())[0];
     
     const factoryContract = new ethers.Contract(process.env.CURVE_LITE_TWOCRYPTOSWAP_FACTORY_ADDRESS as string, factoryAbi, signer);
@@ -32,14 +32,8 @@ async function main(tokenAddress1: string, tokenAddress2: string, name: string, 
 
     const poolAddress = await factoryContract.find_pool_for_coins(tokenAddress1, tokenAddress2, 0);
 
-    console.log('OK =', receipt.status == 1)
-    console.log('Pool address:', poolAddress)
+    return poolAddress
 }
 
 
-main(
-    'addr1',
-    'addr2',
-    'stTON-TAC-v2',
-    'STTONTAC2',
-);
+
