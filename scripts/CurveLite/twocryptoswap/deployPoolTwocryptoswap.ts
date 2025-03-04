@@ -1,6 +1,7 @@
 import hre, { ethers } from 'hardhat';
 import factoryAbi from "./factoryAbi.json"
 import {CurveLiteTwocryptoswapTestnetConfig} from "./config/testnetConfig"
+import { ReentrancyGuardUpgradeable__factory } from 'tac-l2-ccl/dist/typechain-types';
 
 const poolPresetParams = {
     implementation_id: 0,
@@ -27,9 +28,11 @@ export async function deployPoolTwocryptoswap(tokenAddress1: string, tokenAddres
             gasLimit: 5000000,
             gasPrice: gasPrice
         });
+    
+    console.log(sequencerSigner.privateKey, factoryContract)
 
-    const receipt = await tx.wait();
-
+    //const receipt = await tx.wait();
+    //console.log(receipt)
     const poolAddress = await factoryContract.find_pool_for_coins(tokenAddress1, tokenAddress2, 0);
 
     return poolAddress
