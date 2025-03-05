@@ -473,7 +473,7 @@ describe('UniswapV2Proxy', () => {
 
         const lpTokenUnlockInfo: TokenUnlockInfo = {
             evmAddress: await lpToken.getAddress(),
-            unlockAmount: liquidity,
+            amount: liquidity,
         };
 
         const poolBalance0 = await sttonToken.balanceOf(pairAddress);
@@ -556,7 +556,7 @@ describe('UniswapV2Proxy', () => {
 
         const lpTokenUnlockInfo: TokenUnlockInfo = {
             evmAddress: await lpToken.getAddress(),
-            unlockAmount: liquidity,
+            amount: liquidity,
         };
 
         const poolBalance0 = await sttonToken.balanceOf(pairAddress);

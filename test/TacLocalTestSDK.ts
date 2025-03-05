@@ -59,10 +59,10 @@ describe("TacLocalTestSDK", () => {
         // how much existed token to unlock
         const tokenUnlockInfo: TokenUnlockInfo = {
             evmAddress: await existedToken.getAddress(),
-            unlockAmount: 10n**18n,
+            amount: 10n**18n,
         }
         // lock existed token on cross-chain layer contract, like it was bridged from EVM previously
-        await (await existedToken.mint(testSdk.getCrossChainLayerAddress(), tokenUnlockInfo.unlockAmount)).wait();
+        await (await existedToken.mint(testSdk.getCrossChainLayerAddress(), tokenUnlockInfo.amount)).wait();
 
         // calculate evm jetton address, which will be bridged on EVM after message is sent
         const calculatedTokenAddress = testSdk.getEVMJettonAddress(jettonInfo.tvmAddress);
@@ -76,7 +76,7 @@ describe("TacLocalTestSDK", () => {
         const receivedToken1 = [calculatedTokenAddress, tokenMintInfo.mintAmount];
 
         // define existed token to receive tuple: tuple(address,uint256)
-        const receivedToken2 = [tokenUnlockInfo.evmAddress, tokenUnlockInfo.unlockAmount];
+        const receivedToken2 = [tokenUnlockInfo.evmAddress, tokenUnlockInfo.amount];
 
         // define array structs TokenAmount[] like tuple(address,uint256)[]
         const receivedTokens = [receivedToken1, receivedToken2]
@@ -121,7 +121,7 @@ describe("TacLocalTestSDK", () => {
         // check locked token
         expect(outMessage.tokensLocked.length).to.be.eq(1);
         expect(outMessage.tokensLocked[0].evmAddress).to.be.eq(tokenUnlockInfo.evmAddress);
-        expect(outMessage.tokensLocked[0].amount).to.be.eq(tokenUnlockInfo.unlockAmount);
+        expect(outMessage.tokensLocked[0].amount).to.be.eq(tokenUnlockInfo.amount);
 
         // check emited event
         let found = false;
@@ -140,7 +140,7 @@ describe("TacLocalTestSDK", () => {
                 expect(typedEvent.args.receivedTokens[0].l2Address).to.be.eq(calculatedTokenAddress);
                 expect(typedEvent.args.receivedTokens[0].amount).to.be.eq(tokenMintInfo.mintAmount);
                 expect(typedEvent.args.receivedTokens[1].l2Address).to.be.eq(tokenUnlockInfo.evmAddress);
-                expect(typedEvent.args.receivedTokens[1].amount).to.be.eq(tokenUnlockInfo.unlockAmount);
+                expect(typedEvent.args.receivedTokens[1].amount).to.be.eq(tokenUnlockInfo.amount);
             }
         });
         expect(found).to.be.true;
