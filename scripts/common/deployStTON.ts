@@ -1,5 +1,5 @@
 import { ethers } from "hardhat";
-import { deployToken, loadTacContracts, saveContractAddress } from "tac-l2-ccl";
+import { deployToken, loadTacContracts, saveContractAddress } from "@tonappchain/evm-ccl";
 import path from 'path';
 import { sttonTokenInfo } from "./info/tokensInfo";
 

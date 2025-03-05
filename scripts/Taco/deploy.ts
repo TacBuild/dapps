@@ -1,6 +1,6 @@
 import hre, { ethers } from 'hardhat';
 import path from 'path';
-import { loadTacContracts, saveContractAddress } from "tac-l2-ccl";
+import { loadTacContracts, saveContractAddress } from "@tonappchain/evm-ccl";
 import { deployTacoProxy } from './deployTacoProxy';
 import { tacoTestnetConfig } from './config/testnetConfig';
 import { tacoMainnetConfig } from './config/mainnetConfig';

@@ -1,7 +1,7 @@
 import { ethers } from "hardhat";
 import fs from 'fs';
 import { BaseContract, Signer, TransactionReceipt } from "ethers";
-import { ERC20, ERC20__factory } from "tac-l2-ccl/dist/typechain-types";
+import { ERC20, ERC20__factory } from "@tonappchain/evm-ccl/dist/typechain-types";
 
 
 

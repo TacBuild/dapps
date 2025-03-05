@@ -2,8 +2,8 @@ import { ethers } from 'hardhat';
 import path from 'path';
 import { printEvents, loadERC20FromFile } from '../utils';
 import { loadTacoTestEnv } from './utils';
-import { sendSimpleMessageV1 } from 'tac-l2-ccl';
-import { InMessageV1Struct } from 'tac-l2-ccl/dist/typechain-types/contracts/L2/Structs.sol/IStructsInterface';
+import { sendSimpleMessageV1 } from '@tonappchain/evm-ccl';
+import { InMessageV1Struct } from '@tonappchain/evm-ccl/dist/typechain-types/contracts/L2/Structs.sol/IStructsInterface';
 
 
 async function main(showEvents=false) {

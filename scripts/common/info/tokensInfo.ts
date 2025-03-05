@@ -1,4 +1,4 @@
-import { JettonInfo } from "tac-l2-ccl";
+import { JettonInfo } from "@tonappchain/evm-ccl";
 
 export const sttonTokenInfo: JettonInfo = {
     tvmAddress: "EQDJfaGp5pgN8oVGyCQI0AvUPMiuMyzaWq7Ckdf_wVZYm1IY",

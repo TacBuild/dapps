@@ -3,9 +3,9 @@ pragma solidity ^0.8.28;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import { ICrossChainLayer } from "tac-l2-ccl/contracts/interfaces/ICrossChainLayer.sol";
-import { TacProxyV1 } from "tac-l2-ccl/contracts/proxies/TacProxyV1.sol";
-import { OutMessageV1, TacHeaderV1, TokenAmount } from "tac-l2-ccl/contracts/L2/Structs.sol";
+import { ICrossChainLayer } from "@tonappchain/evm-ccl/contracts/interfaces/ICrossChainLayer.sol";
+import { TacProxyV1 } from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1.sol";
+import { OutMessageV1, TacHeaderV1, TokenAmount } from "@tonappchain/evm-ccl/contracts/L2/Structs.sol";
 
 contract TestProxy is TacProxyV1 {
 
