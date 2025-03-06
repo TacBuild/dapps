@@ -31,7 +31,7 @@ contract TestNFTProxy is TacProxyV1, IERC721Receiver {
         address,
         uint256,
         bytes calldata
-    ) external pure returns (bytes4) {
+    ) external pure override(IERC721Receiver) returns (bytes4) {
         return this.onERC721Received.selector;
     }
 
@@ -44,13 +44,13 @@ contract TestNFTProxy is TacProxyV1, IERC721Receiver {
 
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         // bridge nft back
-        OutMessageV2 memory outMessage = OutMessageV2(
-            header.shardsKey,
-            header.tvmCaller,
-            "",
-            new TokenAmount[](0),
-            nftTokens // nft tokens to Bridge
-        );
+        OutMessageV2 memory outMessage = OutMessageV2({
+            shardsKey: header.shardsKey,
+            tvmTarget: header.tvmCaller, // Original TON user
+            tvmPayload: "",
+            toBridge: new TokenAmount[](0), // no ERC-20 bridging in this example
+            toBridgeNFT: nftTokens         // bridging these NFTs back to TON
+        });
         _sendMessageV2(outMessage, 0);
     }
 }

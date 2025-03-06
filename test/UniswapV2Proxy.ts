@@ -59,16 +59,16 @@ describe('UniswapV2Proxy', () => {
 
         const sttonTokenMintInfo: TokenMintInfo = {
             info: sttonTokenInfo,
-            mintAmount: sttonAmount,
+            amount: sttonAmount,
         }
         const tacTokenMintInfo: TokenMintInfo = {
             info: tacTokenInfo,
-            mintAmount: tacAmount,
+            amount: tacAmount,
         }
 
         // initial liquidity must add all tokens to the pool
-        const sttonMinAmount = sttonTokenMintInfo.mintAmount;
-        const tacMinAmount = tacTokenMintInfo.mintAmount;
+        const sttonMinAmount = sttonTokenMintInfo.amount;
+        const tacMinAmount = tacTokenMintInfo.amount;
 
         const deadline = 19010987500n;
 
@@ -79,8 +79,8 @@ describe('UniswapV2Proxy', () => {
                 [
                     sttonEVMTokenAddress,
                     tacEVMTokenAddress,
-                    sttonTokenMintInfo.mintAmount,
-                    tacTokenMintInfo.mintAmount,
+                    sttonTokenMintInfo.amount,
+                    tacTokenMintInfo.amount,
                     sttonMinAmount,
                     tacMinAmount,
                     target,
@@ -121,8 +121,8 @@ describe('UniswapV2Proxy', () => {
         expect(pairAddress).to.not.be.equal(ethers.ZeroAddress);
 
         // check liquidity was added
-        expect(await sttonToken.balanceOf(pairAddress)).to.be.equal(sttonTokenMintInfo.mintAmount);
-        expect(await tacToken.balanceOf(pairAddress)).to.be.equal(tacTokenMintInfo.mintAmount);
+        expect(await sttonToken.balanceOf(pairAddress)).to.be.equal(sttonTokenMintInfo.amount);
+        expect(await tacToken.balanceOf(pairAddress)).to.be.equal(tacTokenMintInfo.amount);
 
         // check crossChainLayer LP token balance
         const lpToken = (new ethers.Contract(pairAddress, uniswapPairArtifact.abi, admin)) as unknown as IUniswapV2Pair;
@@ -166,11 +166,11 @@ describe('UniswapV2Proxy', () => {
 
         const sttonTokenMintInfo: TokenMintInfo = {
             info: sttonTokenInfo,
-            mintAmount: sttonAmount,
+            amount: sttonAmount,
         }
 
         // initial liquidity must add all tokens to the pool
-        const sttonMinAmount = sttonTokenMintInfo.mintAmount;
+        const sttonMinAmount = sttonTokenMintInfo.amount;
         const ethMinAmount = ethAmount;
 
         const deadline = 19010987500n;
@@ -208,7 +208,7 @@ describe('UniswapV2Proxy', () => {
         expect(pairAddress).to.not.be.equal(ethers.ZeroAddress);
 
         // check liquidity was added
-        expect(await sttonToken.balanceOf(pairAddress)).to.be.equal(sttonTokenMintInfo.mintAmount);
+        expect(await sttonToken.balanceOf(pairAddress)).to.be.equal(sttonTokenMintInfo.amount);
         expect(await wTAC.balanceOf(pairAddress)).to.be.equal(ethAmount);
 
         // check crossChainLayer LP token balance
@@ -258,7 +258,7 @@ describe('UniswapV2Proxy', () => {
 
         const sttonTokenMintInfo: TokenMintInfo = {
             info: sttonTokenInfo,
-            mintAmount: amountIn,
+            amount: amountIn,
         }
 
         const deadline = 19010987500n;
@@ -330,7 +330,7 @@ describe('UniswapV2Proxy', () => {
 
         const sttonTokenMintInfo: TokenMintInfo = {
             info: sttonTokenInfo,
-            mintAmount: amountInMax,
+            amount: amountInMax,
         }
 
         const deadline = 19010987500n;
@@ -402,7 +402,7 @@ describe('UniswapV2Proxy', () => {
 
         const sttonTokenMintInfo: TokenMintInfo = {
             info: sttonTokenInfo,
-            mintAmount: amountIn,
+            amount: amountIn,
         }
 
         const deadline = 19010987500n;

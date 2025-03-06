@@ -53,7 +53,7 @@ describe("TacLocalTestSDK", () => {
         // how much jetton to mint
         const tokenMintInfo: TokenMintInfo = {
             info: jettonInfo,
-            mintAmount: 10n**9n,
+            amount: 10n**9n,
         }
 
         // how much existed token to unlock
@@ -73,7 +73,7 @@ describe("TacLocalTestSDK", () => {
         const methodName = "invokeWithCallback(bytes,bytes)";
 
         // define jetton token to receive tuple: tuple(address,uint256)
-        const receivedToken1 = [calculatedTokenAddress, tokenMintInfo.mintAmount];
+        const receivedToken1 = [calculatedTokenAddress, tokenMintInfo.amount];
 
         // define existed token to receive tuple: tuple(address,uint256)
         const receivedToken2 = [tokenUnlockInfo.evmAddress, tokenUnlockInfo.amount];
@@ -117,7 +117,7 @@ describe("TacLocalTestSDK", () => {
         // check burned token
         expect(outMessage.tokensBurned.length).to.be.eq(1);
         expect(outMessage.tokensBurned[0].evmAddress).to.be.eq(calculatedTokenAddress);
-        expect(outMessage.tokensBurned[0].amount).to.be.eq(tokenMintInfo.mintAmount);
+        expect(outMessage.tokensBurned[0].amount).to.be.eq(tokenMintInfo.amount);
         // check locked token
         expect(outMessage.tokensLocked.length).to.be.eq(1);
         expect(outMessage.tokensLocked[0].evmAddress).to.be.eq(tokenUnlockInfo.evmAddress);
@@ -138,7 +138,7 @@ describe("TacLocalTestSDK", () => {
                 expect(typedEvent.args.extraData).to.be.eq(extraData);
                 expect(typedEvent.args.receivedTokens.length).to.be.eq(2);
                 expect(typedEvent.args.receivedTokens[0].l2Address).to.be.eq(calculatedTokenAddress);
-                expect(typedEvent.args.receivedTokens[0].amount).to.be.eq(tokenMintInfo.mintAmount);
+                expect(typedEvent.args.receivedTokens[0].amount).to.be.eq(tokenMintInfo.amount);
                 expect(typedEvent.args.receivedTokens[1].l2Address).to.be.eq(tokenUnlockInfo.evmAddress);
                 expect(typedEvent.args.receivedTokens[1].amount).to.be.eq(tokenUnlockInfo.amount);
             }
