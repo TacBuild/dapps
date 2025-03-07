@@ -13,7 +13,7 @@ type UniswapContracts = {
     uniswapV2Proxy: UniswapV2Proxy,
 }
 
-export async function deployUniswapV2(deployer: Signer, wTACAddress: string, crossChainLayerAddress: string, localTest: boolean = false): Promise<UniswapContracts> {
+export async function deployUniswapV2(deployer: Signer, wTACAddress: string, crossChainLayerAddress: string): Promise<UniswapContracts> {
     // Factory
     const uniswapV2Factory_factory = new ContractFactory(factoryArtifact.abi, factoryArtifact.bytecode, deployer);
     const uniswapV2Factory = (await uniswapV2Factory_factory.deploy(await deployer.getAddress())) as IUniswapV2Factory;
