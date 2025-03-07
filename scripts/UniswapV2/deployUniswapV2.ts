@@ -5,7 +5,7 @@ import routerArtifact from "@uniswap/v2-periphery/build/UniswapV2Router02.json";
 import { ContractFactory, Signer } from 'ethers';
 import { UniswapV2Proxy } from '../../typechain-types';
 import { IUniswapV2Router02, IUniswapV2Factory } from '../../typechain-types';
-import { deployUpgradable } from 'tac-l2-ccl'
+import { deployUpgradable } from '@tonappchain/evm-ccl'
 
 type UniswapContracts = {
     uniswapV2Factory: IUniswapV2Factory,

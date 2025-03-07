@@ -2,7 +2,7 @@ import hre from 'hardhat';
 import { TacoProxy } from '../../typechain-types/';
 import { deploy } from "@tonappchain/evm-ccl";
 import { Signer } from 'ethers';
-import { deployUpgradable } from 'tac-l2-ccl'
+import { deployUpgradable } from '@tonappchain/evm-ccl'
 
 export async function deployTacoProxy(deployer: Signer, tacoConfig: TacoConfig, crossChainLayerAddress: string, localTest: boolean = false): Promise<TacoProxy> {
     // Proxy 

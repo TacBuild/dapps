@@ -1,9 +1,9 @@
-import { deploy, loadTacContracts, saveContractAddress } from "tac-l2-ccl";
+import { deploy, loadTacContracts, saveContractAddress } from "@tonappchain/evm-ccl";
 import path from 'path';
 import { CurveLiteTwocryptoswapProxy } from '../../../typechain-types';
 import hre, { ethers } from 'hardhat';
 import { ContractFactory, Signer } from 'ethers';
-import { deployUpgradable } from 'tac-l2-ccl'
+import { deployUpgradable } from '@tonappchain/evm-ccl'
 
 
 

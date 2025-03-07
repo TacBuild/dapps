@@ -5,9 +5,9 @@ import { expect } from "chai";
 import { deployCurveLiteTwocryptoswapProxy } from "../scripts/CurveLite/twocryptoswap/deployProxy";
 import { deployPoolTwocryptoswap } from "../scripts/CurveLite/twocryptoswap/deployPoolTwocryptoswap";
 import { CurveLiteTwocryptoswapTestnetConfig } from "../scripts/CurveLite/twocryptoswap/config/testnetConfig";
-import { TacLocalTestSdk, TokenMintInfo } from "tac-l2-ccl";
+import { TacLocalTestSdk, TokenMintInfo } from "@tonappchain/evm-ccl";
 
-import { ERC20 } from "tac-l2-ccl/dist/typechain-types";
+import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types";
 import { CurveLiteTwocryptoswapProxy, ICurveLiteTwocryptoFactory } from "../typechain-types";
 import { curveLiteTwocryptoProxySol } from "../typechain-types/factories/contracts/proxies/CurveLite";
 import factoryAbi from "../scripts/CurveLite/twocryptoswap/factoryAbi.json"

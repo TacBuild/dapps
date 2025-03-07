@@ -1,9 +1,7 @@
-import { deploy, loadTacContracts, saveContractAddress } from "tac-l2-ccl";
-import path from 'path';
 import { CurveLiteTricryptoswapProxy } from '../../../typechain-types';
 import hre, { ethers } from 'hardhat';
 import { ContractFactory, Signer } from 'ethers';
-import { deployUpgradable } from 'tac-l2-ccl'
+import { deployUpgradable } from '@tonappchain/evm-ccl'
 
 
 export async function deployCurveLiteTricryptoswapProxy(deployer: Signer, crossChainLayerAddress: string, localTest: boolean = false): Promise<CurveLiteTricryptoswapProxy> {

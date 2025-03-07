@@ -1,5 +1,5 @@
 import { ethers } from 'hardhat';
-import { loadTacContracts, saveContractAddress } from "tac-l2-ccl";
+import { loadTacContracts, saveContractAddress } from "@tonappchain/evm-ccl";
 import { deployCurveLiteTwocryptoswapProxy } from './deployProxy';
 import path from 'path';
 

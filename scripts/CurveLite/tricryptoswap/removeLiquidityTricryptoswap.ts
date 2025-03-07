@@ -1,16 +1,19 @@
 import hre, { ethers } from 'hardhat';
-import { InMessageStruct } from 'tac-l2-ccl/dist/typechain-types/contracts/L2/CrossChainLayer';
-import { sendSimpleMessage } from 'tac-l2-ccl';
+import { sendSimpleMessageV1, simulateReceiveMessageV1, decodeCrossChainLayerErrorData } from '@tonappchain/evm-ccl';
+import { InMessageV1Struct } from '@tonappchain/evm-ccl/dist/typechain-types/contracts/L2/Structs.sol/IStructsInterface';
+import path from 'path';
 import {getCoinsFromPool} from './utils'
-import {loadTestEnv} from '../utils'
-
+import { loadTacContracts } from "@tonappchain/evm-ccl";
 
 async function main(proxyAddress: string, poolAddress: string, amount: bigint) {
+    const [signer] = await ethers.getSigners();
     const sequencerSigner = new ethers.Wallet(process.env.SEQUENCER_PRIVATE_KEY_EVM!, ethers.provider);
-    const { tacContracts, groups, } = await loadTestEnv(sequencerSigner);
+    const addressesFilePath = path.resolve(__dirname, '../../addresses.json');
+    const tacContracts = await loadTacContracts(addressesFilePath, signer);
 
-    const message: InMessageStruct = {
-        queryId: 15,
+    const message: InMessageV1Struct = {
+        shardsKey: 5,
+        gasLimit: 0n,
         operationId: ethers.encodeBytes32String("test removeLiquidity Curve"),
         timestamp: BigInt(Math.floor(Date.now() / 1000)),
         target: proxyAddress,
@@ -31,7 +34,7 @@ async function main(proxyAddress: string, poolAddress: string, amount: bigint) {
         meta: [],  // TODO
     };
 
-    const receipt = await sendSimpleMessage([sequencerSigner], message, [tacContracts, groups], "0x", true);
+    const receipt = await sendSimpleMessageV1([sequencerSigner], message, tacContracts, "0x", true);
 }
 
 
