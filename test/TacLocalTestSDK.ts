@@ -1,6 +1,6 @@
 
 import hre, { ethers } from "hardhat";
-import { deploy, TacLocalTestSdk, JettonInfo, TokenMintInfo, TokenUnlockInfo } from "tac-l2-ccl";
+import { deploy, TacLocalTestSdk, JettonInfo, TokenMintInfo, TokenUnlockInfo } from "@tonappchain/evm-ccl";
 import { Signer } from "ethers";
 import { TestProxy, TestToken } from "../typechain-types";
 import { expect } from "chai";

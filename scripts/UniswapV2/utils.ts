@@ -1,11 +1,11 @@
 import hre, { ethers } from "hardhat";
 import path from 'path';
-import { getCCLArtifacts, loadTacContracts } from "tac-l2-ccl";
-import { CrossChainLayerToken, WTAC } from "tac-l2-ccl/dist/typechain-types";
+import { getCCLArtifacts, loadTacContracts } from "@tonappchain/evm-ccl";
+import { CrossChainLayerToken, WTAC } from "@tonappchain/evm-ccl/dist/typechain-types";
 import { loadContractFromFile } from "../utils";
 import { Contract, Signer } from "ethers";
 import { UniswapV2Proxy, IUniswapV2Router02, IUniswapV2Factory } from "../../typechain-types";
-import { ERC20 } from "tac-l2-ccl/dist/typechain-types";
+import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types";
 
 import uniswapRouterArtifact from "@uniswap/v2-periphery/build/UniswapV2Router02.json";
 import uniswapFactoryArtifact from "@uniswap/v2-core/build/UniswapV2Factory.json";

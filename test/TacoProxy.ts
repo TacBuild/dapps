@@ -4,10 +4,10 @@ import { expect } from "chai";
 
 import { deployTacoProxy } from "../scripts/Taco/deployTacoProxy";
 import { tacoTestnetConfig } from "../scripts/Taco/config/testnetConfig";
-import { TacLocalTestSdk, TokenMintInfo } from "tac-l2-ccl";
+import { TacLocalTestSdk, TokenMintInfo } from "@tonappchain/evm-ccl";
 import { sttonTokenInfo, tacTokenInfo } from '../scripts/common/info/tokensInfo';
 
-import { ERC20 } from "tac-l2-ccl/dist/typechain-types";
+import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types";
 import { TacoProxy, IDODOV2Proxy01, IDODOFeeRouteProxy, IDVMFactory, IDODOApprove, IDVM } from "../typechain-types";
 
 const dvmPoolAbi = hre.artifacts.readArtifactSync('IDVM').abi;

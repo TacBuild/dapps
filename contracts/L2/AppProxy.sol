@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import { ISettings } from "tac-l2-ccl/contracts/interfaces/ISettings.sol";
-import { ICrossChainLayer } from "tac-l2-ccl/contracts/interfaces/ICrossChainLayer.sol";
-import { OutMessageV1 } from "tac-l2-ccl/contracts/L2/Structs.sol";
-import { TacProxyV1 } from "tac-l2-ccl/contracts/proxies/TacProxyV1.sol";
+import { ISettings } from "@tonappchain/evm-ccl/contracts/interfaces/ISettings.sol";
+import { ICrossChainLayer } from "@tonappchain/evm-ccl/contracts/interfaces/ICrossChainLayer.sol";
+import { OutMessageV1 } from "@tonappchain/evm-ccl/contracts/L2/Structs.sol";
+import { TacProxyV1 } from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1.sol";
 
 
 /**

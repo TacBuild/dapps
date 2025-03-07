@@ -1,6 +1,6 @@
 import hre from 'hardhat';
 import { TacoProxy } from '../../typechain-types/';
-import { deploy } from "tac-l2-ccl";
+import { deploy } from "@tonappchain/evm-ccl";
 import { Signer } from 'ethers';
 import { deployUpgradable } from 'tac-l2-ccl'
 

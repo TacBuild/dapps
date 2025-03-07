@@ -1,5 +1,5 @@
 # Use the same base image as the hardhat node for consistency
-FROM node:20.11.1-alpine AS dapps-deployer-image
+FROM node:22-alpine AS dapps-deployer-image
 
 RUN apk add nano jq dos2unix
 
@@ -18,4 +18,4 @@ RUN chmod +x ./tilt/deploy.sh
 # Generate artifacts
 RUN npx hardhat compile
 
-ENTRYPOINT ["./tilt/deploy.sh"]
+ENTRYPOINT ["./tilt/deploy.sh", "--useTilt"]
