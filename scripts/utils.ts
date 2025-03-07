@@ -1,7 +1,12 @@
 import fs from 'fs';
 import { BaseContract, Signer, TransactionReceipt } from "ethers";
 import { ERC20, ERC20__factory } from "@tonappchain/evm-ccl/dist/typechain-types";
+import { DeployProxyOptions } from "@openzeppelin/hardhat-upgrades/dist/utils";
 
+
+export const proxyOptsUUPS: DeployProxyOptions = {
+    kind: "uups"
+};
 
 
 export function loadContractFromFile<T>(addressesFilePath: string, entryName: string, contractAbi: any[], signer: Signer): T {
