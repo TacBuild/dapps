@@ -4,7 +4,7 @@ import { ContractFactory, Signer } from 'ethers';
 import { deployUpgradable } from '@tonappchain/evm-ccl'
 import { proxyOptsUUPS} from "../../utils"
 
-export async function deployCurveLiteTricryptoswapProxy(deployer: Signer, crossChainLayerAddress: string, localTest: boolean = false): Promise<CurveLiteTricryptoswapProxy> {
+export async function deployCurveLiteTricryptoswapProxy(deployer: Signer, crossChainLayerAddress: string): Promise<CurveLiteTricryptoswapProxy> {
     const CurveLiteTricryptoswapProxy = await deployUpgradable<CurveLiteTricryptoswapProxy>(
         deployer,
         hre.artifacts.readArtifactSync('CurveLiteTricryptoswapProxy'),
