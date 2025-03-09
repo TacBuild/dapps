@@ -16,6 +16,8 @@ import { ILiquidityManager } from "../Interface/Izumi/ILiquidityManager.sol";
  * @title IzumiProxy
  * @dev Proxy contract for Izumi, similar to UniswapV2Router02
  */
+import "hardhat/console.sol";
+
 contract IzumiProxy is TacProxyV1 {
     address public poolAddress;
     address public swapAddress;
@@ -126,8 +128,8 @@ contract IzumiProxy is TacProxyV1 {
         SwapY2XArguments memory args = abi.decode(arguments, (SwapY2XArguments));
         
         ISwap.SwapParams memory params = ISwap.SwapParams({
-            tokenX: args.tokenX,
-            tokenY: args.tokenY,
+            tokenX: args.tokenX > args.tokenY ? args.tokenY : args.tokenX,
+            tokenY: args.tokenX > args.tokenY ? args.tokenX : args.tokenY,
             fee: args.fee,
             boundaryPt: args.boundaryPt,
             recipient: args.recipient,
@@ -136,6 +138,8 @@ contract IzumiProxy is TacProxyV1 {
             minAcquired: args.minAcquired,
             deadline: args.deadline
         });
+
+        TransferHelper.safeApprove(args.tokenY, swapAddress, args.amount);
 
         ISwap(swapAddress).swapY2X{value: msg.value}(params);
 
@@ -182,8 +186,8 @@ contract IzumiProxy is TacProxyV1 {
         SwapX2YArguments memory args = abi.decode(arguments, (SwapX2YArguments));
         
         ISwap.SwapParams memory params = ISwap.SwapParams({
-            tokenX: args.tokenX,
-            tokenY: args.tokenY,
+            tokenX: args.tokenX > args.tokenY ? args.tokenY : args.tokenX,
+            tokenY: args.tokenX > args.tokenY ? args.tokenX : args.tokenY,
             fee: args.fee,
             boundaryPt: args.boundaryPt,
             recipient: args.recipient,
@@ -377,13 +381,13 @@ contract IzumiProxy is TacProxyV1 {
         bytes calldata arguments
     ) external payable {
         ILiquidityManager.MintParam memory params = abi.decode(arguments, (ILiquidityManager.MintParam));
-
-        if (params.tokenX != address(0)) {
-            TransferHelper.safeApprove(params.tokenX, liquidityManagerAddress, params.xLim);
+        if (params.tokenX > params.tokenY) {
+            address temp = params.tokenX;
+            params.tokenX = params.tokenY;
+            params.tokenY = temp;
         }
-        if (params.tokenY != address(0)) {
-            TransferHelper.safeApprove(params.tokenY, liquidityManagerAddress, params.yLim);
-        }
+        TransferHelper.safeApprove(params.tokenX, liquidityManagerAddress, params.xLim);
+        TransferHelper.safeApprove(params.tokenY, liquidityManagerAddress, params.yLim);
 
         (uint256 lid, uint128 liquidity, uint256 amountX, uint256 amountY) = 
             ILiquidityManager(liquidityManagerAddress).mint{value: msg.value}(params);
