@@ -14,6 +14,7 @@ import factoryAbi from "../scripts/CurveLite/twocryptoswap/factoryAbi.json"
 import implementationAbi from "../scripts/CurveLite/twocryptoswap/implementationAbi.json"
 import { erc20 } from "../typechain-types/factories/@openzeppelin/contracts/token";
 import { sttonTokenInfo, tacTokenInfo } from '../scripts/common/info/tokensInfo';
+import { token } from "../typechain-types/@openzeppelin/contracts";
 
 describe("CurveLiteTwocryptoswapProxy", function () {
     const poolPresetParams = {
@@ -40,6 +41,7 @@ describe("CurveLiteTwocryptoswapProxy", function () {
         [admin] = await ethers.getSigners();
         testSdk = new TacLocalTestSdk();
         const crossChainLayerAddress = await testSdk.create(ethers.provider);
+        
         curveLiteTwocryptoswapProxy = await deployCurveLiteTwocryptoswapProxy(admin, crossChainLayerAddress);
         factoryContract = new ethers.Contract(CurveLiteTwocryptoswapTestnetConfig.CurveLiteTwocryptoswapFactory, factoryAbi, admin) as unknown as ICurveLiteTwocryptoFactory;
     });
@@ -69,10 +71,7 @@ describe("CurveLiteTwocryptoswapProxy", function () {
             shardsKey, // shardsKey
             target, // proxy address
             "", // method name
-            new ethers.AbiCoder().encode(
-                [],
-                []
-            ), // encoded arguments
+            "0x", // encoded arguments
             tvmWalletCaller, // tvm caller
             [sttonTokenMintInfo, tacTokenMintInfo], // mint tokens
             [], // unlock tokens
@@ -136,8 +135,8 @@ describe("CurveLiteTwocryptoswapProxy", function () {
         const target = await curveLiteTwocryptoswapProxy.getAddress();
         const methodName = "addLiquidity(bytes,bytes)";
 
-        const amountA = 1n;
-        const amountB = 1n;
+        const amountA = 5n*10n**(await sttonEVM.decimals());
+        const amountB = 5n*10n**(await tacEVM.decimals());
 
 
         const sttonTokenMintInfo: TokenMintInfo = {
@@ -152,15 +151,16 @@ describe("CurveLiteTwocryptoswapProxy", function () {
         const encodedParameters = new ethers.AbiCoder().encode(
             ['tuple(address, uint256[2], uint256)'],
             [
-                [await pool.getAddress(),
-                [amountA, amountB],
-                0]
+                [
+                    await pool.getAddress(),
+                    [amountA, amountB],
+                    0
+                ]
             ],
         );
 
         const balanceBeforeA = await pool.balances(0);
         const balanceBeforeB = await pool.balances(1);
-        console.log("send message")
         // send message
         const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
             shardsKey, // shardsKey
@@ -176,13 +176,8 @@ describe("CurveLiteTwocryptoswapProxy", function () {
             timestamp
         );
 
-        console.log(receipt)
-        console.log(deployedTokens)
-
-        console.log(balanceBeforeA)
-        console.log(balanceBeforeB)
-        console.log(await pool.balances(0))
-        console.log(await pool.balances(1))
+        expect(balanceBeforeA+amountA).to.be.equal(await pool.balances(0));
+        expect(balanceBeforeB+amountB).to.be.equal(await pool.balances(1));
 
         // check bridge lp back to user
         expect(outMessages.length).to.be.equal(1);
@@ -202,6 +197,65 @@ describe("CurveLiteTwocryptoswapProxy", function () {
 
     });
 
+    it ("CurveLiteTwocryptoswap test exchange", async function () {
+        const shardsKey = 1n;
+        const operationId = ethers.encodeBytes32String("exchange");
+        const extraData = "0x";
+        const timestamp = BigInt(Math.floor(Date.now() / 1000));
+        const tvmWalletCaller = "EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk";
+
+        const target = await curveLiteTwocryptoswapProxy.getAddress();
+        const methodName = "exchange(bytes,bytes)";
+
+        const amount = 1n*10n**(await sttonEVM.decimals());
 
 
+        const sttonTokenMintInfo: TokenMintInfo = {
+            info: sttonTokenInfo,
+            mintAmount: amount,
+        }
+
+        const encodedParameters = new ethers.AbiCoder().encode(
+            ['tuple(address, uint256, uint256, uint256, uint256)'],
+            [
+                [
+                    await pool.getAddress(),
+                    0,
+                    1,
+                    amount,
+                    0
+                ]
+            ],
+        );
+
+        const balanceBeforeA = await pool.balances(0);
+        const balanceBeforeB = await pool.balances(1);
+        // send message
+        const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
+            shardsKey, // shardsKey
+            target, // proxy address
+            methodName, // method name
+            encodedParameters, // encoded arguments
+            tvmWalletCaller, // tvm caller
+            [sttonTokenMintInfo], // mint tokens
+            [], // unlock tokens
+            0n, // native tac amount to unlock
+            extraData,
+            operationId,
+            timestamp
+        );
+        expect(balanceBeforeA + amount).to.be.equal(await pool.balances(0));
+        expect(balanceBeforeB).to.be.gt(await pool.balances(1));
+
+        expect(outMessages.length).to.be.equal(1);
+        const outMessage = outMessages[0];
+        expect(outMessage.operationId).to.be.equal(operationId);
+        expect(outMessage.shardsKey).to.be.equal(shardsKey);
+        expect(outMessage.callerAddress).to.be.equal(await curveLiteTwocryptoswapProxy.getAddress());
+        expect(outMessage.targetAddress).to.be.equal(tvmWalletCaller);
+        expect(outMessage.payload).to.be.equal("");
+        expect(outMessage.tokensLocked.length).to.be.equal(0);
+    });
+
+    
 });
