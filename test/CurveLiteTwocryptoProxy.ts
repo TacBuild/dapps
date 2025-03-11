@@ -13,7 +13,7 @@ import { curveLiteTwocryptoProxySol } from "../typechain-types/factories/contrac
 import factoryAbi from "../scripts/CurveLite/twocryptoswap/factoryAbi.json"
 import implementationAbi from "../scripts/CurveLite/twocryptoswap/implementationAbi.json"
 import { erc20 } from "../typechain-types/factories/@openzeppelin/contracts/token";
-
+import { sttonTokenInfo, tacTokenInfo } from '../scripts/common/info/tokensInfo';
 
 describe("CurveLiteTwocryptoswapProxy", function () {
     const poolPresetParams = {
@@ -28,10 +28,8 @@ describe("CurveLiteTwocryptoswapProxy", function () {
         ma_exp_time: 866n,
         initial_price: 10n ** 18n
     };
-    let usdtEVM: ERC20;
-    let wethEVM: ERC20;
-    let usdtTVMAddress: string;
-    let wethTVMAddress: string;
+    let sttonEVM: ERC20;
+    let tacEVM: ERC20;
     let pool: Contract
     let admin: Signer;
     let testSdk: TacLocalTestSdk;
@@ -42,22 +40,65 @@ describe("CurveLiteTwocryptoswapProxy", function () {
         [admin] = await ethers.getSigners();
         testSdk = new TacLocalTestSdk();
         const crossChainLayerAddress = await testSdk.create(ethers.provider);
-        const usdtEVMAddress = "0x40d02AAe9D294Ebefe818Bc9020a9883E055154e";
-        usdtEVM = new ethers.Contract(usdtEVMAddress, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;
-        usdtTVMAddress = "EQDHWeU8l1QZkcK3Db5fDys7rdzJYuFHzToFxZNAurRNLf17"
-        const wethEVMAddress = "0x2183Bb115F6f90840B1d6FEd0857149546e4BF22";
-        wethEVM = new ethers.Contract(wethEVMAddress, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;
-        wethTVMAddress = "EQDHWeU8l1QZkcK3Db5fDys7rdzJYuFHzToFxZNAurRNLf17"
         curveLiteTwocryptoswapProxy = await deployCurveLiteTwocryptoswapProxy(admin, crossChainLayerAddress);
         factoryContract = new ethers.Contract(CurveLiteTwocryptoswapTestnetConfig.CurveLiteTwocryptoswapFactory, factoryAbi, admin) as unknown as ICurveLiteTwocryptoFactory;
     });
 
+    it("deploy tokens", async function () {
+        const shardsKey = 1n;
+        const operationId = ethers.encodeBytes32String("add ERC20 DVM");
+        const extraData = "0x";
+        const timestamp = BigInt(Math.floor(Date.now() / 1000));
+        const tvmWalletCaller = "EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk";
+        const target = await admin.getAddress();
+        
+        const mintAmount = 2n
+
+        const sttonTokenMintInfo: TokenMintInfo = {
+            info: sttonTokenInfo,
+            mintAmount: mintAmount,
+        }
+        const tacTokenMintInfo: TokenMintInfo = {
+            info: tacTokenInfo,
+            mintAmount: mintAmount,
+        }
+
+        
+
+        const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
+            shardsKey, // shardsKey
+            target, // proxy address
+            "", // method name
+            new ethers.AbiCoder().encode(
+                [],
+                []
+            ), // encoded arguments
+            tvmWalletCaller, // tvm caller
+            [sttonTokenMintInfo, tacTokenMintInfo], // mint tokens
+            [], // unlock tokens
+            0n, // native tac amount to unlock
+            extraData,
+            operationId,
+            timestamp
+        );
+        const sttonEVMAddress = testSdk.getEVMJettonAddress(sttonTokenInfo.tvmAddress);
+        const tacEVMAddress = testSdk.getEVMJettonAddress(tacTokenInfo.tvmAddress);
+        expect(sttonEVMAddress).to.be.equal(deployedTokens[0].evmAddress);
+        expect(tacEVMAddress).to.be.equal(deployedTokens[1].evmAddress);
+        sttonEVM = new ethers.Contract(sttonEVMAddress, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;
+        tacEVM = new ethers.Contract(tacEVMAddress, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;
+        expect(await sttonEVM.balanceOf(await admin.getAddress())).to.be.equal(mintAmount);
+        expect(await tacEVM.balanceOf(await admin.getAddress())).to.be.equal(mintAmount);
+
+    });
+
+
     it("CurveLiteTwocryptoswap pool deploy pool", async function () {
         const poolCountBefore = await factoryContract.pool_count()
         const tx = await factoryContract.deploy_pool(
-            "USDT-wETH",
-            "USDT-wETH",
-            [await usdtEVM.getAddress(), await wethEVM.getAddress()],
+            "stTON-TAC",
+            "stTON-TAC",
+            [await sttonEVM.getAddress(), await tacEVM.getAddress()],
             poolPresetParams.implementation_id,
             poolPresetParams.A,
             poolPresetParams.gamma,
@@ -77,12 +118,12 @@ describe("CurveLiteTwocryptoswapProxy", function () {
     });
 
     it("CurveLiteTwocryptoswap pool check pool", async function () {
-        const PoolAddress = await factoryContract.find_pool_for_coins(await usdtEVM.getAddress(), await wethEVM.getAddress(), 0)
+        const PoolAddress = await factoryContract.find_pool_for_coins(await sttonEVM.getAddress(), await tacEVM.getAddress(), 0)
         pool = new ethers.Contract(PoolAddress, implementationAbi, admin) as unknown as Contract;
-        expect(await pool.coins(0)).to.be.equal(await usdtEVM.getAddress());
-        expect(await pool.coins(1)).to.be.equal(await wethEVM.getAddress());
-        expect(await pool.balances(0)).to.be.equal(await usdtEVM.balanceOf(await pool.getAddress()));
-        expect(await pool.balances(1)).to.be.equal(await wethEVM.balanceOf(await pool.getAddress()));
+        expect(await pool.coins(0)).to.be.equal(await sttonEVM.getAddress());
+        expect(await pool.coins(1)).to.be.equal(await tacEVM.getAddress());
+        expect(await pool.balances(0)).to.be.equal(await sttonEVM.balanceOf(await pool.getAddress()));
+        expect(await pool.balances(1)).to.be.equal(await tacEVM.balanceOf(await pool.getAddress()));
     });
 
     it ("CurveLiteTwocryptoswap test add liquidity", async function () {
@@ -98,22 +139,13 @@ describe("CurveLiteTwocryptoswapProxy", function () {
         const amountA = 1n;
         const amountB = 1n;
 
-        const usdtTokenMintInfo: TokenMintInfo = {
-            info: {
-                decimals: await usdtEVM.decimals(),
-                name: await usdtEVM.name(),
-                symbol: await usdtEVM.symbol(),
-                tvmAddress: usdtTVMAddress,
-            },
+
+        const sttonTokenMintInfo: TokenMintInfo = {
+            info: sttonTokenInfo,
             mintAmount: amountA,
         }
-        const wethTokenMintInfo: TokenMintInfo = {
-            info: {
-                decimals: await wethEVM.decimals(),
-                name: await wethEVM.name(),
-                symbol: await wethEVM.symbol(),
-                tvmAddress: wethTVMAddress,
-            },
+        const tacTokenMintInfo: TokenMintInfo = {
+            info: tacTokenInfo,
             mintAmount: amountB,
         }
 
@@ -128,7 +160,7 @@ describe("CurveLiteTwocryptoswapProxy", function () {
 
         const balanceBeforeA = await pool.balances(0);
         const balanceBeforeB = await pool.balances(1);
-
+        console.log("send message")
         // send message
         const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
             shardsKey, // shardsKey
@@ -136,13 +168,16 @@ describe("CurveLiteTwocryptoswapProxy", function () {
             methodName, // method name
             encodedParameters, // encoded arguments
             tvmWalletCaller, // tvm caller
-            [usdtTokenMintInfo, wethTokenMintInfo], // mint tokens
+            [sttonTokenMintInfo, tacTokenMintInfo], // mint tokens
             [], // unlock tokens
             0n, // native tac amount to unlock
             extraData,
             operationId,
             timestamp
         );
+
+        console.log(receipt)
+        console.log(deployedTokens)
 
         console.log(balanceBeforeA)
         console.log(balanceBeforeB)
