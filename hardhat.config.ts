@@ -34,7 +34,7 @@ const config: HardhatUserConfig = {
       allowBlocksWithSameTimestamp: true,
       forking: {
         url: TAC_TESTNET_URL,
-        blockNumber: 2153000,
+        blockNumber: 2898061,
       },
     },
     localhost: {
@@ -49,6 +49,9 @@ const config: HardhatUserConfig = {
     enabled: false,
     currency: 'ETH',
     gasPrice: 1
+  },
+  mocha: {
+    timeout: 10000000
   }
 };
 
