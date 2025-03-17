@@ -1,10 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
+
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+
 import { IUniswapV2Router02 } from '@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol';
 import { TransferHelper } from '@uniswap/lib/contracts/libraries/TransferHelper.sol';
-
-import { AppProxy } from "contracts/L2/AppProxy.sol";
+import { TacProxyV1Upgradeable } from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
 import { OutMessageV1, TokenAmount, TacHeaderV1 } from "@tonappchain/evm-ccl/contracts/L2/Structs.sol";
 import { UniswapV2Library } from "contracts/proxies/UniswapV2/CompilerVersionAdapters.sol";
 import { ICrossChainLayer } from "@tonappchain/evm-ccl/contracts/interfaces/ICrossChainLayer.sol";
@@ -83,13 +87,32 @@ struct SwapExactTokensForETHArguments {
  * @title UniswapV2Proxy
  * @dev Proxy contract UniswapV2, namely UniswapV2Router02
  */
-contract UniswapV2Proxy is AppProxy {
+contract UniswapV2Proxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
+    // State variables
+    address internal _appAddress;
+    
     /**
-     * @dev Constructor function to initialize the contract with initial state.
-     * @param appAddress Application address.
-     * @param crossChainLayer Cross chain layer contract address.
+     * @dev Initialize the contract.
      */
-    constructor(address appAddress, address crossChainLayer) AppProxy(appAddress, crossChainLayer) {
+    function initialize(address adminAddress,address appAddress, address crossChainLayer) public initializer {
+        __TacProxyV1Upgradeable_init(crossChainLayer);
+        __Ownable_init(adminAddress);
+        __UUPSUpgradeable_init();
+        
+        _appAddress = appAddress;
+    }
+
+    /**
+     * @dev Upgrades the contract.
+     */
+    function _authorizeUpgrade(address) internal override onlyOwner {}
+
+    /**
+     * @dev Returns the application address.
+     * @return address The application address.
+     */
+    function getAppAddress() external view returns (address) {
+        return _appAddress;
     }
 
     function WETH() external view returns (address) {

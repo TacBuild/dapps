@@ -185,7 +185,7 @@ describe("TacoProxy", function () {
         const deadLine = 19010987500n;
 
          // lock native tac
-         await testSdk.lockNativeTacOnCrossChainLayer(baseInAmount);
+        await testSdk.lockNativeTacOnCrossChainLayer(baseInAmount);
 
         const sttonTokenMintInfo: TokenMintInfo = {
             info: sttonTokenInfo,

@@ -1,8 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+
 import { TransferHelper } from 'contracts/helpers/TransferHelper.sol';
-import { AppProxy } from "contracts/L2/AppProxy.sol";
+import { TacProxyV1Upgradeable } from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
 import { OutMessageV1, TokenAmount, TacHeaderV1 } from "@tonappchain/evm-ccl/contracts/L2/Structs.sol";
 
 /**
@@ -30,7 +34,7 @@ interface ITricryptoswapPool {
     function remove_liquidity(
         uint256 amount,
         uint256[3] calldata min_amounts
-    ) external returns (uint256[3] calldata);
+    ) external returns (uint256[3] memory);
     /**
      * @notice Exchange tokens 
      * @param i Index value for the input coin
@@ -52,7 +56,7 @@ interface ITricryptoswapPool {
      */
     function coins(
         uint256 arg0
-    ) external returns (address);
+    ) external view returns (address);
 }
 
 
@@ -60,15 +64,23 @@ interface ITricryptoswapPool {
  * @title CurveLiteTricryptoswapProxy
  * @dev Proxy contract CurveLite, working with tricryptoswap pools contracts directly
  */
-contract CurveLiteTricryptoswapProxy is AppProxy {
+contract CurveLiteTricryptoswapProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
+  
     /**
-     * @dev Constructor function to initialize the contract with initial state. 
-     * @param crossChainLayer Cross chain layer contract address.
-     * The decentralized application (dApp) operates as a dynamic pool
-     * The initial parameter, appAddress, of the AppProxy is not required. Consequently, we assign an empty address to it.
+     * @dev Initialize the contract.
      */
-    constructor(address crossChainLayer) AppProxy(address(0), crossChainLayer) {
+    function initialize(address adminAddress, address crossChainLayer) public initializer {
+        __TacProxyV1Upgradeable_init(crossChainLayer);
+        __Ownable_init(adminAddress);
+        __UUPSUpgradeable_init();
+        
     }
+
+    /**
+     * @dev Upgrades the contract.
+     */
+    function _authorizeUpgrade(address) internal override onlyOwner {}
+
 
     /**
      * @dev A proxy to addLiquidity
