@@ -1,9 +1,9 @@
 import hre, { ethers } from 'hardhat';
-import { sendSimpleMessageV1, simulateReceiveMessageV1, decodeCrossChainLayerErrorData } from 'tac-l2-ccl';
+import { sendSimpleMessageV1, simulateReceiveMessageV1, decodeCrossChainLayerErrorData } from '@tonappchain/evm-ccl';
 import { printEvents, printBalances } from '../utils';
-import { InMessageV1Struct } from 'tac-l2-ccl/dist/typechain-types/contracts/L2/Structs.sol/IStructsInterface';
+import { InMessageV1Struct } from '@tonappchain/evm-ccl/dist/typechain-types/contracts/L2/Structs.sol/IStructsInterface';
 import { loadUniswapTestEnv } from './utils';
-import { ERC20 } from 'tac-l2-ccl/dist/typechain-types';
+import { ERC20 } from '@tonappchain/evm-ccl/dist/typechain-types';
 
 async function main(showEvents=false) {
 

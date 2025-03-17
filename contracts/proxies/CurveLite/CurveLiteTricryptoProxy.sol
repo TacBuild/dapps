@@ -6,8 +6,8 @@ import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import { TransferHelper } from 'contracts/helpers/TransferHelper.sol';
-import { TacProxyV1Upgradeable } from "tac-l2-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
-import { OutMessageV1, TokenAmount, TacHeaderV1 } from "tac-l2-ccl/contracts/L2/Structs.sol";
+import { TacProxyV1Upgradeable } from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
+import { OutMessageV1, TokenAmount, TacHeaderV1 } from "@tonappchain/evm-ccl/contracts/L2/Structs.sol";
 
 /**
  * @title ITricryptoswapPool Interface
@@ -34,7 +34,7 @@ interface ITricryptoswapPool {
     function remove_liquidity(
         uint256 amount,
         uint256[3] calldata min_amounts
-    ) external returns (uint256[3] calldata);
+    ) external returns (uint256[3] memory);
     /**
      * @notice Exchange tokens 
      * @param i Index value for the input coin
@@ -56,7 +56,7 @@ interface ITricryptoswapPool {
      */
     function coins(
         uint256 arg0
-    ) external returns (address);
+    ) external view returns (address);
 }
 
 
@@ -70,10 +70,10 @@ contract CurveLiteTricryptoswapProxy is TacProxyV1Upgradeable, OwnableUpgradeabl
      * @dev Initialize the contract.
      */
     function initialize(address adminAddress, address crossChainLayer) public initializer {
+        __TacProxyV1Upgradeable_init(crossChainLayer);
         __Ownable_init(adminAddress);
         __UUPSUpgradeable_init();
-        __TacProxyV1Upgradeable_init(crossChainLayer);
-        transferOwnership(adminAddress);
+        
     }
 
     /**

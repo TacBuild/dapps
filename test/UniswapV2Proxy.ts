@@ -4,13 +4,13 @@ import { Signer } from 'ethers';
 
 import { deployUniswapV2 } from '../scripts/UniswapV2/deployUniswapV2';
 import { sttonTokenInfo, tacTokenInfo } from '../scripts/common/info/tokensInfo';
-import { JettonInfo, TacLocalTestSdk, TokenMintInfo, TokenUnlockInfo } from 'tac-l2-ccl';
+import { JettonInfo, TacLocalTestSdk, TokenMintInfo, TokenUnlockInfo } from '@tonappchain/evm-ccl';
 import { expect } from "chai";
 
 import { IUniswapV2Factory, IUniswapV2Pair, IUniswapV2Router02, UniswapV2Proxy } from '../typechain-types';
-import { ERC20, WTAC } from 'tac-l2-ccl/dist/typechain-types';
+import { ERC20, WTAC } from '@tonappchain/evm-ccl/dist/typechain-types';
 
-import wTACArtifact from 'tac-l2-ccl/dist/artifacts/contracts/WTAC.sol/WTAC.json';
+import wTACArtifact from '@tonappchain/evm-ccl/dist/artifacts/contracts/WTAC.sol/WTAC.json';
 import erc20Artifact from '../artifacts/@openzeppelin/contracts/token/ERC20/ERC20.sol/ERC20.json';
 import uniswapPairArtifact from '../artifacts/@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol/IUniswapV2Pair.json';
 

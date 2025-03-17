@@ -3,7 +3,7 @@ import { ethers } from "hardhat";
 import path from 'path';
 import simpleStorageArtifact from '../../artifacts/contracts/test/SimpleStorage.sol/SimpleStorage.json';
 
-import { saveContractAddress } from "tac-l2-ccl";
+import { saveContractAddress } from "@tonappchain/evm-ccl";
 
 
 async function main() {
