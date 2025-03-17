@@ -2,12 +2,12 @@ import { ethers, run } from "hardhat";
 import * as fs from "fs";
 import * as path from "path";
 import tokens from "../../tokens.json";
-import {  } from "tac-l2-ccl/dist/typechain-types";
+import {  } from "@tonappchain/evm-ccl/dist/typechain-types";
 import { Contract } from "ethers";
 import { TestnetERC20 } from "../../typechain-types";
 
 
-const wTON = "0x5a56a653e2e1b29caF9d892a27cCaE7aa6007efd";
+const wTON = "0xc40A96e983f9Cef1890c2af343Dee064875D3490";
 
 export function saveContractAddress(addressesFilePath: string, name: string, address: string) {
     let addressData: { [contractName: string]: string } = {};
@@ -20,7 +20,7 @@ export function saveContractAddress(addressesFilePath: string, name: string, add
 
 async function deployToken(tokenName: string, tokenSymbol: string, decimals: number) {
     const ERC20 = await ethers.getContractFactory("TestnetERC20");
-    const token = await ERC20.deploy(tokenName, tokenSymbol, decimals, {});
+    const token = await ERC20.deploy(tokenName, tokenSymbol, decimals);
     await token.waitForDeployment();
     console.log("Successful deployment");
     console.log("Contract address: ", await token.getAddress());
