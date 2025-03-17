@@ -19,7 +19,7 @@ describe("TacLocalTestSDK NFT", () => {
         testSdk = new TacLocalTestSdk();
         const crossChainLayerAddress = testSdk.create(ethers.provider);
 
-        existedERC721 = await deploy<TestERC721Token>(admin, hre.artifacts.readArtifactSync("TestERC721Token"), ["ExistedNFTToken", "NFTTokenE"], undefined, false);
+        existedERC721 = await deploy<TestERC721Token>(admin, hre.artifacts.readArtifactSync("TestERC721Token"), ["ExistedNFTToken", "NFTTokenE", "https://test-token.com/"], undefined, false);
         testNFTProxy = await deploy<TestNFTProxy>(admin, hre.artifacts.readArtifactSync("TestNFTProxy"), [crossChainLayerAddress], undefined, false);
 
     });
