@@ -10,7 +10,7 @@ import { ISwap } from "../Interface/Izumi/ISwap.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ILimitOrderManager } from "../Interface/Izumi/ILimitOrderManager.sol";
 import { ILiquidityManager } from "../Interface/Izumi/ILiquidityManager.sol";
-
+import { BytesLib } from "./BytesLib.sol";
 
 /**
  * @title IzumiProxy
@@ -19,6 +19,8 @@ import { ILiquidityManager } from "../Interface/Izumi/ILiquidityManager.sol";
 import "hardhat/console.sol";
 
 contract IzumiProxy is TacProxyV1 {
+
+    using BytesLib for bytes;
     address public poolAddress;
     address public swapAddress;
     address public limitOrderAddress;
@@ -128,8 +130,8 @@ contract IzumiProxy is TacProxyV1 {
         SwapY2XArguments memory args = abi.decode(arguments, (SwapY2XArguments));
         
         ISwap.SwapParams memory params = ISwap.SwapParams({
-            tokenX: args.tokenX > args.tokenY ? args.tokenY : args.tokenX,
-            tokenY: args.tokenX > args.tokenY ? args.tokenX : args.tokenY,
+            tokenX: args.tokenX,
+            tokenY: args.tokenY,
             fee: args.fee,
             boundaryPt: args.boundaryPt,
             recipient: args.recipient,
@@ -142,6 +144,7 @@ contract IzumiProxy is TacProxyV1 {
         TransferHelper.safeApprove(args.tokenY, swapAddress, args.amount);
 
         ISwap(swapAddress).swapY2X{value: msg.value}(params);
+        console.log("DONE");
 
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(args.tokenX, IERC20(args.tokenX).balanceOf(address(this)));
@@ -153,15 +156,17 @@ contract IzumiProxy is TacProxyV1 {
         bytes calldata tacHeader,
         bytes calldata arguments
     ) external payable {
+        console.log("swapAmount");
         SwapAmountArguments memory args = abi.decode(arguments, (SwapAmountArguments));
-        
+        console.log("swapAmount 1");
         address lastToken;
-        assembly {
-            let path := mload(add(args, 0x20))
-            let pathLength := mload(path)
-            let lastTokenStart := add(add(path, 0x20), sub(pathLength, 20))
-            lastToken := shr(96, mload(lastTokenStart))
-        }
+        lastToken = args.path.toAddress(0);
+        console.log(lastToken);
+        address firstToken;
+        firstToken = args.path.toAddress(23);
+        console.log(firstToken);
+        TransferHelper.safeApprove(firstToken, swapAddress, args.amount);
+        TransferHelper.safeApprove(lastToken, swapAddress, args.amount);
 
         ISwap.SwapAmountParams memory params = ISwap.SwapAmountParams({
             path: args.path,
@@ -186,8 +191,8 @@ contract IzumiProxy is TacProxyV1 {
         SwapX2YArguments memory args = abi.decode(arguments, (SwapX2YArguments));
         
         ISwap.SwapParams memory params = ISwap.SwapParams({
-            tokenX: args.tokenX > args.tokenY ? args.tokenY : args.tokenX,
-            tokenY: args.tokenX > args.tokenY ? args.tokenX : args.tokenY,
+            tokenX: args.tokenX,
+            tokenY: args.tokenY,
             fee: args.fee,
             boundaryPt: args.boundaryPt,
             recipient: args.recipient,
@@ -196,6 +201,8 @@ contract IzumiProxy is TacProxyV1 {
             minAcquired: args.minAcquired,
             deadline: args.deadline
         });
+
+        TransferHelper.safeApprove(args.tokenX, swapAddress, args.amount);
 
         ISwap(swapAddress).swapX2Y{value: msg.value}(params);
 
@@ -223,6 +230,8 @@ contract IzumiProxy is TacProxyV1 {
             deadline: args.deadline
         });
 
+        TransferHelper.safeApprove(args.tokenX, swapAddress, args.amount);
+
         ISwap(swapAddress).swapX2YDesireY{value: msg.value}(params);
 
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
@@ -249,6 +258,8 @@ contract IzumiProxy is TacProxyV1 {
             deadline: args.deadline
         });
 
+        TransferHelper.safeApprove(args.tokenY, swapAddress, args.amount);
+
         ISwap(swapAddress).swapY2XDesireX{value: msg.value}(params);
 
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
@@ -270,6 +281,14 @@ contract IzumiProxy is TacProxyV1 {
             let lastTokenStart := add(add(path, 0x20), sub(pathLength, 20))
             lastToken := shr(96, mload(lastTokenStart))
         }
+        address firstToken;
+        assembly {
+            let path := mload(add(args, 0x20))
+            let pathLength := mload(path)
+            let firstTokenStart := add(add(path, 0x20), 20)
+            firstToken := shr(96, mload(firstTokenStart))
+        }
+        TransferHelper.safeApprove(firstToken, swapAddress, args.desire);
         
         ISwap.SwapDesireParams memory params = ISwap.SwapDesireParams({
             path: args.path,
@@ -528,6 +547,10 @@ contract IzumiProxy is TacProxyV1 {
     //     return results;
     // }
 
+    function getCrossChainLayerAddress() public view returns (address) {
+        return _getCrossChainLayerAddress();
+    }
+
     receive() external payable {}
 
     function _bridgeTokens(
@@ -551,6 +574,6 @@ contract IzumiProxy is TacProxyV1 {
             toBridge: tokens
         });
 
-        _sendMessageV1(message, 0);
+        _sendMessageV1(message, address(this).balance);
     }
 }
