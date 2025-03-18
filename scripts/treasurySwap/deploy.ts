@@ -6,8 +6,7 @@ import { treasuryTokens } from "./config/tokens";
 import { TestnetERC20 } from "../../typechain-types";
 import { deployTreasurySwap } from "./deployTreasurySwap";
 import { deployTreasurySwapProxy } from "./deployTreasurySwapProxy";
-
-const wTON = "0xc40A96e983f9Cef1890c2af343Dee064875D3490";
+import { loadERC20FromFile } from "../utils";
 
 async function main() {
 
@@ -18,6 +17,9 @@ async function main() {
     const addressesFilePath = path.resolve(__dirname, "../addresses.json");
 
     const tacContracts = await loadTacContracts(addressesFilePath, deployer);
+
+    const wTONContract = loadERC20FromFile(addressesFilePath, "evmTONTokenAddress", deployer);
+    const wTONAddress = await wTONContract.getAddress();
 
     const testnetERC20Artifact = hre.artifacts.readArtifactSync("TestnetERC20");
 
@@ -38,7 +40,7 @@ async function main() {
 
         const treasurSwapContract = await deployTreasurySwap(
             deployer,
-            wTON,
+            wTONAddress,
             tokenAddress,
             token.tokenValue,
             token.decimals,
@@ -50,7 +52,7 @@ async function main() {
         const proxyContract = await deployTreasurySwapProxy(
             deployer,
             await treasurSwapContract.getAddress(),
-            wTON,
+            wTONAddress,
             await tacContracts.crossChainLayer.getAddress(),
             verbose
         );
