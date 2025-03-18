@@ -5,6 +5,8 @@ pragma solidity ^0.8.25;
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { TacProxyV1Upgradeable } from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
 
@@ -12,7 +14,6 @@ import { OutMessageV1, TokenAmount, TacHeaderV1 } from "@tonappchain/evm-ccl/con
 
 //Faucet Proxy Imports:
 import { ITreasurySwap } from "../interfaces/ITreasurySwap.sol";
-import { TransferHelper } from "../helpers/TransferHelper.sol";
 
 struct MintArguments {
     address to;
@@ -29,6 +30,8 @@ struct BurnArguments {
  * @dev Proxy contract for TreasurySwap
  */
 contract TreasurySwapProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
+
+    using SafeERC20 for IERC20;
 
     address public _wTON;
     address internal _appAddress;
@@ -53,7 +56,7 @@ contract TreasurySwapProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpg
         MintArguments memory arguments
     ) internal returns (TokenAmount[] memory) {
         // grant token approvals
-        TransferHelper.safeApprove(_wTON, _appAddress, arguments.wTONamt);
+        IERC20(_wTON).safeIncreaseAllowance(_appAddress, arguments.wTONamt);
 
         // proxy call
         uint256 receivedAmount = ITreasurySwap(_appAddress).mint(arguments.to, arguments.wTONamt);
@@ -79,7 +82,7 @@ contract TreasurySwapProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpg
 
         uint i;
         for (; i < tokensToBridge.length;) {
-            TransferHelper.safeApprove(tokensToBridge[i].l2Address, _getCrossChainLayerAddress(), tokensToBridge[i].amount);
+            IERC20(tokensToBridge[i].l2Address).safeIncreaseAllowance(_getCrossChainLayerAddress(), tokensToBridge[i].amount);
             unchecked {
                 i++;
             }
@@ -101,7 +104,7 @@ contract TreasurySwapProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpg
         BurnArguments memory arguments
     ) internal returns (TokenAmount[] memory) {
         // grant token approvals
-        TransferHelper.safeApprove(ITreasurySwap(_appAddress).token(), _appAddress, arguments.amount);
+        IERC20(_wTON).safeIncreaseAllowance(_appAddress, arguments.amount);
 
         // proxy call
         uint256 receivedAmount = ITreasurySwap(_appAddress).burn(arguments.to, arguments.amount);
@@ -126,7 +129,7 @@ contract TreasurySwapProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpg
 
         uint i;
         for (; i < tokensToBridge.length;) {
-            TransferHelper.safeApprove(tokensToBridge[i].l2Address, _getCrossChainLayerAddress(), tokensToBridge[i].amount);
+            IERC20(tokensToBridge[i].l2Address).safeIncreaseAllowance(_getCrossChainLayerAddress(), tokensToBridge[i].amount);
             unchecked {
                 i++;
             }
@@ -141,6 +144,6 @@ contract TreasurySwapProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpg
             toBridge: tokensToBridge
         });
 
-        _sendMessageV1(message, 0);    
+        _sendMessageV1(message, 0);
     }
 }
