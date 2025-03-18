@@ -29,7 +29,7 @@ struct BurnArguments {
  * @title TreasurySwapProxy
  * @dev Proxy contract for TreasurySwap
  */
-contract TreasurySwapProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
+contract TreasurySwapProxy is UUPSUpgradeable, OwnableUpgradeable, TacProxyV1Upgradeable {
 
     using SafeERC20 for IERC20;
 
