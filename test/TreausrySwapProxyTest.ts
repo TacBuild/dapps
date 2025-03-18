@@ -1,11 +1,11 @@
 
 import hre, { ethers } from "hardhat";
-import { deploy, TacLocalTestSdk, JettonInfo, TokenMintInfo, TokenUnlockInfo } from "tac-l2-ccl";
+import { deploy, TacLocalTestSdk, JettonInfo, TokenMintInfo, TokenUnlockInfo } from "@tonappchain/evm-ccl";
 import { Signer, assertArgumentCount } from "ethers";
 import { expect } from "chai";
-import { TreasurySwapProxy } from "../typechain-types/contracts/proxy/TreasurySwapProxy";
-import { TestnetERC20 } from "../typechain-types/contracts/TestnetERC20";
-import { TreasurySwap } from "../typechain-types/contracts/TreasurySwap.sol/TreasurySwap";
+import { TreasurySwapProxy } from "../typechain-types";
+import { TestnetERC20 } from "../typechain-types";
+import { TreasurySwap } from "../typechain-types";
 import { ERC20 } from "../typechain-types/@openzeppelin/contracts/token/ERC20";
 
 describe("TreasurySwap proxy test", () => {
