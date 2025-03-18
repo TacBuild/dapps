@@ -1,15 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.4;
-import "@openzeppelin/contracts/access/Ownable.sol";
-
-interface IERC20 {
-    function transfer(address to, uint256 amount) external returns (bool);
-    function balanceOf(address account) external view returns (uint256);
-    function allowance(address owner, address spender) external view returns (uint256);
-    function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
-}
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract TreasurySwap is Ownable {
+
+    using SafeERC20 for IERC20;
+
     address public token;
     address public wTON;
     uint256 public tokenValue;
@@ -47,13 +45,12 @@ contract TreasurySwap is Ownable {
         uint256 allowance = IERC20(wTON).allowance(msg.sender, address(this));
         require(allowance >= wTONamt, "TreasurySwap: Check the wTON allowance");
 
-        bool success = IERC20(wTON).transferFrom(msg.sender, address(this), wTONamt);
-        require(success, "TreasurySwap: Can't take wTON from user. Likely insufficient balance");
+        IERC20(wTON).safeTransferFrom(msg.sender, address(this), wTONamt);
 
         uint256 faucetBalance = IERC20(token).balanceOf(address(this));
         require(amount <= faucetBalance, "TreasurySwap: Not enough tokens in the treasury");
 
-        IERC20(token).transfer(to, amount);
+        IERC20(token).safeTransfer(to, amount);
 
         return amount;
     }
@@ -68,17 +65,17 @@ contract TreasurySwap is Ownable {
         uint256 availableBalance = addressBalance(to);
         require(amount <= availableBalance, "TreasurySwap: Requested burn amount greater than current balance");
 
-        IERC20(token).transferFrom(to, address(this), amount);
+        IERC20(token).safeTransferFrom(to, address(this), amount);
 
         uint256 refundAmount = amount * 10 ** 9 / tokenValue;
 
-        IERC20(wTON).transfer(to, refundAmount);
+        IERC20(wTON).safeTransfer(to, refundAmount);
 
         return refundAmount;
     }
 
     function adminWithdraw(uint256 amount) public onlyOwner {
-        IERC20(token).transfer(msg.sender, amount);
+        IERC20(token).safeTransfer(msg.sender, amount);
     }
 
     function adminWithdrawETH(uint256 amount) public onlyOwner {
@@ -87,7 +84,7 @@ contract TreasurySwap is Ownable {
     }
 
     function adminWithdrawTON(uint256 amount) public onlyOwner {
-        IERC20(wTON).transfer(msg.sender, amount);
+        IERC20(wTON).safeTransfer(msg.sender, amount);
     }
 
     function treasuryERCBalance() public view returns (uint256) {
@@ -104,9 +101,4 @@ contract TreasurySwap is Ownable {
         uint256 balance = IERC20(token).balanceOf(address(addr));
         return balance;
     }
-
-    receive() external payable {}
-
-    fallback() external payable {}
-
 }
