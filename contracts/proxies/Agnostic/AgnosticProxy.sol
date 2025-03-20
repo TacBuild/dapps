@@ -16,19 +16,12 @@ contract AgnosticProxy is TacProxyV1 {
         address[] tokens;
         bool isRequired;
     }
-    constructor(address crossChainLayer) TacProxyV1(crossChainLayer) {
-        console.log("AgnosticProxy constructor");
-    }
+    constructor(address crossChainLayer) TacProxyV1(crossChainLayer) {}
 
     function Zap(bytes calldata tacHeader, bytes calldata arguments) public {
-        console.log("Zap");
         (address[] memory to, bytes[] memory encodedMission, BridgeData memory bridgeData) = abi.decode(arguments, (address[], bytes[], BridgeData));
-        console.log("to.length", to.length);
         for (uint256 i = 0; i < to.length; i++) {
             if (encodedMission[i].length > 0) {
-                console.log("encodedMission[i].length", encodedMission[i].length);
-                console.log("to[i]", to[i]);
-                console.log(i);
             // (bytes memory data, address callTo) = ReplacementLib.decoder(dataInfo[i], encodedMission[i]);
             callContract(encodedMission[i], to[i]);
         }

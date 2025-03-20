@@ -10,7 +10,7 @@ import { ERC20 } from "tac-l2-ccl/dist/typechain-types";
 import { IPool, ISwap, ILimitOrderManager, ILiquidityManager, AgnosticProxy } from "../typechain-types";
 import { AgnosticProxySDK } from "../scripts/Agnostic/AgnosticProxySDK";
 
-describe("IzumiProxy", function () {
+describe("AgnosticProxy", function () {
     let admin: Signer;
     let testSdk: TacLocalTestSdk;
     let agnosticProxySDK: AgnosticProxySDK;
@@ -36,7 +36,7 @@ describe("IzumiProxy", function () {
 
     });
 
-    it("Izumi test create new pool, mint tokens, add liquidity", async function () {
+    it("AgnosticProxy test create new pool, mint tokens, add liquidity", async function () {
         const shardsKey = 1n;
         const operationId = ethers.encodeBytes32String("Zap new pool mint add liquidity");
         const extraData = "0x";
