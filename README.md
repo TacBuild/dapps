@@ -132,31 +132,6 @@ Deployment scripts must be run manually and modified according to the output of 
 
 This software is provided as it is, being a testnet project this code was not audited. Use it at your own risk.
 
-# Instructions to deploy:
-
-1) git clone this repo
-
-2) npm i
-
-3) EXPORT MNEMONIC = "test test test test test test test test test test test junk"
-
-4) npx hardhat run deploy/1_deploy_Token.ts --network tacTurin
-
-5) Now change all tokenAddress of contracts in the deploy/2_deploy_treasury.ts script with the one deployed in step 4)
-
-6) npx hardhat run deploy/2_deploy_treasury.ts --network tacTurin
-
-7) Now change all the treasuryAddress in the deploy/3_deploy_proxy.ts script with the one deployed in step 6)
-
-8) npx hardhat run deploy/3_deploy_proxy.ts --network tacTurin
-
-step 3 gives ERC20 token addresses -> this is needed to calculate the JettonAddress (TVMTokenAddress) with the TAC SDK. JettonAddress are required in the TAC SDK for the Crosschain operations with tokens.
-
-step 6 gives all the TreasurySwap addresses for each ERC20 deployed -> this is not used in the TAC SDK
-
-step 8 gives all the ProxyApp addresses for each TreasurySwap deployed -> this is needed in the TAC SDK (EVMProxyApp)
-
-
 ## Setup and Deployment
 
 1. **Install Dependencies:**
