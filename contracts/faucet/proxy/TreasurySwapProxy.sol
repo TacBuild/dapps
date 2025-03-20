@@ -104,7 +104,7 @@ contract TreasurySwapProxy is UUPSUpgradeable, OwnableUpgradeable, TacProxyV1Upg
         BurnArguments memory arguments
     ) internal returns (TokenAmount[] memory) {
         // grant token approvals
-        IERC20(_wTON).safeIncreaseAllowance(_appAddress, arguments.amount);
+        IERC20(ITreasurySwap(_appAddress).token()).safeIncreaseAllowance(_appAddress, arguments.amount);
 
         // proxy call
         uint256 receivedAmount = ITreasurySwap(_appAddress).burn(arguments.to, arguments.amount);
