@@ -2,7 +2,7 @@ import hre, { ethers, upgrades } from "hardhat";
 
 const proxyAddresses = [
     "0xC137dbdB0029f4BAc9942Cac9499DD8966A5Ec6c",
-    // "0x5FFCa38A45b6cb89DE1423fEB8dC4180D9e40125",
+    "0x5FFCa38A45b6cb89DE1423fEB8dC4180D9e40125",
     "0xC97d51c60Bc6705B249b2aB8a2ee85D6AA4B9421",
     "0x34B248d6d86948E47AD829B17d22cD9fD38D5289",
     "0x0417ef03d70A1542078B6E348965d8CA7Ae80ea6",
@@ -44,4 +44,4 @@ async function main(needsForceImport: boolean = false) {
 
 // set true for force import (if there is no upgrade manifest)
 // set false for upgrade
-main(true);
+main(false);
