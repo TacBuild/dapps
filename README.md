@@ -114,6 +114,24 @@ This library contains utility functions for working with messages, such as hashi
 
 Provides utility functions for working with Merkle trees, which are used to ensure the integrity of data.
 
+# Faucet on TAC Turin.
+
+There are 3 sets of contracts:
+
+- Vanilla ERC20 with AccessControl (testnetERC20.sol)
+- a Treasury Contract (treasurySwap.sol) used in the Faucet. Drip method: users lock some wTON tokens (ERC20) and get an equivalent amount of the ERC20. They can burn the ERC20 tokens to get back wTON. The swap is done at a fixed rate (like wETH) that is set in the config file and it's static. It's an anti-abuse mechanism, does not require any throttling or ratelimit.
+- A ProxyApp to work with the TAC Adapter (CCL) and let transaction flowing from and to TON wallets.
+
+Relationship between contract is 1:1:1. It needs a deployment of:
+- ERC20 contract
+- Associated TreasurySwap contract
+- ProxyApp Associated to the TreasurySwap
+for each ERC20 Token included in the faucet.
+
+Deployment scripts must be run manually and modified according to the output of the previous run.
+
+This software is provided as it is, being a testnet project this code was not audited. Use it at your own risk.
+
 ## Setup and Deployment
 
 1. **Install Dependencies:**

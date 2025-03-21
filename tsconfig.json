@@ -8,6 +8,6 @@
         "forceConsistentCasingInFileNames": true,
         "outDir": "dist",
         "declaration": true,
-        "resolveJsonModule": true
+        "resolveJsonModule": true,
     }
 }
