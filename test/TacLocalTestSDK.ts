@@ -22,7 +22,7 @@ describe("TacLocalTestSDK", () => {
         [admin] = await ethers.getSigners();
         testSdk = new TacLocalTestSdk();
         const crossChainLayerAddress = testSdk.create(ethers.provider);
-        
+
         existedToken = await deploy<TestToken>(admin, hre.artifacts.readArtifactSync("TestToken"), ["ExistedToken", "TokenE"], undefined, false);
         proxyContract = await deploy<TestProxy>(admin, hre.artifacts.readArtifactSync("TestProxy"), [crossChainLayerAddress], undefined, false);
 
@@ -53,16 +53,16 @@ describe("TacLocalTestSDK", () => {
         // how much jetton to mint
         const tokenMintInfo: TokenMintInfo = {
             info: jettonInfo,
-            mintAmount: 10n**9n,
+            amount: 10n**9n,
         }
 
         // how much existed token to unlock
         const tokenUnlockInfo: TokenUnlockInfo = {
             evmAddress: await existedToken.getAddress(),
-            unlockAmount: 10n**18n,
+            amount: 10n**18n,
         }
         // lock existed token on cross-chain layer contract, like it was bridged from EVM previously
-        await (await existedToken.mint(testSdk.getCrossChainLayerAddress(), tokenUnlockInfo.unlockAmount)).wait();
+        await (await existedToken.mint(testSdk.getCrossChainLayerAddress(), tokenUnlockInfo.amount)).wait();
 
         // calculate evm jetton address, which will be bridged on EVM after message is sent
         const calculatedTokenAddress = testSdk.getEVMJettonAddress(jettonInfo.tvmAddress);
@@ -73,10 +73,10 @@ describe("TacLocalTestSDK", () => {
         const methodName = "invokeWithCallback(bytes,bytes)";
 
         // define jetton token to receive tuple: tuple(address,uint256)
-        const receivedToken1 = [calculatedTokenAddress, tokenMintInfo.mintAmount];
+        const receivedToken1 = [calculatedTokenAddress, tokenMintInfo.amount];
 
         // define existed token to receive tuple: tuple(address,uint256)
-        const receivedToken2 = [tokenUnlockInfo.evmAddress, tokenUnlockInfo.unlockAmount];
+        const receivedToken2 = [tokenUnlockInfo.evmAddress, tokenUnlockInfo.amount];
 
         // define array structs TokenAmount[] like tuple(address,uint256)[]
         const receivedTokens = [receivedToken1, receivedToken2]
@@ -117,11 +117,11 @@ describe("TacLocalTestSDK", () => {
         // check burned token
         expect(outMessage.tokensBurned.length).to.be.eq(1);
         expect(outMessage.tokensBurned[0].evmAddress).to.be.eq(calculatedTokenAddress);
-        expect(outMessage.tokensBurned[0].amount).to.be.eq(tokenMintInfo.mintAmount);
+        expect(outMessage.tokensBurned[0].amount).to.be.eq(tokenMintInfo.amount);
         // check locked token
         expect(outMessage.tokensLocked.length).to.be.eq(1);
         expect(outMessage.tokensLocked[0].evmAddress).to.be.eq(tokenUnlockInfo.evmAddress);
-        expect(outMessage.tokensLocked[0].amount).to.be.eq(tokenUnlockInfo.unlockAmount);
+        expect(outMessage.tokensLocked[0].amount).to.be.eq(tokenUnlockInfo.amount);
 
         // check emited event
         let found = false;
@@ -138,9 +138,9 @@ describe("TacLocalTestSDK", () => {
                 expect(typedEvent.args.extraData).to.be.eq(extraData);
                 expect(typedEvent.args.receivedTokens.length).to.be.eq(2);
                 expect(typedEvent.args.receivedTokens[0].l2Address).to.be.eq(calculatedTokenAddress);
-                expect(typedEvent.args.receivedTokens[0].amount).to.be.eq(tokenMintInfo.mintAmount);
+                expect(typedEvent.args.receivedTokens[0].amount).to.be.eq(tokenMintInfo.amount);
                 expect(typedEvent.args.receivedTokens[1].l2Address).to.be.eq(tokenUnlockInfo.evmAddress);
-                expect(typedEvent.args.receivedTokens[1].amount).to.be.eq(tokenUnlockInfo.unlockAmount);
+                expect(typedEvent.args.receivedTokens[1].amount).to.be.eq(tokenUnlockInfo.amount);
             }
         });
         expect(found).to.be.true;

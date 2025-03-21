@@ -44,4 +44,4 @@ async function main(needsForceImport: boolean = false) {
 
 // set true for force import (if there is no upgrade manifest)
 // set false for upgrade
-main(false);
+main(true);

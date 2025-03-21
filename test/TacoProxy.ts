@@ -69,11 +69,11 @@ describe("TacoProxy", function () {
 
         const sttonTokenMintInfo: TokenMintInfo = {
             info: sttonTokenInfo,
-            mintAmount: baseInAmount,
+            amount: baseInAmount,
         }
         const tacTokenMintInfo: TokenMintInfo = {
             info: tacTokenInfo,
-            mintAmount: quoteInAmount,
+            amount: quoteInAmount,
         }
 
         const lpFeeRate = 5000000n *10n**9n;
@@ -189,7 +189,7 @@ describe("TacoProxy", function () {
 
         const sttonTokenMintInfo: TokenMintInfo = {
             info: sttonTokenInfo,
-            mintAmount: quoteInAmount,
+            amount: quoteInAmount,
         }
 
         const encodedArguments = new ethers.AbiCoder().encode(
@@ -284,7 +284,7 @@ describe("TacoProxy", function () {
         // mint stton token
         const sttonTokenMintInfo: TokenMintInfo = {
             info: sttonTokenInfo,
-            mintAmount: baseInAmount,
+            amount: baseInAmount,
         }
 
         // lock native tac
@@ -406,11 +406,11 @@ describe("TacoProxy", function () {
         // mint tokens
         const sttonTokenMintInfo: TokenMintInfo = {
             info: sttonTokenInfo,
-            mintAmount: baseInAmount,
+            amount: baseInAmount,
         }
         const tacTokenMintInfo: TokenMintInfo = {
             info: tacTokenInfo,
-            mintAmount: quoteInAmount,
+            amount: quoteInAmount,
         }
 
         const encodedArguments = new ethers.AbiCoder().encode(
@@ -544,7 +544,7 @@ describe("TacoProxy", function () {
         // mint tokens
         const sttonTokenMintInfo: TokenMintInfo = {
             info: sttonTokenInfo,
-            mintAmount: quoteInAmount,
+            amount: quoteInAmount,
         }
 
         const encodedArguments = new ethers.AbiCoder().encode(
@@ -679,7 +679,7 @@ describe("TacoProxy", function () {
         // mint tokens
         const sttonTokenMintInfo: TokenMintInfo = {
             info: sttonTokenInfo,
-            mintAmount: baseInAmount,
+            amount: baseInAmount,
         };
 
         // lock native tac
@@ -800,7 +800,7 @@ describe("TacoProxy", function () {
         // mint base token
         const sttonTokenMintInfo: TokenMintInfo = {
             info: sttonTokenInfo,
-            mintAmount: fromTokenAmount,
+            amount: fromTokenAmount,
         }
 
         const encodedArguments = new ethers.AbiCoder().encode(
