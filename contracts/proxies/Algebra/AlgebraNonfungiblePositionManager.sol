@@ -1,0 +1,319 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.28;
+
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+
+import { TransferHelper } from 'contracts/helpers/TransferHelper.sol';
+import { TacProxyV1Upgradeable } from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
+import { OutMessageV1, TokenAmount, TacHeaderV1 } from "@tonappchain/evm-ccl/contracts/L2/Structs.sol";
+
+struct MintParams {
+    address token0;
+    address token1;
+    address deployer;
+    int24 tickLower;
+    int24 tickUpper;
+    uint256 amount0Desired;
+    uint256 amount1Desired;
+    uint256 amount0Min;
+    uint256 amount1Min;
+    address recipient;
+    uint256 deadline;
+}
+
+struct IncreaseLiquidityParams {
+    uint256 tokenId;
+    uint256 amount0Desired;
+    uint256 amount1Desired;
+    uint256 amount0Min;
+    uint256 amount1Min;
+    uint256 deadline;
+}
+
+struct DecreaseLiquidityParams {
+    uint256 tokenId;
+    uint128 liquidity;
+    uint256 amount0Min;
+    uint256 amount1Min;
+    uint256 deadline;
+}
+
+struct CollectParams {
+    uint256 tokenId;
+    address recipient;
+    uint128 amount0Max;
+    uint128 amount1Max;
+}
+
+struct Position {
+    uint88 nonce; // the nonce for permits
+    address operator; // the address that is approved for spending this token
+    uint80 poolId; // the ID of the pool with which this token is connected
+    int24 tickLower; // the tick range of the position
+    int24 tickUpper;
+    uint128 liquidity; // the liquidity of the position
+    uint256 feeGrowthInside0LastX128; // the fee growth of the aggregate position as of the last action on the individual position
+    uint256 feeGrowthInside1LastX128;
+    uint128 tokensOwed0; // how many uncollected tokens are owed to the position, as of the last computation
+    uint128 tokensOwed1;
+}
+
+
+
+/**
+ * @title INonfungiblePositionManager Interface
+ * @notice This interface defines the core functionalities for a INonfungiblePositionManager in a Algebra.
+ * @dev NonfungiblePositionManager for stateless execution of swaps against Algebra
+ */
+
+
+/// @title NonfungiblePositionManager Interface
+/// @notice This interface defines the core functionalities for a INonfungiblePositionManager in a Algebra:
+/// wraps Algebra positions in a non-fungible token interface which allows for them to be transferred
+/// and authorized.
+interface INonfungiblePositionManager {
+    /// @notice Returns the position information associated with a given token ID.
+    /// @dev Throws if the token ID is not valid.
+    /// @param tokenId The ID of the token that represents the position
+    /// @return nonce The nonce for permits
+    /// @return operator The address that is approved for spending
+    /// @return token0 The address of the token0 for a specific pool
+    /// @return token1 The address of the token1 for a specific pool
+    /// @return deployer The address of the custom pool deployer
+    /// @return tickLower The lower end of the tick range for the position
+    /// @return tickUpper The higher end of the tick range for the position
+    /// @return liquidity The liquidity of the position
+    /// @return feeGrowthInside0LastX128 The fee growth of token0 as of the last action on the individual position
+    /// @return feeGrowthInside1LastX128 The fee growth of token1 as of the last action on the individual position
+    /// @return tokensOwed0 The uncollected amount of token0 owed to the position as of the last computation
+    /// @return tokensOwed1 The uncollected amount of token1 owed to the position as of the last computation
+    function positions(
+        uint256 tokenId
+    )
+        external
+        view
+        returns (
+            uint88 nonce,
+            address operator,
+            address token0,
+            address token1,
+            address deployer,
+            int24 tickLower,
+            int24 tickUpper,
+            uint128 liquidity,
+            uint256 feeGrowthInside0LastX128,
+            uint256 feeGrowthInside1LastX128,
+            uint128 tokensOwed0,
+            uint128 tokensOwed1
+        );
+
+    
+
+    /// @notice Creates a new position wrapped in a NFT
+    /// @dev Call this when the pool does exist and is initialized. Note that if the pool is created but not initialized
+    /// a method does not exist, i.e. the pool is assumed to be initialized.
+    /// @dev If native token is used as input, this function should be accompanied by a `refundNativeToken` in multicall to avoid potential loss of native tokens
+    /// @param params The params necessary to mint a position, encoded as `MintParams` in calldata
+    /// @return tokenId The ID of the token that represents the minted position
+    /// @return liquidity The liquidity delta amount as a result of the increase
+    /// @return amount0 The amount of token0
+    /// @return amount1 The amount of token1
+    function mint(
+        MintParams calldata params
+    ) external payable returns (uint256 tokenId, uint128 liquidity, uint256 amount0, uint256 amount1);
+
+    
+
+    /// @notice Increases the amount of liquidity in a position, with tokens paid by the `msg.sender`
+    /// @param params tokenId The ID of the token for which liquidity is being increased,
+    /// amount0Desired The desired amount of token0 to be spent,
+    /// amount1Desired The desired amount of token1 to be spent,
+    /// amount0Min The minimum amount of token0 to spend, which serves as a slippage check,
+    /// amount1Min The minimum amount of token1 to spend, which serves as a slippage check,
+    /// deadline The time by which the transaction must be included to effect the change
+    /// @dev If native token is used as input, this function should be accompanied by a `refundNativeToken` in multicall to avoid potential loss of native tokens
+    /// @return liquidity The liquidity delta amount as a result of the increase
+    /// @return amount0 The amount of token0 to achieve resulting liquidity
+    /// @return amount1 The amount of token1 to achieve resulting liquidity
+    function increaseLiquidity(
+        IncreaseLiquidityParams calldata params
+    ) external payable returns (uint128 liquidity, uint256 amount0, uint256 amount1);
+
+    
+
+    /// @notice Decreases the amount of liquidity in a position and accounts it to the position
+    /// @param params tokenId The ID of the token for which liquidity is being decreased,
+    /// amount The amount by which liquidity will be decreased,
+    /// amount0Min The minimum amount of token0 that should be accounted for the burned liquidity,
+    /// amount1Min The minimum amount of token1 that should be accounted for the burned liquidity,
+    /// deadline The time by which the transaction must be included to effect the change
+    /// @return amount0 The amount of token0 accounted to the position's tokens owed
+    /// @return amount1 The amount of token1 accounted to the position's tokens owed
+    function decreaseLiquidity(
+        DecreaseLiquidityParams calldata params
+    ) external payable returns (uint256 amount0, uint256 amount1);
+
+    
+
+    /// @notice Collects up to a maximum amount of fees owed to a specific position to the recipient
+    /// @param params tokenId The ID of the NFT for which tokens are being collected,
+    /// recipient The account that should receive the tokens,
+    /// amount0Max The maximum amount of token0 to collect,
+    /// amount1Max The maximum amount of token1 to collect
+    /// @return amount0 The amount of fees collected in token0
+    /// @return amount1 The amount of fees collected in token1
+    function collect(CollectParams calldata params) external payable returns (uint256 amount0, uint256 amount1);
+
+    /// @notice Burns a token ID, which deletes it from the NFT contract. The token must have 0 liquidity and all tokens
+    /// must be collected first.
+    /// @param tokenId The ID of the token that is being burned
+    function burn(uint256 tokenId) external payable;
+
+    /// @notice Changes approval of token ID for farming.
+    /// @param tokenId The ID of the token that is being approved / unapproved
+    /// @param approve New status of approval
+    /// @param farmingAddress The address of farming: used to prevent tx frontrun
+    function approveForFarming(uint256 tokenId, bool approve, address farmingAddress) external payable;
+
+    /// @notice Changes farming status of token to 'farmed' or 'not farmed'
+    /// @dev can be called only by farmingCenter
+    /// @param tokenId The ID of the token
+    /// @param toActive The new status
+    function switchFarmingStatus(uint256 tokenId, bool toActive) external;
+
+    /// @notice Changes address of farmingCenter
+    /// @dev can be called only by factory owner or NONFUNGIBLE_POSITION_MANAGER_ADMINISTRATOR_ROLE
+    /// @param newFarmingCenter The new address of farmingCenter
+    function setFarmingCenter(address newFarmingCenter) external;
+
+    /// @notice Returns whether `spender` is allowed to manage `tokenId`
+    /// @dev Requirement: `tokenId` must exist
+    function isApprovedOrOwner(address spender, uint256 tokenId) external view returns (bool);
+
+    /// @notice Returns the address of currently connected farming, if any
+    /// @return The address of the farming center contract, which handles farmings logic
+    function farmingCenter() external view returns (address);
+
+    /// @notice Returns the address of farming that is approved for this token, if any
+    function farmingApprovals(uint256 tokenId) external view returns (address);
+
+    /// @notice Returns the address of farming in which this token is farmed, if any
+    function tokenFarmedIn(uint256 tokenId) external view returns (address);
+
+
+}
+
+
+/**
+ * @title AlgebraNonfungiblePositionManagerProxy
+ * @dev Proxy contract Algebra, working with NonfungiblePositionManager
+ */
+contract AlgebraNonfungiblePositionManagerProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
+    address public constant _ETH_ADDRESS_ = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+    address internal _appAddress;
+
+    /**
+     * @dev Initialize the contract.
+     */
+    function initialize(address adminAddress, address appAddress, address crossChainLayer) public initializer {
+        __TacProxyV1Upgradeable_init(crossChainLayer);
+        __Ownable_init(adminAddress);
+        __UUPSUpgradeable_init();
+        _appAddress = appAddress;
+    }
+
+    /**
+     * @dev Upgrades the contract.
+     */
+    function _authorizeUpgrade(address) internal override onlyOwner {}
+
+
+    /**
+     * @dev A proxy to mint
+     * @param tacHeader TacHeaderV1 struct containing the header information
+     * @param arguments arguments data
+     */
+    function mint(
+        bytes calldata tacHeader,
+        bytes calldata arguments
+    ) public _onlyCrossChainLayer {
+        (MintParams memory params) = abi.decode(arguments, (MintParams));
+
+        TransferHelper.safeApprove(params.token0, _appAddress, params.amount0Desired);
+        TransferHelper.safeApprove(params.token1, _appAddress, params.amount1Desired);
+
+        (uint256 tokenId, uint128 liquidity, uint256 amount0, uint256 amount1) = INonfungiblePositionManager(_appAddress).mint(params);
+
+        // TODO: NFT WORK SEND NFT
+    }
+
+    /**
+     * @dev A proxy to increaseLiquidity
+     * @param tacHeader TacHeaderV1 struct containing the header information
+     * @param arguments arguments data
+     */
+    function increaseLiquidity(
+        bytes calldata tacHeader,
+        bytes calldata arguments
+    ) public _onlyCrossChainLayer {
+        (IncreaseLiquidityParams memory params) = abi.decode(arguments, (IncreaseLiquidityParams));
+
+        (, , address _token0, address _token1, , , , , , , , ) = INonfungiblePositionManager(_appAddress).positions(params.tokenId);
+
+        TransferHelper.safeApprove(_token0, _appAddress, params.amount0Desired);
+        TransferHelper.safeApprove(_token1, _appAddress, params.amount1Desired);
+
+        (uint128 liquidity, uint256 amount0, uint256 amount1) = INonfungiblePositionManager(_appAddress).increaseLiquidity(params);
+
+        // TODO: NFT WORK SEND NFT
+    }
+
+    /**
+     * @dev A proxy to decreaseLiquidity
+     * @param tacHeader TacHeaderV1 struct containing the header information
+     * @param arguments arguments data
+     */
+    function decreaseLiquidity(
+        bytes calldata tacHeader,
+        bytes calldata arguments
+    ) public _onlyCrossChainLayer {
+        (DecreaseLiquidityParams memory params) = abi.decode(arguments, (DecreaseLiquidityParams));
+
+        (uint256 amount0, uint256 amount1) = INonfungiblePositionManager(_appAddress).decreaseLiquidity(params);
+
+        // TODO: NFT WORK SEND NFT
+    }
+
+    /**
+     * @dev A proxy to burn
+     * @param tacHeader TacHeaderV1 struct containing the header information
+     * @param arguments arguments data
+     */
+    function burn(
+        bytes calldata tacHeader,
+        bytes calldata arguments
+    ) public _onlyCrossChainLayer {
+        (uint256 tokenId) = abi.decode(arguments, (uint256));
+
+        INonfungiblePositionManager(_appAddress).burn(tokenId);
+    }
+
+    /**
+     * @dev A proxy to collect
+     * @param tacHeader TacHeaderV1 struct containing the header information
+     * @param arguments arguments data
+     */
+    function collect(
+        bytes calldata tacHeader,
+        bytes calldata arguments
+    ) public _onlyCrossChainLayer {
+        (CollectParams memory params) = abi.decode(arguments, (CollectParams));
+
+        (uint256 amount0, uint256 amount1) = INonfungiblePositionManager(_appAddress).collect(params);
+
+        // TODO: NFT WORK SEND NFT
+    }
+
+}
