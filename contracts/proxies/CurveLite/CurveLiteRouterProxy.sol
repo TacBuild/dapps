@@ -93,42 +93,4 @@ contract CurveLiteRouterProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPS
         });
         _sendMessageV1(message, value);
     }
-
-    /**
-     * @dev A proxy to getDx
-     * @param arguments arguments data
-     */
-    function getDx(
-        bytes calldata arguments
-    ) public view _onlyCrossChainLayer returns (uint256){
-        (address[11] memory route,
-        uint256[4][5] memory params,
-        uint256 amount) = abi.decode(arguments, (address[11], uint256[4][5], uint256));
-
-        uint256 amountOut = IRouter(_appAddress).get_dx(
-            route, params, amount
-        );
-
-        return amountOut;
-    }
-
-    /**
-     * @dev A proxy to getDy
-     * @param arguments arguments data
-     */
-    function getDy(
-        bytes calldata arguments
-    ) public view _onlyCrossChainLayer returns (uint256){
-        (address[11] memory route,
-        uint256[4][5] memory params,
-        uint256 amount) = abi.decode(arguments, (address[11], uint256[4][5], uint256));
-
-        uint256 amountOut = IRouter(_appAddress).get_dy(
-            route, params, amount
-        );
-
-        return amountOut;
-    }
-
-
 }
