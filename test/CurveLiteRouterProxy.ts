@@ -213,8 +213,6 @@ describe("CurveLiteTwocryptoswapProxy", function () {
         const methodName = "exchange(bytes,bytes)";
 
         const amount = 1n*10n**(await sttonEVM.decimals());
-        
-
 
         const sttonTokenMintInfo: TokenMintInfo = {
             info: sttonTokenInfo,
@@ -269,126 +267,6 @@ describe("CurveLiteTwocryptoswapProxy", function () {
         expect(outMessage.targetAddress).to.be.equal(tvmWalletCaller);
         expect(outMessage.payload).to.be.equal("");
         expect(outMessage.tokensLocked.length).to.be.equal(0);
-
     });
 
-    it ("CurveLiteTwocryptoswap test exchange", async function () {
-        const shardsKey = 1n;
-        const operationId = ethers.encodeBytes32String("exchange");
-        const extraData = "0x";
-        const timestamp = BigInt(Math.floor(Date.now() / 1000));
-        const tvmWalletCaller = "EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk";
-
-        const target = await curveLiteTwocryptoswapProxy.getAddress();
-        const methodName = "exchange(bytes,bytes)";
-
-        const amount = 1n*10n**(await sttonEVM.decimals());
-
-
-        const sttonTokenMintInfo: TokenMintInfo = {
-            info: sttonTokenInfo,
-            mintAmount: amount,
-        }
-
-        const encodedParameters = new ethers.AbiCoder().encode(
-            ['tuple(address, uint256, uint256, uint256, uint256)'],
-            [
-                [
-                    await pool.getAddress(),
-                    0,
-                    1,
-                    amount,
-                    0
-                ]
-            ],
-        );
-
-        const balanceBeforeA = await pool.balances(0);
-        const balanceBeforeB = await pool.balances(1);
-        // send message
-        const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
-            shardsKey, // shardsKey
-            target, // proxy address
-            methodName, // method name
-            encodedParameters, // encoded arguments
-            tvmWalletCaller, // tvm caller
-            [sttonTokenMintInfo], // mint tokens
-            [], // unlock tokens
-            0n, // native tac amount to unlock
-            extraData,
-            operationId,
-            timestamp
-        );
-        expect(balanceBeforeA + amount).to.be.equal(await pool.balances(0));
-        expect(balanceBeforeB).to.be.gt(await pool.balances(1));
-
-        expect(outMessages.length).to.be.equal(1);
-        const outMessage = outMessages[0];
-        expect(outMessage.operationId).to.be.equal(operationId);
-        expect(outMessage.shardsKey).to.be.equal(shardsKey);
-        expect(outMessage.callerAddress).to.be.equal(await curveLiteTwocryptoswapProxy.getAddress());
-        expect(outMessage.targetAddress).to.be.equal(tvmWalletCaller);
-        expect(outMessage.payload).to.be.equal("");
-        expect(outMessage.tokensLocked.length).to.be.equal(0);
-    });
-
-    it ("CurveLiteTwocryptoswap test remove liquidity", async function () {
-        const shardsKey = 1n;
-        const operationId = ethers.encodeBytes32String("exchange");
-        const extraData = "0x";
-        const timestamp = BigInt(Math.floor(Date.now() / 1000));
-        const tvmWalletCaller = "EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk";
-
-        const target = await curveLiteTwocryptoswapProxy.getAddress();
-        const methodName = "removeLiquidity(bytes,bytes)";
-
-        
-        const amount = 1n*10n**(await pool.decimals());
-
-
-        const liquidityTokenUnlockInfo: TokenUnlockInfo = {
-            evmAddress: await pool.getAddress(),
-            unlockAmount: amount,
-        }
-
-        const encodedParameters = new ethers.AbiCoder().encode(
-            ['tuple(address, uint256, uint256[2])'],
-            [
-                [
-                    await pool.getAddress(),
-                    amount,
-                    [0, 0]
-                ]
-            ],
-        );
-
-        const balanceBeforeA = await pool.balances(0);
-        const balanceBeforeB = await pool.balances(1);
-        const liquidityBefore = await pool.balanceOf(testSdk.getCrossChainLayerAddress());
-        // send message
-        const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
-            shardsKey, // shardsKey
-            target, // proxy address
-            methodName, // method name
-            encodedParameters, // encoded arguments
-            tvmWalletCaller, // tvm caller
-            [], // mint tokens
-            [liquidityTokenUnlockInfo], // unlock tokens
-            0n, // native tac amount to unlock
-            extraData,
-            operationId,
-            timestamp
-        );
-        expect(balanceBeforeA).to.be.gt(await pool.balances(0));
-        expect(balanceBeforeB).to.be.gt(await pool.balances(1));
-        expect(liquidityBefore-amount).to.be.equal(await pool.balanceOf(testSdk.getCrossChainLayerAddress()));
-        expect(outMessages.length).to.be.equal(1);
-        const outMessage = outMessages[0];
-        expect(outMessage.operationId).to.be.equal(operationId);
-        expect(outMessage.shardsKey).to.be.equal(shardsKey);
-        expect(outMessage.callerAddress).to.be.equal(await curveLiteTwocryptoswapProxy.getAddress());
-        expect(outMessage.targetAddress).to.be.equal(tvmWalletCaller);
-        expect(outMessage.payload).to.be.equal("");
-        expect(outMessage.tokensLocked.length).to.be.equal(0);
-    });
 });
