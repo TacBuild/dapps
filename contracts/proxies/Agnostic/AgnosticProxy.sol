@@ -5,10 +5,6 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { TacProxyV1 } from "tac-l2-ccl/contracts/proxies/TacProxyV1.sol";
 import { OutMessageV1, TokenAmount, TacHeaderV1 } from "tac-l2-ccl/contracts/L2/Structs.sol";
 import { TransferHelper } from '@uniswap/lib/contracts/libraries/TransferHelper.sol';
-import "hardhat/console.sol";
-
-
-import "./ReplacementLib.sol";
 
 contract AgnosticProxy is TacProxyV1 {
 
@@ -16,15 +12,15 @@ contract AgnosticProxy is TacProxyV1 {
         address[] tokens;
         bool isRequired;
     }
+    
     constructor(address crossChainLayer) TacProxyV1(crossChainLayer) {}
 
-    function Zap(bytes calldata tacHeader, bytes calldata arguments) public {
+    function Zap(bytes calldata tacHeader, bytes calldata arguments) public _onlyCrossChainLayer {
         (address[] memory to, bytes[] memory encodedMission, BridgeData memory bridgeData) = abi.decode(arguments, (address[], bytes[], BridgeData));
         for (uint256 i = 0; i < to.length; i++) {
             if (encodedMission[i].length > 0) {
-            // (bytes memory data, address callTo) = ReplacementLib.decoder(dataInfo[i], encodedMission[i]);
-            callContract(encodedMission[i], to[i]);
-        }
+                callContract(encodedMission[i], to[i]);
+            }
         }
         if (bridgeData.isRequired) {
             TokenAmount[] memory tokensToBridge = new TokenAmount[](bridgeData.tokens.length);
@@ -35,12 +31,9 @@ contract AgnosticProxy is TacProxyV1 {
         }
     }
 
-
-    /// @dev Handling mission to another protocol
     function callContract(bytes memory data, address callTo) private {
         require(callTo != address(0), "Invalid call address");
-
-        (bool success, bytes memory resp) = callTo.call(data);
+        (bool success, ) = callTo.call(data);
         require(success, "Call failed");
     }
 

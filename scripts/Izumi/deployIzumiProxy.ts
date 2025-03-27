@@ -1,8 +1,16 @@
 import { Signer } from "ethers";
 import { IzumiProxy } from "../../typechain-types";
 import { IzumiTestnetConfig } from "./config/testnetConfig";
-import { deploy } from "tac-l2-ccl";
+import { deployUpgradable } from '@tonappchain/evm-ccl'
+import { DeployProxyOptions } from "@openzeppelin/hardhat-upgrades/dist/utils";
+
+
 import hre from 'hardhat';
+
+export const proxyOptsUUPS: DeployProxyOptions = {
+    kind: "uups"
+};
+
 
 
 export async function deployIzumiProxy(
@@ -11,7 +19,7 @@ export async function deployIzumiProxy(
     crossChainLayerAddress: string
 ): Promise<IzumiProxy> {
     
-    const izumiProxy = await deploy<IzumiProxy>(
+    const izumiProxy = await deployUpgradable<IzumiProxy>(
         deployer,
         hre.artifacts.readArtifactSync('IzumiProxy'),
         [crossChainLayerAddress,
@@ -19,6 +27,7 @@ export async function deployIzumiProxy(
             config.swapAddress,
             config.limitOrderAddress,
             config.liquidityManagerAddress],
+        proxyOptsUUPS,
         undefined,
         true
     );
