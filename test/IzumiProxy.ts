@@ -368,7 +368,7 @@ describe("IzumiProxy", function () {
         const poolAddress = await pool.pool(sttonEVMAddress, tacEVMAddress, 3000);
         const poolContract = new ethers.Contract(poolAddress, IzumiPoolAbi, admin);
         
-        const amount = ethers.parseUnits("0.1", sttonTokenInfo.decimals);
+        const amount = ethers.parseUnits("0.001", sttonEVMAddress > tacEVMAddress ? sttonTokenInfo.decimals : tacTokenInfo.decimals);
         const stTon = new ethers.Contract(sttonEVMAddress, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;
         const tac = new ethers.Contract(tacEVMAddress, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;
         const tokenX = sttonEVMAddress > tacEVMAddress ? tacEVMAddress : sttonEVMAddress;
@@ -393,10 +393,16 @@ describe("IzumiProxy", function () {
             ]]
         );
 
-        const mintTokens: TokenMintInfo[] = [{
-            info: sttonTokenInfo,
-            mintAmount: amount
-        }];
+        const mintTokens: TokenMintInfo[] = [
+            {
+                info: sttonTokenInfo,
+                mintAmount: amount
+            },
+            {
+                info: tacTokenInfo,
+                mintAmount: amount
+            }
+        ];
 
         const {receipt, outMessages} = await testSdk.sendMessage(
             shardsKey,
@@ -434,7 +440,7 @@ describe("IzumiProxy", function () {
         const poolAddress = await pool.pool(sttonEVMAddress, tacEVMAddress, 3000);
         const poolContract = new ethers.Contract(poolAddress, IzumiPoolAbi, admin);
         
-        const amount = ethers.parseUnits("0.1", tacTokenInfo.decimals);
+        const amount = ethers.parseUnits("0.001", sttonEVMAddress > tacEVMAddress ? sttonTokenInfo.decimals : tacTokenInfo.decimals);
         const stTon = new ethers.Contract(sttonEVMAddress, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;
         const tac = new ethers.Contract(tacEVMAddress, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;
         const tokenX = sttonEVMAddress > tacEVMAddress ? tacEVMAddress : sttonEVMAddress;
@@ -459,10 +465,16 @@ describe("IzumiProxy", function () {
             ]]
         );
 
-        const mintTokens: TokenMintInfo[] = [{
-            info: tacTokenInfo,
-            mintAmount: amount
-        }];
+        const mintTokens: TokenMintInfo[] = [
+            {
+                info: sttonTokenInfo,
+                mintAmount: amount
+            },
+            {
+                info: tacTokenInfo,
+                mintAmount: amount
+            }
+        ];
 
         const {receipt, outMessages} = await testSdk.sendMessage(
             shardsKey,

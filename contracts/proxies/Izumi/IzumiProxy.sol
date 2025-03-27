@@ -2,15 +2,18 @@
 pragma solidity ^0.8.28;
 
 import { TransferHelper } from '@uniswap/lib/contracts/libraries/TransferHelper.sol';
-import { OutMessageV1, TokenAmount, TacHeaderV1 } from "tac-l2-ccl/contracts/L2/Structs.sol";
+import { OutMessageV1, TokenAmount, TacHeaderV1 } from "@tonappchain/evm-ccl/contracts/L2/Structs.sol";
 import { ICrossChainLayer } from "tac-l2-ccl/contracts/interfaces/ICrossChainLayer.sol";
-import { TacProxyV1 } from "tac-l2-ccl/contracts/proxies/TacProxyV1.sol";
+import { TacProxyV1Upgradeable } from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
 import { IPool } from "../Interface/Izumi/IPool.sol";
 import { ISwap } from "../Interface/Izumi/ISwap.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ILimitOrderManager } from "../Interface/Izumi/ILimitOrderManager.sol";
 import { ILiquidityManager } from "../Interface/Izumi/ILiquidityManager.sol";
 import { BytesLib } from "./BytesLib.sol";
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+
 
 /**
  * @title IzumiProxy
@@ -18,7 +21,7 @@ import { BytesLib } from "./BytesLib.sol";
  */
 import "hardhat/console.sol";
 
-contract IzumiProxy is TacProxyV1 {
+contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
 
     using BytesLib for bytes;
     address public poolAddress;
@@ -28,22 +31,6 @@ contract IzumiProxy is TacProxyV1 {
 
     event NewPool(address indexed pool);
     event BurnFailed();
-    /**
-     * @dev Constructor function to initialize the contract with initial state.
-     * @param crossChainLayer Cross chain layer contract address.
-     */
-    constructor(
-        address crossChainLayer,
-        address _poolAddress,
-        address _swapAddress,
-        address _limitOrderAddress,
-        address _liquidityManagerAddress
-    ) TacProxyV1(crossChainLayer) {
-        poolAddress = _poolAddress;
-        swapAddress = _swapAddress;
-        limitOrderAddress = _limitOrderAddress;
-        liquidityManagerAddress = _liquidityManagerAddress;
-    }
 
     struct NewPoolArguments {
         address tokenX;
@@ -106,6 +93,28 @@ contract IzumiProxy is TacProxyV1 {
         uint256 idx;
         ILimitOrderManager.AddLimOrderParam originAddLimitOrderParam;
     }
+
+    function initialize(
+        address crossChainLayer,
+        address _poolAddress,
+        address _swapAddress,
+        address _limitOrderAddress,
+        address _liquidityManagerAddress
+    ) external initializer {
+        __TacProxyV1Upgradeable_init(crossChainLayer);
+        __Ownable_init(msg.sender);
+        __UUPSUpgradeable_init();
+        poolAddress = _poolAddress;
+        swapAddress = _swapAddress;
+        limitOrderAddress = _limitOrderAddress;
+        liquidityManagerAddress = _liquidityManagerAddress;
+    }
+
+    function _authorizeUpgrade(address newImplementation)
+        internal
+        override
+        onlyOwner
+    {}
 
     function newPool(
          bytes calldata,
@@ -259,6 +268,7 @@ contract IzumiProxy is TacProxyV1 {
         });
 
         TransferHelper.safeApprove(args.tokenY, swapAddress, args.amount);
+        TransferHelper.safeApprove(args.tokenX, swapAddress, args.amount);
 
         ISwap(swapAddress).swapY2XDesireX{value: msg.value}(params);
 

@@ -54,5 +54,8 @@
     "kill-node": "lsof -ti:8545 | xargs kill -9",
     "tests": "npx jest --runInBand --maxConcurrency=1",
     "deploy-and-tests": "npm run kill-node; npm run start-node & sleep 5 && npm run uniswap-deploy && sleep 7 && npx jest --runInBand --maxConcurrency=1"
+  },
+  "dependencies": {
+    "@tonappchain/evm-ccl": "^0.9.13"
   }
 }
