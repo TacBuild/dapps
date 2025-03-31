@@ -94,6 +94,9 @@ contract TreasurySwapProxy is UUPSUpgradeable, OwnableUpgradeable, TacProxyV1Upg
             shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
+            tvmProtocolFee: 0,
+            tvmExecutorFee: 0,
+            tvmValidExecutors: new string[](0),
             toBridge: tokensToBridge
         });
 
@@ -141,6 +144,9 @@ contract TreasurySwapProxy is UUPSUpgradeable, OwnableUpgradeable, TacProxyV1Upg
             shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
+            tvmProtocolFee: 0,
+            tvmExecutorFee: 0,
+            tvmValidExecutors: new string[](0),
             toBridge: tokensToBridge
         });
 

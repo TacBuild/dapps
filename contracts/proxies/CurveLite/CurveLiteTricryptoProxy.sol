@@ -120,6 +120,9 @@ contract CurveLiteTricryptoswapProxy is TacProxyV1Upgradeable, OwnableUpgradeabl
             shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
+            tvmProtocolFee: 0,
+            tvmExecutorFee: 0,
+            tvmValidExecutors: new string[](0),
             toBridge: tokensToBridge
         });
         _sendMessageV1(message, 0);
@@ -165,6 +168,9 @@ contract CurveLiteTricryptoswapProxy is TacProxyV1Upgradeable, OwnableUpgradeabl
             shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
+            tvmProtocolFee: 0,
+            tvmExecutorFee: 0,
+            tvmValidExecutors: new string[](0),
             toBridge: tokensToBridge
         });
         _sendMessageV1(message, 0);
@@ -205,6 +211,9 @@ contract CurveLiteTricryptoswapProxy is TacProxyV1Upgradeable, OwnableUpgradeabl
             shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
+            tvmProtocolFee: 0,
+            tvmExecutorFee: 0,
+            tvmValidExecutors: new string[](0),
             toBridge: tokensToBridge
         });
         _sendMessageV1(message, 0);
