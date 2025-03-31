@@ -33,7 +33,6 @@ if [ "$useTilt" = false ]; then
 
 elif [ "$useTilt" = true ]; then
   npx hardhat --network localhost run ./scripts/UniswapV2/deploy.ts
-  npx hardhat --network localhost run ./scripts/common/deploySimpleStorage.ts
   echo "------------------DEPLOY FINISHED------------------"
   touch /tmp/DEPLOY_FINISHED
   sleep infinity
