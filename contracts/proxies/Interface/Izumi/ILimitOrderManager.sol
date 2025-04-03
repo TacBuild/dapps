@@ -3,48 +3,59 @@ pragma solidity ^0.8.28;
 
 interface ILimitOrderManager {
     struct AddLimOrderParam {
-        address recipient;
         address tokenX;
         address tokenY;
         uint24 fee;
         int24 pt;
-        bool isDesireMode;
         uint128 amount;
-        uint256 swapMinAcquired;
         bool sellXEarnY;
         uint256 deadline;
     }
 
     struct LimOrder {
-        uint256 lastAccEarn;
-        uint128 initSellingAmount;
-        uint128 sellingRemain;
-        uint128 earn;
-        uint128 poolId;
-        uint128 timestamp;
-        int24 pt;
-        bool sellXEarnY;
-        bool active;
-    }
+    // total amount of earned token by all users at this point 
+    // with same direction (sell x or sell y) as of the last update(add/dec)
+    uint256 lastAccEarn;
+    // initial amount of token on sale
+    uint128 amount;
+    // remaing amount of token on sale
+    uint128 sellingRemain;
+    // accumulated decreased token
+    uint128 accSellingDec;
+    // uncollected decreased token
+    uint128 sellingDec;
+    // uncollected earned token
+    uint128 earn;
+    // id of pool in which this liquidity is added
+    uint128 poolId;
+    // block.timestamp when add a limit order
+    uint128 timestamp;
+    // point (price) of limit order
+    int24 pt;
+    // direction of limit order (sellx or sell y)
+    bool sellXEarnY;
+    // active or not
+    bool active;
+}
 
-    function cancel(
+    function decLimOrder(
+        uint256 orderIdx,
+        uint128 amount,
+        uint256 deadline
+    ) external returns (uint128 actualDelta);
+
+    function collectLimOrder(
         address recipient,
         uint256 orderIdx,
-        uint256 deadline
-    ) external;
-
-    function collect(
-        address recipient,
-        uint256 orderIdx
-    ) external returns (uint128 earn);
+        uint128 collectDec,
+        uint128 collectEarn
+    ) external returns (uint128 actualCollectDec, uint128 actualCollectEarn);
 
     function newLimOrder(
         uint256 idx,
         AddLimOrderParam calldata originAddLimitOrderParam
     ) external payable returns (
         uint128 orderAmount,
-        uint128 costBeforeSwap,
-        uint128 acquireBeforeSwap,
         uint128 acquire
     );
 

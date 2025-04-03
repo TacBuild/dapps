@@ -86,4 +86,5 @@ interface ILiquidityManager {
         address tokenY,
         uint24 fee
     );
+    function factory() external view returns (address);
 } 

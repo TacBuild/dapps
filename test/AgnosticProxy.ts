@@ -4,9 +4,9 @@ import { expect } from "chai";
 
 import { deployAgnosticProxy } from "../scripts/Agnostic/AgnosticProxyDeploy";
 import { izumiTestnetConfig } from "../scripts/Izumi/config/testnetConfig";
-import { TacLocalTestSdk, TokenMintInfo } from "tac-l2-ccl";
+import { TacLocalTestSdk, TokenMintInfo } from "@tonappchain/evm-ccl";
 import { sttonTokenInfo, tacTokenInfo } from '../scripts/common/info/tokensInfo';
-import { ERC20 } from "tac-l2-ccl/dist/typechain-types";
+import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types";
 import { IPool, ISwap, ILimitOrderManager, ILiquidityManager, AgnosticProxy } from "../typechain-types";
 import { AgnosticProxySDK } from "../scripts/Agnostic/AgnosticProxySDK";
 
@@ -58,8 +58,6 @@ describe("AgnosticProxy", function () {
 
         const contractInterfaces = {
             [izumiTestnetConfig.poolAddress]: pool.interface,
-            [izumiTestnetConfig.swapAddress]: swap.interface,
-            [izumiTestnetConfig.limitOrderAddress]: limitOrderManager.interface,
             [izumiTestnetConfig.liquidityManagerAddress]: liquidityManager.interface,
             [sttonEVMAddress]: stTon.interface,
             [tacEVMAddress]: tac.interface
@@ -107,20 +105,20 @@ describe("AgnosticProxy", function () {
             {
                 to: izumiTestnetConfig.liquidityManagerAddress,
                 functionName: "addLiquidity",
-                params: [[6, amount, amount, 0, 0, ethers.MaxUint256]]
+                params: [[3, amount, amount, 0, 0, ethers.MaxUint256]]
             }
         ];
 
-        const zapCallData = agnosticProxySDK.createZapTransaction(contractInterfaces, calls);
+        const zapCallData = agnosticProxySDK.createZapTransaction(contractInterfaces, calls, [], [{nft: izumiTestnetConfig.liquidityManagerAddress, id: 3n, amount: 0n}], true);
 
         const mintTokens: TokenMintInfo[] = [
                     {
                         info: sttonTokenInfo,
-                        mintAmount: amountToMint
+                        amount: amountToMint
                     },
                     {
                         info: tacTokenInfo,
-                        mintAmount: amountToMint
+                        amount: amountToMint
                     }
                 ];
 

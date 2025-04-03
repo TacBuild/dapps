@@ -1,8 +1,15 @@
 import { ethers } from "ethers";
 import { Interface } from "ethers";
 
+export interface NFTData {
+    nft: string;
+    id: bigint;
+    amount: bigint;
+}
+
 export interface BridgeData {
     tokens: string[];
+    nfts: NFTData[];
     isRequired: boolean;
 }
 
@@ -34,12 +41,14 @@ export class AgnosticProxySDK {
      * Encodes multiple function calls for the Zap function
      * @param calls Array of contract addresses and their encoded function calls
      * @param bridgeTokens Array of token addresses to bridge after execution
+     * @param bridgeNFTs Array of NFT data to bridge after execution
      * @param requiresBridge Whether bridging is required
      * @returns Encoded Zap function parameters
      */
     public encodeZapCall(
         calls: { to: string; encodedCall: string }[],
         bridgeTokens: string[] = [],
+        bridgeNFTs: NFTData[] = [],
         requiresBridge: boolean = false
     ): ZapCallData {
         const to: string[] = [];
@@ -54,6 +63,7 @@ export class AgnosticProxySDK {
         // Create bridge data
         const bridgeData: BridgeData = {
             tokens: bridgeTokens,
+            nfts: bridgeNFTs,
             isRequired: requiresBridge
         };
 
@@ -71,11 +81,15 @@ export class AgnosticProxySDK {
      */
     public encodeZapParameters(zapData: ZapCallData): string {
         return ethers.AbiCoder.defaultAbiCoder().encode(
-            ['address[]', 'bytes[]', 'tuple(address[],bool)'],
+            ['address[]', 'bytes[]', 'tuple(address[],tuple(address,uint256,uint256)[],bool)'],
             [
                 zapData.to,
                 zapData.encodedMission,
-                [zapData.bridgeData.tokens, zapData.bridgeData.isRequired]
+                [
+                    zapData.bridgeData.tokens,
+                    zapData.bridgeData.nfts.map(nft => [nft.nft, nft.id, nft.amount]),
+                    zapData.bridgeData.isRequired
+                ]
             ]
         );
     }
@@ -85,6 +99,7 @@ export class AgnosticProxySDK {
      * @param contractInterfaces Array of contract interfaces
      * @param calls Array of function calls with their parameters
      * @param bridgeTokens Array of token addresses to bridge
+     * @param bridgeNFTs Array of NFT data to bridge
      * @param requiresBridge Whether bridging is required
      * @returns Encoded Zap function parameters
      */
@@ -92,6 +107,7 @@ export class AgnosticProxySDK {
         contractInterfaces: { [address: string]: Interface },
         calls: { to: string; functionName: string; params: any[] }[],
         bridgeTokens: string[] = [],
+        bridgeNFTs: NFTData[] = [],
         requiresBridge: boolean = false
     ): string {
         const encodedCalls = calls.map(call => ({
@@ -103,7 +119,7 @@ export class AgnosticProxySDK {
             )
         }));
 
-        const zapData = this.encodeZapCall(encodedCalls, bridgeTokens, requiresBridge);
+        const zapData = this.encodeZapCall(encodedCalls, bridgeTokens, bridgeNFTs, requiresBridge);
         return this.encodeZapParameters(zapData);
     }
 }

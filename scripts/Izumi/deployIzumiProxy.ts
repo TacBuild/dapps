@@ -7,7 +7,7 @@ import { DeployProxyOptions } from "@openzeppelin/hardhat-upgrades/dist/utils";
 
 import hre from 'hardhat';
 
-export const proxyOptsUUPS: DeployProxyOptions = {
+const proxyOptsUUPS: DeployProxyOptions = {
     kind: "uups"
 };
 
