@@ -166,13 +166,19 @@ contract TacoProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable
     address public constant _ETH_ADDRESS_ = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
     address internal  _approveAddress;
     address internal  _wethAddress;
-    address internal  _feeRouteProxyAddress;
     address internal _appAddress;
+    address internal  _feeRouteProxyAddress;
+    address internal  _tacoCalleeHelperAddress;
 
     /**
      * @dev Initialize the contract.
      */
-    function initialize(address adminAddress, address appAddress, address feeRouteProxyAddress, address crossChainLayer) public initializer {
+    function initialize(
+        address adminAddress,
+        address appAddress,
+        address feeRouteProxyAddress,
+        address tacoCalleeHelperAddress,
+        address crossChainLayer) public initializer {
         __TacProxyV1Upgradeable_init(crossChainLayer);
         __Ownable_init(adminAddress);
         __UUPSUpgradeable_init();
@@ -181,6 +187,7 @@ contract TacoProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable
         _approveAddress = IDODOV2Proxy01(IDODOV2Proxy01(appAddress)._DODO_APPROVE_PROXY_())._DODO_APPROVE_();
         _wethAddress = IDODOV2Proxy01(appAddress)._WETH_();
         _feeRouteProxyAddress = feeRouteProxyAddress;
+        _tacoCalleeHelperAddress = tacoCalleeHelperAddress;
     }
 
     /**
@@ -212,7 +219,7 @@ contract TacoProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable
         }
 
         // proxy call
-        (newVendingMachine, shares) = 
+        (newVendingMachine, shares) =
             IDODOV2Proxy01(_appAddress).createDODOVendingMachine{value: msg.value}(
                 arguments.baseToken,
                 arguments.quoteToken,
@@ -420,7 +427,7 @@ contract TacoProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable
         // call dApp
         (baseAmount, quoteAmount) = IDVM(arguments.dvmAddress).sellShares(
             arguments.shareAmount,
-            address(this), // receive tokens to this proxy
+            _tacoCalleeHelperAddress,  // use ETH helper to convert WETH to TAC
             arguments.baseMinAmount,
             arguments.quoteMinAmount,
             arguments.data,
@@ -451,7 +458,7 @@ contract TacoProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable
         uint256 value = 0;
         uint256 i = 0;
 
-        if (baseToken == _ETH_ADDRESS_) {
+        if (baseToken == _wethAddress) {
             value += baseAmount;
         } else {
             tokensToBridge[i] = TokenAmount(baseToken, baseAmount);
@@ -461,7 +468,7 @@ contract TacoProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable
             }
         }
 
-        if (quoteToken == _ETH_ADDRESS_) {
+        if (quoteToken == _wethAddress) {
             value += quoteAmount;
         } else {
             tokensToBridge[i] = TokenAmount(quoteToken, quoteAmount);

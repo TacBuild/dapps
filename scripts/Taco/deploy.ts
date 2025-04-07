@@ -19,6 +19,7 @@ async function main() {
     saveContractAddress(addressesFilePath, 'tacoFeeRouteProxy', config.tacoFeeRouteProxy);
     saveContractAddress(addressesFilePath, 'tacoDVMFactory', config.tacoDVMFactory);
     saveContractAddress(addressesFilePath, 'tacoApprove', config.tacoApprove);
+    saveContractAddress(addressesFilePath, 'tacoCalleeHelperAddress', config.tacoCalleeHelperAddress);
     saveContractAddress(addressesFilePath, 'tacoWETH', config.tacoWETH);
 
     const tacoProxy = await deployTacoProxy(deployer, config, await tacContracts.crossChainLayer.getAddress());

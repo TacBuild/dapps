@@ -10,7 +10,7 @@ export async function deployTacoProxy(deployer: Signer, tacoConfig: TacoConfig, 
     const tacoProxy = await deployUpgradable<TacoProxy>(
         deployer,
         hre.artifacts.readArtifactSync('TacoProxy'),
-        [await deployer.getAddress(), tacoConfig.tacoV2Proxy02, tacoConfig.tacoFeeRouteProxy, crossChainLayerAddress],
+        [await deployer.getAddress(), tacoConfig.tacoV2Proxy02, tacoConfig.tacoFeeRouteProxy, tacoConfig.tacoCalleeHelperAddress, crossChainLayerAddress],
         proxyOptsUUPS,
         undefined,
         true
