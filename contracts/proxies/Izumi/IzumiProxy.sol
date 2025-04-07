@@ -26,11 +26,24 @@ import "hardhat/console.sol";
 
 contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable, IERC721Receiver {
 
+    struct BridgeData {
+        address[] tokens;
+        NFTData[] nfts;
+        bool isRequired;
+    }
+
+    struct NFTData {
+        address nft;
+        uint256 id;
+        uint256 amount;
+    }
+
     using BytesLib for bytes;
     address public poolAddress;
     address public swapAddress;
     address public limitOrderAddress;
     address public liquidityManagerAddress;
+    address constant private GAS_TOKEN = 0x0000000000000000000000000000000000000000;
 
     event NewPool(address indexed pool);
     event BurnFailed();
@@ -85,6 +98,8 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         uint256 orderIdx;
         uint128 amount;
         uint256 deadline;
+        uint128 collectDec;
+        uint128 collectEarn;
     }
 
     struct CollectOrderArguments {
@@ -322,12 +337,16 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         );
 
         (uint128 actualCollectDec, uint128 actualCollectEarn) = ILimitOrderManager(limitOrderAddress).collectLimOrder(
-            address(this),
+            _isGasToken(tokenToSell) || _isGasToken(tokenToReceive) ? limitOrderAddress : address(this),
             args.orderIdx,
-            args.amount,
-            type(uint128).max
+            args.collectDec,
+            args.collectEarn
         );
 
+        if (_isGasToken(tokenToSell) || _isGasToken(tokenToReceive)) {
+            ILimitOrderManager(limitOrderAddress).unwrapWETH9(0, address(this));
+            _isGasToken(tokenToSell) ? ILimitOrderManager(limitOrderAddress).sweepToken(tokenToReceive, 0, address(this)) : ILimitOrderManager(limitOrderAddress).sweepToken(tokenToSell, 0, address(this));
+        }
         
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(
@@ -547,31 +566,31 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         }
     }
 
-    // function multicall(
-    //     bytes calldata tacHeader,
-    //     bytes[] calldata data
-    // ) external payable returns (bytes[] memory) {
-    //     bytes[] memory results = ISwap(swapAddress).multicall{value: msg.value}(data);
+    function multicall(
+        bytes calldata tacHeader,
+        bytes calldata arguments
+    ) external payable returns (bytes[] memory) {
 
-    //     // CCL TAC->TON callback
-    //     TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
-    //     OutMessageV1 memory message = OutMessageV1({
-    //         shardsKey: header.shardsKey,
-    //         tvmTarget: header.tvmCaller,
-    //         tvmPayload: "",
-    //         toBridge: new TokenAmount[](0)
-    //     });
+        (address[] memory to, bytes[] memory data, uint256[] memory value, BridgeData memory bridgeData) = abi.decode(arguments, (address[], bytes[], uint256[], BridgeData));
+        for (uint256 i = 0; i < to.length; i++) {
+            (bool success,) = to[i].call{value: value[i]}(data[i]);
+            if (!success) {
+                revert("Multicall failed");
+            }
+        }
 
-    //     _sendMessageV1(message, 0);
-        
-    //     return results;
-    // }
+        TokenAmount[] memory tokensToBridge = new TokenAmount[](bridgeData.tokens.length);
+        for (uint256 i = 0; i < bridgeData.tokens.length; i++) {
+            tokensToBridge[i] = TokenAmount(bridgeData.tokens[i], IERC20(bridgeData.tokens[i]).balanceOf(address(this)));
+        }
 
-    function getCrossChainLayerAddress() public view returns (address) {
-        return _getCrossChainLayerAddress();
-    }
+        NFTTokenAmount[] memory nftsToBridge = new NFTTokenAmount[](bridgeData.nfts.length);
+        for (uint256 i = 0; i < bridgeData.nfts.length; i++) {
+            nftsToBridge[i] = NFTTokenAmount(bridgeData.nfts[i].nft, bridgeData.nfts[i].id, bridgeData.nfts[i].amount);
+        }
 
-    
+        _bridgeTokens(tacHeader, tokensToBridge, nftsToBridge, "");
+    }    
 
     function _bridgeTokens(
         bytes calldata tacHeader,
@@ -609,6 +628,10 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         bytes calldata
     ) external pure override(IERC721Receiver) returns (bytes4) {
         return this.onERC721Received.selector;
+    }
+
+    function _isGasToken(address token) private view returns (bool) {
+        return token == GAS_TOKEN;
     }
 
     receive() external payable {}

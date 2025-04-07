@@ -69,4 +69,12 @@ interface ILimitOrderManager {
         address tokenY,
         uint24 fee
     );
+
+    function unwrapWETH9(uint256 minAmount, address recipient) external payable returns (uint256 amount);
+
+    function sweepToken(
+        address token,
+        uint256 minAmount,
+        address recipient
+    ) external payable;
 } 
