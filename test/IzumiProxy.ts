@@ -10,6 +10,9 @@ import { IzumiPoolAbi } from "./abis/IzumiPool";
 import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types";
 import { IzumiProxy, IPool, ISwap, ILimitOrderManager, ILiquidityManager } from "../typechain-types";
 
+export const MAXUINT128 = BigInt("340282366920938463463374607431768211455");
+
+
 describe("IzumiProxy", function () {
     let admin: Signer;
     let testSdk: TacLocalTestSdk;
@@ -19,9 +22,6 @@ describe("IzumiProxy", function () {
     let swap: ISwap;
     let limitOrderManager: ILimitOrderManager;
     let liquidityManager: ILiquidityManager;
-
-    let sttonToken: ERC20;
-    let tacToken: ERC20;
 
     before(async function () {
         [admin] = await ethers.getSigners();
@@ -61,11 +61,10 @@ describe("IzumiProxy", function () {
             ]]
         );
 
-        // Get initial pool address
         const initialPoolAddress = await pool.pool(sttonEVMAddress, tacEVMAddress, fee);
         expect(initialPoolAddress).to.equal(ethers.ZeroAddress);
 
-        const {receipt, outMessages} = await testSdk.sendMessage(
+        await testSdk.sendMessage(
             shardsKey,
             target,
             methodName,
@@ -79,11 +78,9 @@ describe("IzumiProxy", function () {
             timestamp
         );
 
-        // Verify pool creation
         const newPoolAddress = await pool.pool(sttonEVMAddress, tacEVMAddress, fee);
         expect(newPoolAddress).to.not.equal(ethers.ZeroAddress);
 
-        // Verify point delta for fee
         const pointDelta = await pool.fee2pointDelta(fee);
         expect(pointDelta).to.not.equal(0);
     });
@@ -154,7 +151,7 @@ describe("IzumiProxy", function () {
             }
         ];
 
-        const {receipt, outMessages} = await testSdk.sendMessage(
+        await testSdk.sendMessage(
             shardsKey,
             target,
             methodName,
@@ -168,7 +165,6 @@ describe("IzumiProxy", function () {
             timestamp
         );
 
-        const poolAddress = await pool.pool(sttonEVMAddress, tacEVMAddress, fee);
         const liquidityInfo = await liquidityManager.liquidities(3n);        
         expect(liquidityInfo.liquidity).to.be.gt(0);
     });
@@ -182,13 +178,6 @@ describe("IzumiProxy", function () {
 
         const target = await izumiProxy.getAddress();
         const methodName = "addLiquidity(bytes,bytes)";
-
-        const sttonEVMAddress = testSdk.getEVMJettonAddress(sttonTokenInfo.tvmAddress);
-        const tacEVMAddress = testSdk.getEVMJettonAddress(tacTokenInfo.tvmAddress);
-        const initialPoolAddress = await pool.pool(sttonEVMAddress, tacEVMAddress, 3000);
-        
-        const stTon = new ethers.Contract(sttonEVMAddress, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;
-        const tac = new ethers.Contract(tacEVMAddress, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;
         
         const amount = ethers.parseEther("1");
         const encodedArguments = new ethers.AbiCoder().encode(
@@ -220,9 +209,8 @@ describe("IzumiProxy", function () {
             amount: 0n
         }
         const liquidityInfoBefore = await liquidityManager.liquidities(3n);
-        
 
-        const {receipt, outMessages} = await testSdk.sendMessageWithNFT(
+        await testSdk.sendMessageWithNFT(
             shardsKey,
             target,
             methodName,
@@ -243,10 +231,6 @@ describe("IzumiProxy", function () {
         expect(liquidityInfoAfter.liquidity).to.be.gt(liquidityInfoBefore.liquidity);
     });
 
-    
-
-    
-
     it("Izumi test swap Y2X and X2Y", async function () {
         const shardsKey = 4n;
         const operationIdYToX = ethers.encodeBytes32String("swap y to x");
@@ -260,24 +244,27 @@ describe("IzumiProxy", function () {
         const sttonEVMAddress = testSdk.getEVMJettonAddress(sttonTokenInfo.tvmAddress);
         const tacEVMAddress = testSdk.getEVMJettonAddress(tacTokenInfo.tvmAddress);
         
-        
-        const poolAddress = await pool.pool(sttonEVMAddress, tacEVMAddress, 3000);
-        const poolContract = new ethers.Contract(poolAddress, IzumiPoolAbi, admin);
-        
-        const amount = ethers.parseEther("0.1"); // Smaller amount for testing
-        const stTon = new ethers.Contract(sttonEVMAddress, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;
-        const tac = new ethers.Contract(tacEVMAddress, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;
+        const poolAddress = await pool.pool(sttonEVMAddress, tacEVMAddress, 3000);        
+        const amount = "0.1" // Smaller amount for testing
         const tokenX = sttonEVMAddress > tacEVMAddress ? tacEVMAddress : sttonEVMAddress;
         const tokenY = sttonEVMAddress > tacEVMAddress ? sttonEVMAddress : tacEVMAddress;
+        const tokenXContract = new ethers.Contract(tokenX, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;
+        const tokenYContract = new ethers.Contract(tokenY, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;
 
-        await swapToken2Token(tokenX, tokenY, 3000, 214200n, ethers.parseUnits("0.1", tacTokenInfo.decimals), target, shardsKey, operationIdYToX, methodNameYToX, tvmWalletCaller, testSdk);
+        const initialTokenXBalance = await tokenXContract.balanceOf(poolAddress);
+        const initialTokenYBalance = await tokenYContract.balanceOf(poolAddress);
+        
+        await swapToken2Token(tokenX, tokenY, 3000, 214200n, ethers.parseUnits(amount, tacTokenInfo.decimals), target, shardsKey, operationIdYToX, methodNameYToX, tvmWalletCaller, testSdk);
+        expect(await tokenXContract.balanceOf(poolAddress)).to.be.lt(initialTokenXBalance);
+        expect(await tokenYContract.balanceOf(poolAddress)).to.be.gt(initialTokenYBalance);
 
-        await swapToken2Token(tokenX, tokenY, 3000, 207240n, ethers.parseUnits("0.1", sttonTokenInfo.decimals), target, shardsKey, operationIdXToY, methodNameXToY, tvmWalletCaller, testSdk);
-        
-        
-        const finalState = await poolContract.state();
-        // expect(finalState.currentPoint).to.not.equal(initialState.currentPoint);
-        // expect(finalState.liquidity).to.equal(initialLiquidity);
+        const initialTokenXBalance2 = await tokenXContract.balanceOf(poolAddress);
+        const initialTokenYBalance2 = await tokenYContract.balanceOf(poolAddress);
+
+        await swapToken2Token(tokenX, tokenY, 3000, 207240n, ethers.parseUnits(amount, sttonTokenInfo.decimals), target, shardsKey, operationIdXToY, methodNameXToY, tvmWalletCaller, testSdk);
+        expect(await tokenXContract.balanceOf(poolAddress)).to.be.gt(initialTokenXBalance2);
+        expect(await tokenYContract.balanceOf(poolAddress)).to.be.lt(initialTokenYBalance2);
+    
     });
     
 
@@ -294,13 +281,11 @@ describe("IzumiProxy", function () {
         const sttonEVMAddress = testSdk.getEVMJettonAddress(sttonTokenInfo.tvmAddress);
         const tacEVMAddress = testSdk.getEVMJettonAddress(tacTokenInfo.tvmAddress);
 
-        // Create path bytes: tokenX -> tokenY with fee
         const path = ethers.concat([
             ethers.zeroPadValue(sttonEVMAddress, 20),
             ethers.zeroPadValue(ethers.toBeHex(3000), 3),
             ethers.zeroPadValue(tacEVMAddress, 20)
         ]);
-        
 
         const amount = ethers.parseUnits("0.1", tacTokenInfo.decimals);
         const minAcquired = 0; // No minimum amount requirement for test
@@ -316,7 +301,6 @@ describe("IzumiProxy", function () {
             ]]
         );
 
-        // Get initial balances
         const stTon = new ethers.Contract(sttonEVMAddress, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;
         const tac = new ethers.Contract(tacEVMAddress, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;
         const poolAddress = await pool.pool(sttonEVMAddress, tacEVMAddress, 3000);
@@ -329,7 +313,7 @@ describe("IzumiProxy", function () {
             amount: amount
         }];
 
-        const {receipt, outMessages} = await testSdk.sendMessage(
+        await testSdk.sendMessage(
             shardsKey,
             target,
             methodName,
@@ -343,18 +327,11 @@ describe("IzumiProxy", function () {
             timestamp
         );
 
-        // Verify balances changed
         const finalStTonBalance = await stTon.balanceOf(poolAddress);
         const finalTacBalance = await tac.balanceOf(poolAddress);
 
         expect(finalStTonBalance).to.be.gt(initialStTonBalance);
         expect(finalTacBalance).to.be.lt(initialTacBalance);
-
-        // // Verify output message
-        // expect(outMessages.length).to.equal(1);
-        // const outMessage = outMessages[0] as any; // Type assertion for bridge info
-        // expect(outMessage.toBridge.length).to.equal(1);
-        // expect(outMessage.toBridge[0].l2Address).to.equal(tacEVMAddress);
     });
     it("Izumi test swap Y2X with desired X amount", async function () {
         const shardsKey = 8n;
@@ -368,18 +345,17 @@ describe("IzumiProxy", function () {
         const tacEVMAddress = testSdk.getEVMJettonAddress(tacTokenInfo.tvmAddress);
         
         const poolAddress = await pool.pool(sttonEVMAddress, tacEVMAddress, 3000);
-        const poolContract = new ethers.Contract(poolAddress, IzumiPoolAbi, admin);
         
-
         const amount = ethers.parseUnits("0.0001", sttonEVMAddress > tacEVMAddress ? sttonTokenInfo.decimals : tacTokenInfo.decimals);
-        const stTon = new ethers.Contract(sttonEVMAddress, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;
-        const tac = new ethers.Contract(tacEVMAddress, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;
         const tokenX = sttonEVMAddress > tacEVMAddress ? tacEVMAddress : sttonEVMAddress;
         const tokenY = sttonEVMAddress > tacEVMAddress ? sttonEVMAddress : tacEVMAddress;
+        
+        const tokenXContract = new ethers.Contract(tokenX, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;
+        const tokenYContract = new ethers.Contract(tokenY, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;
 
-        // Get initial balances
-        const initialStTonBalance = await stTon.balanceOf(poolAddress);
-        const initialTacBalance = await tac.balanceOf(poolAddress);
+        const initialTokenXBalance = await tokenXContract.balanceOf(poolAddress);
+        const initialTokenYBalance = await tokenYContract.balanceOf(poolAddress);
+
 
         const encodedArguments = new ethers.AbiCoder().encode(
             ['tuple(address,address,uint24,int24,address,uint128,uint256,uint256,uint256)'],
@@ -407,7 +383,7 @@ describe("IzumiProxy", function () {
             }
         ];
 
-        const {receipt, outMessages} = await testSdk.sendMessage(
+        await testSdk.sendMessage(
             shardsKey,
             target,
             methodName,
@@ -421,9 +397,11 @@ describe("IzumiProxy", function () {
             BigInt(Math.floor(Date.now() / 1000))
         );
 
-        // Verify balances changed
-        const finalStTonBalance = await stTon.balanceOf(poolAddress);
-        const finalTacBalance = await tac.balanceOf(poolAddress);
+        const finalTokenXBalance = await tokenXContract.balanceOf(poolAddress);
+        const finalTokenYBalance = await tokenYContract.balanceOf(poolAddress);
+
+        expect(finalTokenXBalance).to.be.lt(initialTokenXBalance);
+        expect(finalTokenYBalance).to.be.gt(initialTokenYBalance);
     });
 
     it("Izumi test swap X2Y with desired Y amount", async function () {
@@ -438,17 +416,16 @@ describe("IzumiProxy", function () {
         const tacEVMAddress = testSdk.getEVMJettonAddress(tacTokenInfo.tvmAddress);
         
         const poolAddress = await pool.pool(sttonEVMAddress, tacEVMAddress, 3000);
-        const poolContract = new ethers.Contract(poolAddress, IzumiPoolAbi, admin);
         
         const amount = ethers.parseUnits("0.1", sttonTokenInfo.decimals)
-        const stTon = new ethers.Contract(sttonEVMAddress, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;
-        const tac = new ethers.Contract(tacEVMAddress, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;
         const tokenX = sttonEVMAddress > tacEVMAddress ? tacEVMAddress : sttonEVMAddress;
         const tokenY = sttonEVMAddress > tacEVMAddress ? sttonEVMAddress : tacEVMAddress;
 
-        // Get initial balances
-        const initialStTonBalance = await stTon.balanceOf(poolAddress);
-        const initialTacBalance = await tac.balanceOf(poolAddress);
+        const tokenXContract = new ethers.Contract(tokenX, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;
+        const tokenYContract = new ethers.Contract(tokenY, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;
+
+        const initialTokenXBalance = await tokenXContract.balanceOf(poolAddress);
+        const initialTokenYBalance = await tokenYContract.balanceOf(poolAddress);
 
         const encodedArguments = new ethers.AbiCoder().encode(
             ['tuple(address,address,uint24,int24,address,uint128,uint256,uint256,uint256)'],
@@ -476,7 +453,7 @@ describe("IzumiProxy", function () {
             }
         ];
 
-        const {receipt, outMessages} = await testSdk.sendMessage(
+        await testSdk.sendMessage(
             shardsKey,
             target,
             methodName,
@@ -490,10 +467,11 @@ describe("IzumiProxy", function () {
             BigInt(Math.floor(Date.now() / 1000))
         );
 
-        // Verify balances changed
-        const finalStTonBalance = await stTon.balanceOf(poolAddress);
-        const finalTacBalance = await tac.balanceOf(poolAddress);
+        const finalTokenXBalance = await tokenXContract.balanceOf(poolAddress);
+        const finalTokenYBalance = await tokenYContract.balanceOf(poolAddress);
 
+        expect(finalTokenXBalance).to.be.gt(initialTokenXBalance);
+        expect(finalTokenYBalance).to.be.lt(initialTokenYBalance);
     });
 
     it("Izumi test swap desire through path", async function () {
@@ -509,7 +487,6 @@ describe("IzumiProxy", function () {
         const sttonEVMAddress = testSdk.getEVMJettonAddress(sttonTokenInfo.tvmAddress);
         const tacEVMAddress = testSdk.getEVMJettonAddress(tacTokenInfo.tvmAddress);
 
-        // Create path bytes: tokenX -> tokenY with fee
         const path = ethers.concat([
             ethers.zeroPadValue(sttonEVMAddress, 20),
             ethers.zeroPadValue(ethers.toBeHex(3000), 3),
@@ -517,7 +494,7 @@ describe("IzumiProxy", function () {
         ]);
 
         const desire = ethers.parseUnits("0.1", sttonTokenInfo.decimals);
-        const maxPayed = ethers.MaxUint256; // No maximum amount limit for test
+        const maxPayed = ethers.MaxUint256;
 
         const encodedArguments = new ethers.AbiCoder().encode(
             ['tuple(bytes,address,uint128,uint256,uint256)'],
@@ -530,7 +507,6 @@ describe("IzumiProxy", function () {
             ]]
         );
 
-        // Get initial balances
         const stTon = new ethers.Contract(sttonEVMAddress, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;
         const tac = new ethers.Contract(tacEVMAddress, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;
         const poolAddress = await pool.pool(sttonEVMAddress, tacEVMAddress, 3000);
@@ -541,14 +517,10 @@ describe("IzumiProxy", function () {
         const mintTokens: TokenMintInfo[] = [{
             info: sttonTokenInfo,
             amount: ethers.parseUnits("100000000", sttonTokenInfo.decimals)
-        },
-        {
-            info: tacTokenInfo,
-            amount: ethers.parseUnits("1000000000", tacTokenInfo.decimals)
         }
     ];
 
-        const {receipt, outMessages} = await testSdk.sendMessage(
+        await testSdk.sendMessage(
             shardsKey,
             target,
             methodName,
@@ -562,9 +534,11 @@ describe("IzumiProxy", function () {
             timestamp
         );
 
-        // Verify balances changed
         const finalStTonBalance = await stTon.balanceOf(poolAddress);
         const finalTacBalance = await tac.balanceOf(poolAddress);
+
+        // expect(finalStTonBalance).to.be.gt(initialStTonBalance);
+        // expect(finalTacBalance).to.be.lt(initialTacBalance);
     });
 
     it("Izumi test new limit order", async function () {
@@ -581,9 +555,7 @@ describe("IzumiProxy", function () {
         const tacEVMAddress = testSdk.getEVMJettonAddress(tacTokenInfo.tvmAddress);
         
         const poolAddress = await pool.pool(sttonEVMAddress, tacEVMAddress, 3000);
-        const poolContract = new ethers.Contract(poolAddress, IzumiPoolAbi, admin);
         
-        // Calculate points for the limit order
         const priceUndecimalXByY = BigInt(1) * BigInt(10n ** BigInt(tacTokenInfo.decimals)) / BigInt(10n ** BigInt(sttonTokenInfo.decimals));
         let point1 = Math.log(Number(priceUndecimalXByY)) / Math.log(1.0001);
         point1 = Math.round(point1);
@@ -592,18 +564,10 @@ describe("IzumiProxy", function () {
         let point2 = Math.log(Number(priceUndecimalXByY2)) / Math.log(1.0001);
         point2 = Math.round(point2);
 
-        const state = await poolContract.state();
-        
-        
-        // const leftPoint = pointDeltaRoundingDown(Number(Math.min(point1, point2)), Number(pointDelta));
-        // const rightPoint = pointDeltaRoundingUp(Number(Math.max(point1, point2)), Number(pointDelta));
-        // console.log(leftPoint, rightPoint);
-
         const tokenX = sttonEVMAddress > tacEVMAddress ? tacEVMAddress : sttonEVMAddress;
         const tokenY = sttonEVMAddress > tacEVMAddress ? sttonEVMAddress : tacEVMAddress;
         const amount = ethers.parseUnits("0.001", sttonEVMAddress > tacEVMAddress ? sttonTokenInfo.decimals : tacTokenInfo.decimals);
 
-        // Create the limit order parameters
         const originAddLimitOrderParam = {
             tokenX: tokenX,
             tokenY: tokenY,
@@ -617,7 +581,7 @@ describe("IzumiProxy", function () {
         const encodedArguments = new ethers.AbiCoder().encode(
             ['tuple(uint256,tuple(address,address,uint24,int24,uint128,bool,uint256))'],
             [[
-                0n, // idx for the new limit order
+                0n,
                 [
                     originAddLimitOrderParam.tokenX,
                     originAddLimitOrderParam.tokenY,
@@ -630,7 +594,6 @@ describe("IzumiProxy", function () {
             ]]
         );
 
-        // Get initial state
         const stTon = new ethers.Contract(sttonEVMAddress, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;
         const tac = new ethers.Contract(tacEVMAddress, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;
         
@@ -646,7 +609,7 @@ describe("IzumiProxy", function () {
             amount: ethers.parseUnits("1000000000", tacTokenInfo.decimals)
         }];
 
-        const {receipt, outMessages} = await testSdk.sendMessage(
+        await testSdk.sendMessage(
             shardsKey,
             target,
             methodName,
@@ -660,18 +623,10 @@ describe("IzumiProxy", function () {
             timestamp
         );
 
-        // Verify the limit order was created
         const order = await limitOrderManager.getActiveOrder(target, 0n);
-        // expect(order.initSellingAmount).to.equal(amount);
-        // expect(order.sellXEarnY).to.equal(true);
-        // expect(order.poolId).to.equal(poolAddress);
-
-        // // Verify balances changed
-        // const finalStTonBalance = await stTon.balanceOf(poolAddress);
-        // const finalTacBalance = await tac.balanceOf(poolAddress);
-
-        // expect(finalStTonBalance).to.be.gt(initialStTonBalance);
-        // expect(finalTacBalance).to.be.lt(initialTacBalance);
+        expect(order.sellingRemain).to.equal(amount);
+        expect(order.sellXEarnY).to.equal(false);
+        expect(order.active).to.be.true;
     });
 
     it("Izumi test cancel order", async function () {
@@ -685,21 +640,23 @@ describe("IzumiProxy", function () {
         const methodName = "cancelOrder(bytes,bytes)";
 
         // Verify there's an active order to cancel
-        // const orderBeforeCancel = await limitOrderManager.getActiveOrder(target, 5n);
-        // expect(orderBeforeCancel.active).to.be.true;
-        // expect(orderBeforeCancel.initSellingAmount).to.be.gt(0n);
+        const orderBeforeCancel = await limitOrderManager.getActiveOrder(target, 0n);
+        expect(orderBeforeCancel.active).to.be.true;
+        expect(orderBeforeCancel.sellingRemain).to.be.gt(0n);
 
         // Cancel the order
         const cancelEncodedArguments = new ethers.AbiCoder().encode(
-            ['tuple(uint256,uint128,uint256)'],
+            ['tuple(uint256,uint128,uint256,uint128,uint128)'],
             [[
                 0n,         // orderIdx
-                ethers.parseUnits("1", tacTokenInfo.decimals),            // amount
-                ethers.MaxUint256 // deadline
+                ethers.parseEther("1"),            // amount
+                ethers.MaxUint256, // deadline
+                MAXUINT128, // collectDec
+                MAXUINT128 // collectEarn
             ]]
         );
-
-        const {receipt, outMessages} = await testSdk.sendMessage(
+        
+        await testSdk.sendMessage(
             shardsKey,
             target,
             methodName,
@@ -716,6 +673,8 @@ describe("IzumiProxy", function () {
         // Verify the order was cancelled
         const orderAfterCancel = await limitOrderManager.getActiveOrder(target, 0n);
         expect(orderAfterCancel.active).to.be.false;
+        expect(orderAfterCancel.sellingRemain).to.be.equal(0n);
+        expect(orderAfterCancel.sellingDec).to.be.equal(0n);
     });
 
     it("Izumi test decrease liquidity", async function () {
@@ -767,7 +726,7 @@ describe("IzumiProxy", function () {
             amount: 0n
         };
 
-        const {receipt, outMessages} = await testSdk.sendMessageWithNFT(
+        await testSdk.sendMessageWithNFT(
             shardsKey,
             target,
             methodName,
@@ -831,7 +790,7 @@ describe("IzumiProxy", function () {
             amount: 0n
         };
 
-        const {receipt, outMessages} = await testSdk.sendMessageWithNFT(
+        await testSdk.sendMessageWithNFT(
             shardsKey,
             target,
             methodName,
@@ -851,9 +810,6 @@ describe("IzumiProxy", function () {
         const liquidityInfoAfter = await liquidityManager.liquidities(3n);
         expect(liquidityInfoAfter.liquidity).to.be.equal(0n);
     });
-
-
-    
 
     it("Izumi test burn liquidity", async function () {
         const shardsKey = 13n;
@@ -897,7 +853,7 @@ describe("IzumiProxy", function () {
             amount: 0n
         };
 
-        const {receipt, outMessages} = await testSdk.sendMessageWithNFT(
+        await testSdk.sendMessageWithNFT(
             shardsKey,
             target,
             methodName,

@@ -5,25 +5,23 @@ import { TransferHelper } from '@uniswap/lib/contracts/libraries/TransferHelper.
 import { OutMessageV2, TokenAmount, TacHeaderV1, NFTTokenAmount } from "@tonappchain/evm-ccl/contracts/L2/Structs.sol";
 import { ICrossChainLayer } from "@tonappchain/evm-ccl/contracts/interfaces/ICrossChainLayer.sol";
 import { TacProxyV1Upgradeable } from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
-import { IPool } from "../Interface/Izumi/IPool.sol";
-import { ISwap } from "../Interface/Izumi/ISwap.sol";
+import { IPool } from "./Interface/IPool.sol";
+import { ISwap } from "./Interface/ISwap.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { ILimitOrderManager } from "../Interface/Izumi/ILimitOrderManager.sol";
-import { ILiquidityManager } from "../Interface/Izumi/ILiquidityManager.sol";
+import { ILimitOrderManager } from "./Interface/ILimitOrderManager.sol";
+import { ILiquidityManager } from "./Interface/ILiquidityManager.sol";
 import { BytesLib } from "./BytesLib.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import { IERC721Receiver } from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import { IFactory } from "../Interface/Izumi/IFactory.sol";
-
+import { IFactory } from "./Interface/IFactory.sol";
+import "hardhat/console.sol";
 
 /**
  * @title IzumiProxy
- * @dev Proxy contract for Izumi, similar to UniswapV2Router02
+ * @dev Proxy contract for Izumi
  */
-import "hardhat/console.sol";
-
 contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable, IERC721Receiver {
 
     struct BridgeData {
@@ -47,6 +45,7 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
 
     event NewPool(address indexed pool);
     event BurnFailed();
+    event Mint(uint256 indexed lid);
 
     struct NewPoolArguments {
         address tokenX;
@@ -105,6 +104,8 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
     struct CollectOrderArguments {
         address recipient;
         uint256 orderIdx;
+        uint128 collectDec;
+        uint128 collectEarn;
     }
 
     struct NewLimOrderArguments {
@@ -184,10 +185,10 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
     ) external payable {
         SwapAmountArguments memory args = abi.decode(arguments, (SwapAmountArguments));
         address lastToken;
-        lastToken = args.path.toAddress(23);
         address firstToken;
+
+        lastToken = args.path.toAddress(args.path.length - 20);
         firstToken = args.path.toAddress(0);
-        TransferHelper.safeApprove(firstToken, swapAddress, args.amount);
 
         ISwap.SwapAmountParams memory params = ISwap.SwapAmountParams({
             path: args.path,
@@ -196,6 +197,8 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
             minAcquired: args.minAcquired,
             deadline: args.deadline
         });
+
+        TransferHelper.safeApprove(firstToken, swapAddress, args.amount);
 
         ISwap(swapAddress).swapAmount{value: msg.value}(params);
 
@@ -296,10 +299,10 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         SwapDesireArguments memory args = abi.decode(arguments, (SwapDesireArguments));
 
         address lastToken;
-        lastToken = args.path.toAddress(23);
         address firstToken;
+
+        lastToken = args.path.toAddress(args.path.length - 20);
         firstToken = args.path.toAddress(0);
-        TransferHelper.safeApprove(firstToken, swapAddress, args.maxPayed);
         
         ISwap.SwapDesireParams memory params = ISwap.SwapDesireParams({
             path: args.path,
@@ -308,6 +311,8 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
             maxPayed: args.maxPayed,
             deadline: args.deadline
         });
+
+        TransferHelper.safeApprove(firstToken, swapAddress, args.maxPayed);
 
         ISwap(swapAddress).swapDesire{value: msg.value}(params);
 
@@ -336,7 +341,7 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
             args.deadline
         );
 
-        (uint128 actualCollectDec, uint128 actualCollectEarn) = ILimitOrderManager(limitOrderAddress).collectLimOrder(
+        ILimitOrderManager(limitOrderAddress).collectLimOrder(
             _isGasToken(tokenToSell) || _isGasToken(tokenToReceive) ? limitOrderAddress : address(this),
             args.orderIdx,
             args.collectDec,
@@ -347,13 +352,21 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
             ILimitOrderManager(limitOrderAddress).unwrapWETH9(0, address(this));
             _isGasToken(tokenToSell) ? ILimitOrderManager(limitOrderAddress).sweepToken(tokenToReceive, 0, address(this)) : ILimitOrderManager(limitOrderAddress).sweepToken(tokenToSell, 0, address(this));
         }
-        
-        TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
-        tokensToBridge[0] = TokenAmount(
-            tokenToSell,
-            IERC20(tokenToSell).balanceOf(address(this))
-        );
+        TokenAmount[] memory tokensToBridge;
 
+        if (IERC20(tokenToSell).balanceOf(address(this)) > 0 && IERC20(tokenToReceive).balanceOf(address(this)) > 0) {
+            tokensToBridge = new TokenAmount[](2);
+            tokensToBridge[0] = TokenAmount(tokenToSell, IERC20(tokenToSell).balanceOf(address(this)));
+            tokensToBridge[1] = TokenAmount(tokenToReceive, IERC20(tokenToReceive).balanceOf(address(this)));
+        } else  {
+            tokensToBridge = new TokenAmount[](1);
+            if(IERC20(tokenToSell).balanceOf(address(this)) > 0) {
+                tokensToBridge[0] = TokenAmount(tokenToSell, IERC20(tokenToSell).balanceOf(address(this)));
+            } else {
+                tokensToBridge[0] = TokenAmount(tokenToReceive, IERC20(tokenToReceive).balanceOf(address(this)));
+            }
+        }
+    
         _bridgeTokens(tacHeader, tokensToBridge, new NFTTokenAmount[](0), "");
     }
 
@@ -375,8 +388,8 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         (uint128 actualCollectDec, uint128 actualCollectEarn) = ILimitOrderManager(limitOrderAddress).collectLimOrder(
             address(this),
             args.orderIdx,
-            type(uint128).max,
-            type(uint128).max
+            args.collectDec,
+            args.collectEarn
         );
 
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
@@ -449,7 +462,8 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         }
         NFTTokenAmount[] memory nftsToBridge = new NFTTokenAmount[](1);
         nftsToBridge[0] = NFTTokenAmount(address(liquidityManagerAddress), lid, 0);
-        // TODO: NFT bridging is not supported yet
+
+        emit Mint(lid);
 
         _bridgeTokens(tacHeader, tokensToBridge, nftsToBridge, "");
     }
@@ -569,7 +583,7 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
     function multicall(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable returns (bytes[] memory) {
+    ) external payable {
 
         (address[] memory to, bytes[] memory data, uint256[] memory value, BridgeData memory bridgeData) = abi.decode(arguments, (address[], bytes[], uint256[], BridgeData));
         for (uint256 i = 0; i < to.length; i++) {
