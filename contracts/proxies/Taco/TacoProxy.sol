@@ -26,13 +26,21 @@ interface IDVM is IERC20 {
     function _MT_FEE_RATE_MODEL_() external view returns (address);
     function getVaultReserve() external view returns (uint256 baseReserve, uint256 quoteReserve);
     function getMidPrice() external view returns (uint256 midPrice);
+    function sellShares(
+        uint256 shareAmount,
+        address to,
+        uint256 baseMinAmount,
+        uint256 quoteMinAmount,
+        bytes calldata data,
+        uint256 deadline
+    ) external returns (uint256 baseAmount, uint256 quoteAmount);
 }
 
 /**
  * @title IDVMFactory Interface (from https://github.com/DODOEX/contractV2)
  */
 interface IDVMFactory {
-    function getDODOPool(address baseToken, address quoteToken) 
+    function getDODOPool(address baseToken, address quoteToken)
         external view returns (address[] memory machines);
 }
 
@@ -138,6 +146,15 @@ struct MixSwapArguments {
     bytes[] moreInfos;
     bytes feeData;
     uint256 deadLine;
+}
+
+struct SellSharesArguments {
+    address dvmAddress;
+    uint256 shareAmount;
+    uint256 baseMinAmount;
+    uint256 quoteMinAmount;
+    bytes data;
+    uint256 deadline;
 }
 
 /**
@@ -366,11 +383,11 @@ contract TacoProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable
     ) public payable _onlyCrossChainLayer {
         // decode arguments
         MixSwapArguments memory args = abi.decode(arguments, (MixSwapArguments));
-        
+
         // call dApp
         (uint256 returnAmount) = _mixSwap(args);
 
-        // tokens to L2->L1 transfer (bridge )
+        // tokens to L2->L1 transfer (bridge)
         uint256 value;
         TokenAmount[] memory tokensToBridge;
         if (args.toToken == _ETH_ADDRESS_) {
@@ -381,6 +398,77 @@ contract TacoProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable
             tokensToBridge[0] = TokenAmount(args.toToken, returnAmount);
             TransferHelper.safeApprove(args.toToken, _getCrossChainLayerAddress(), returnAmount);
             value = 0;
+        }
+
+        // CCL L2->L1 callback
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
+        OutMessageV1 memory message = OutMessageV1({
+            shardsKey: header.shardsKey,
+            tvmTarget: header.tvmCaller,
+            tvmPayload: "",
+            toBridge: tokensToBridge
+        });
+        _sendMessageV1(message, value);
+    }
+
+    function _sellShares(
+        SellSharesArguments memory arguments
+    ) internal returns (uint256 baseAmount, uint256 quoteAmount) {
+        // grant token approvals
+        TransferHelper.safeApprove(arguments.dvmAddress, arguments.dvmAddress, arguments.shareAmount);
+
+        // call dApp
+        (baseAmount, quoteAmount) = IDVM(arguments.dvmAddress).sellShares(
+            arguments.shareAmount,
+            address(this), // receive tokens to this proxy
+            arguments.baseMinAmount,
+            arguments.quoteMinAmount,
+            arguments.data,
+            arguments.deadline
+        );
+    }
+
+    /**
+     * @dev A proxy to IDVM.sellShares for removing liquidity from DVM pools.
+     */
+    function sellShares(
+        bytes calldata tacHeader,
+        bytes calldata arguments
+    ) public _onlyCrossChainLayer {
+        // decode arguments
+        SellSharesArguments memory args = abi.decode(arguments, (SellSharesArguments));
+
+        // call dApp
+        (uint256 baseAmount, uint256 quoteAmount) = _sellShares(args);
+
+        // get token addresses from the pool
+        address baseToken = IDVM(args.dvmAddress)._BASE_TOKEN_();
+        address quoteToken = IDVM(args.dvmAddress)._QUOTE_TOKEN_();
+
+        // tokens to L2->L1 transfer (bridge)
+        uint256 t = (baseToken == _ETH_ADDRESS_ ? 0 : 1) + (quoteToken == _ETH_ADDRESS_ ? 0 : 1);
+        TokenAmount[] memory tokensToBridge = new TokenAmount[](t);
+        uint256 value = 0;
+        uint256 i = 0;
+
+        if (baseToken == _ETH_ADDRESS_) {
+            value += baseAmount;
+        } else {
+            tokensToBridge[i] = TokenAmount(baseToken, baseAmount);
+            TransferHelper.safeApprove(baseToken, _getCrossChainLayerAddress(), baseAmount);
+            unchecked {
+                i++;
+            }
+        }
+
+        if (quoteToken == _ETH_ADDRESS_) {
+            value += quoteAmount;
+        } else {
+            tokensToBridge[i] = TokenAmount(quoteToken, quoteAmount);
+            TransferHelper.safeApprove(quoteToken, _getCrossChainLayerAddress(), quoteAmount);
+            unchecked {
+                i++;
+            }
         }
 
         // CCL L2->L1 callback
