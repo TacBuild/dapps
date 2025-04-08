@@ -188,6 +188,8 @@ contract TacoProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable
         _feeRouteProxyAddress = feeRouteProxyAddress;
     }
 
+    receive() external payable {}
+
     /**
      * @dev Upgrades the contract.
      */
@@ -425,7 +427,7 @@ contract TacoProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable
         // call dApp
         (baseAmount, quoteAmount) = IDVM(arguments.dvmAddress).sellShares(
             arguments.shareAmount,
-            address(this),   // use DODO ETH helper to auto convert WETH to TAC
+            arguments.to,   // use DODO ETH helper to auto convert WETH to TAC
             arguments.baseMinAmount,
             arguments.quoteMinAmount,
             arguments.data,
@@ -451,7 +453,7 @@ contract TacoProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable
         address quoteToken = IDVM(args.dvmAddress)._QUOTE_TOKEN_();
 
         // tokens to L2->L1 transfer (bridge)
-        uint256 t = (baseToken == _ETH_ADDRESS_ ? 0 : 1) + (quoteToken == _ETH_ADDRESS_ ? 0 : 1);
+        uint256 t = (baseToken == _wethAddress ? 0 : 1) + (quoteToken == _wethAddress ? 0 : 1);
         TokenAmount[] memory tokensToBridge = new TokenAmount[](t);
         uint256 value = 0;
         uint256 i = 0;

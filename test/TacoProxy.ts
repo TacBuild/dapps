@@ -24,7 +24,6 @@ describe("TacoProxy", function () {
     let tacoFeeRouteProxy: IDODOFeeRouteProxy;
     let tacoWETH: ERC20;
 
-    let tacNativeAddress: string;
     let sttonToken: ERC20;
     let tacToken: ERC20;
 
@@ -670,11 +669,6 @@ describe("TacoProxy", function () {
         const baseMinAmount = factBaseInAmount;
         const quoteMinAmount = factQuoteInAmount;
 
-        // console.log("baseInAmount", baseInAmount.toString());
-        // console.log("quoteInAmount", quoteInAmount.toString());
-        // console.log("factBaseInAmount", factBaseInAmount.toString());
-        // console.log("factQuoteInAmount", factQuoteInAmount.toString());
-
         const flag = 2 // 0 - ERC20, 1 - baseInETH, 2 - quoteInETH
         const deadLine = 19010987500n;
 
@@ -890,7 +884,7 @@ describe("TacoProxy", function () {
                 [
                     await dvmPool.getAddress(),
                     sharesToSell,
-                    await tacoProxy.getAddress(),
+                    target,
                     baseMinAmount,
                     quoteMinAmount,
                     data,
@@ -949,40 +943,38 @@ describe("TacoProxy", function () {
         expect(quoteTokenBridge?.amount).to.be.equal(quoteAmountRemoved, "Incorrect quote token amount bridged");
     });
 
-
-    it ("TACO test sell shares (remove liquidity) from base-ETH DVM", async function () {
+    it ("TACO test sell shares (remove liquidity) from base-TAC DVM", async function () {
         const shardsKey = 9n;
-        const operationId = ethers.encodeBytes32String("sell base-ETH DVM shares");
+        const operationId = ethers.encodeBytes32String("sell (ERC20,TAC) DVM shares");
         const extraData = "0x";
         const timestamp = BigInt(Math.floor(Date.now() / 1000));
         const tvmWalletCaller = "EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk";
 
+        const sttonTokenAddress = await sttonToken.getAddress();
+        const wethAddress = await tacoWETH.getAddress();
+        const tacoNativeAddress = await tacoProxy._ETH_ADDRESS_();
+
         const target = await tacoProxy.getAddress();
         const methodName = "sellShares(bytes,bytes)";
 
-        const tacoNativeAddress = await tacoProxy._ETH_ADDRESS_();
-        const sttonEVMAddress = testSdk.getEVMJettonAddress(sttonTokenInfo.tvmAddress);
-
-        let pools = await tacoDVMFactory.getDODOPool(await tacoWETH.getAddress(), sttonEVMAddress);
+        let pools = await tacoDVMFactory.getDODOPool(wethAddress, sttonTokenAddress);
         expect(pools.length).to.be.equal(1);
 
         const dvmPool = (new ethers.Contract(pools[0], dvmPoolAbi, admin)) as unknown as IDVM;
+
+        // pool balances before removing liquidity
+        const baseBalanceBefore = await tacoWETH.balanceOf(await dvmPool.getAddress());
+        const quoteBalanceBefore = await sttonToken.balanceOf(await dvmPool.getAddress());
+        const tacCCLBalanceBefore = await ethers.provider.getBalance(testSdk.getCrossChainLayerAddress());
 
         const lpTokensOnCCL = await dvmPool.balanceOf(testSdk.getCrossChainLayerAddress());
         expect(lpTokensOnCCL).to.be.gt(0n, "No LP tokens available to remove liquidity");
 
         const sharesToSell = lpTokensOnCCL / 2n;
 
-        // balances before
-        const baseBalanceBefore = await tacoWETH.balanceOf(await dvmPool.getAddress());
-        const quoteBalanceBefore = await sttonToken.balanceOf(await dvmPool.getAddress());
-        const tacCCLWETHBalanceBefore = await tacoWETH.balanceOf(testSdk.getCrossChainLayerAddress());
-        const tacoProxyBalanceBefore = await ethers.provider.getBalance(target);
-        const tacCCLBalanceBefore = await ethers.provider.getBalance(testSdk.getCrossChainLayerAddress());
-
         const baseMinAmount = 0n;
         const quoteMinAmount = 0n;
-        const data = "0x";  // 0x00 to use TACO ETH helper - to autoconvert from wTAC to native TAC
+        const data = "0x00";
         const deadline = 19010987500n;
 
         const encodedArguments = new ethers.AbiCoder().encode(
@@ -1015,23 +1007,22 @@ describe("TacoProxy", function () {
             timestamp
         );
 
-        console.log('!!!!!!!!!!!!!!!!!!!!! >>>>>>>>>>>>>>>>.\n\n')
-
-        // balances after
+        // pool balances after
         const baseBalanceAfter = await tacoWETH.balanceOf(await dvmPool.getAddress());
         const quoteBalanceAfter = await sttonToken.balanceOf(await dvmPool.getAddress());
-        const tacCCLWETHBalanceAfter = await tacoWETH.balanceOf(testSdk.getCrossChainLayerAddress());
-        const tacoProxyBalanceAfter = await ethers.provider.getBalance(target);
         const tacCCLBalanceAfter = await ethers.provider.getBalance(testSdk.getCrossChainLayerAddress());
 
-        expect(baseBalanceAfter).to.be.lt(baseBalanceBefore, "Base token (ETH) balance should decrease");
+        expect(baseBalanceAfter).to.be.lt(baseBalanceBefore, "Base token balance should decrease");
         expect(quoteBalanceAfter).to.be.lt(quoteBalanceBefore, "Quote token balance should decrease");
+        expect(tacCCLBalanceBefore).to.be.lt(tacCCLBalanceAfter, "CCL TAC token balance should increase");
 
         const baseAmountRemoved = baseBalanceBefore - baseBalanceAfter;
         const quoteAmountRemoved = quoteBalanceBefore - quoteBalanceAfter;
+        const nativeAmountAdded = tacCCLBalanceAfter - tacCCLBalanceBefore;
 
         expect(baseAmountRemoved).to.be.gte(baseMinAmount, "Base amount removed is less than minimum");
         expect(quoteAmountRemoved).to.be.gte(quoteMinAmount, "Quote amount removed is less than minimum");
+        expect(nativeAmountAdded).to.be.eq(baseAmountRemoved, "delta wTAC = delta TAC");
 
         expect(outMessages.length).to.be.equal(1, "Should have one outbound message");
         const outMessage = outMessages[0];
@@ -1041,24 +1032,130 @@ describe("TacoProxy", function () {
         expect(outMessage.callerAddress).to.be.equal(await tacoProxy.getAddress());
         expect(outMessage.targetAddress).to.be.equal(tvmWalletCaller);
         expect(outMessage.payload).to.be.equal("");
+        expect(outMessage.tokensLocked.length).to.be.equal(1, "Should bridge 0 tokens back to TON");
+        expect(outMessage.tokensBurned.length).to.be.equal(1, "Should bridge 1 tokens back to TON");
 
-        // TAC should be sent as value in the outbound message
-        console.log('>>>>>>>>>', baseBalanceBefore, baseBalanceAfter)
-        console.log('>>>>>>>>>', quoteBalanceBefore, quoteBalanceAfter)
-        console.log('>>>>>>>>>', tacCCLWETHBalanceBefore, tacCCLWETHBalanceAfter)
-        console.log('>>>>>>>>>', tacoProxyBalanceBefore, tacoProxyBalanceAfter)
-        console.log('>>>>>>>>>', tacCCLBalanceBefore, tacCCLBalanceAfter)
-        console.log('>>>>>>>>>', await tacoWETH.getAddress(), tacoNativeAddress)
-        console.log('>>>>>>>>>', outMessage)
+        const burnedTokens = outMessage.tokensBurned.map(t => t.evmAddress);
+        expect(burnedTokens).to.include(sttonTokenAddress, "Quote token not bridged back");
 
-        expect(outMessage.tokensLocked.length).to.be.equal(1, "Should bridge 1 token (native TAC) back to TON");
-        expect(outMessage.tokensLocked[0].evmAddress).to.be.equal(tacoNativeAddress, "Base token not bridged back");
-        expect(outMessage.tokensLocked[0].amount).to.be.equal(baseAmountRemoved, "Incorrect quote token amount bridged");
+        const quoteTokenBridge = outMessage.tokensBurned.find(t => t.evmAddress === sttonTokenAddress);
+        expect(quoteTokenBridge?.amount).to.be.equal(quoteAmountRemoved, "Incorrect quote token amount bridged");
 
-        // Check the bridged token is the quote token (stTON)
-        expect(outMessage.tokensBurned.length).to.be.equal(1, "Should bridge 1 token (stTON) back to TON");
-        expect(outMessage.tokensBurned[0].evmAddress).to.be.equal(sttonEVMAddress, "Quote token not bridged back");
-        expect(outMessage.tokensBurned[0].amount).to.be.equal(quoteAmountRemoved, "Incorrect quote token amount bridged");
+        const lockedTokens = outMessage.tokensLocked.map(t => t.evmAddress);
+        expect(lockedTokens).to.include(tacoNativeAddress, "Base token not bridged back");
+
+
+
+
+        // const burnedTokens = outMessage.tokensBurned.map(t => t.evmAddress);
+        // expect(burnedTokens).to.include(sttonTokenAddress, "Base token not bridged back");
+
+        // const baseTokenBridge = outMessage.tokensBurned.find(t => t.evmAddress === sttonTokenAddress);
+        // expect(baseTokenBridge?.amount).to.be.equal(baseAmountRemoved, "Incorrect quote token amount bridged");
+
+        // const lockedTokens = outMessage.tokensLocked.map(t => t.evmAddress);
+        // expect(lockedTokens).to.include(tacoNativeAddress, "Base token not bridged back");
     });
 
+    it ("TACO test sell shares (remove liquidity) from quote-TAC DVM", async function () {
+        const shardsKey = 10n;
+        const operationId = ethers.encodeBytes32String("sell (ERC20,TAC) DVM shares");
+        const extraData = "0x";
+        const timestamp = BigInt(Math.floor(Date.now() / 1000));
+        const tvmWalletCaller = "EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk";
+
+        const sttonTokenAddress = await sttonToken.getAddress();
+        const wethAddress = await tacoWETH.getAddress();
+        const tacoNativeAddress = await tacoProxy._ETH_ADDRESS_();
+
+        const target = await tacoProxy.getAddress();
+        const methodName = "sellShares(bytes,bytes)";
+
+        let pools = await tacoDVMFactory.getDODOPool(sttonTokenAddress, wethAddress);
+        expect(pools.length).to.be.equal(1);
+
+        const dvmPool = (new ethers.Contract(pools[0], dvmPoolAbi, admin)) as unknown as IDVM;
+
+        // pool balances before removing liquidity
+        const baseBalanceBefore = await sttonToken.balanceOf(await dvmPool.getAddress());
+        const quoteBalanceBefore = await tacoWETH.balanceOf(await dvmPool.getAddress());
+        const tacCCLBalanceBefore = await ethers.provider.getBalance(testSdk.getCrossChainLayerAddress());
+
+        const lpTokensOnCCL = await dvmPool.balanceOf(testSdk.getCrossChainLayerAddress());
+        expect(lpTokensOnCCL).to.be.gt(0n, "No LP tokens available to remove liquidity");
+
+        const sharesToSell = lpTokensOnCCL / 2n;
+
+        const baseMinAmount = 0n;
+        const quoteMinAmount = 0n;
+        const data = "0x00";
+        const deadline = 19010987500n;
+
+        const encodedArguments = new ethers.AbiCoder().encode(
+            ['tuple(address,uint256,address,uint256,uint256,bytes,uint256)'],
+            [
+                [
+                    await dvmPool.getAddress(),
+                    sharesToSell,
+                    tacoTestnetConfig.tacoCalleeHelperAddress,  // use TACO ETH helper - to autoconvert from wTAC to native TAC
+                    baseMinAmount,
+                    quoteMinAmount,
+                    data,
+                    deadline
+                ]
+            ]
+        );
+
+        // msg to remove liquidity
+        const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
+            shardsKey,
+            target,
+            methodName,
+            encodedArguments,
+            tvmWalletCaller,
+            [], // mint tokens
+            [{ evmAddress: await dvmPool.getAddress(), amount: sharesToSell }], // unlock LP tokens
+            0n, // native tac amount to unlock
+            extraData,
+            operationId,
+            timestamp
+        );
+
+        // pool balances after
+        const baseBalanceAfter = await sttonToken.balanceOf(await dvmPool.getAddress());
+        const quoteBalanceAfter = await tacoWETH.balanceOf(await dvmPool.getAddress());
+        const tacCCLBalanceAfter = await ethers.provider.getBalance(testSdk.getCrossChainLayerAddress());
+
+        expect(baseBalanceAfter).to.be.lt(baseBalanceBefore, "Base token balance should decrease");
+        expect(quoteBalanceAfter).to.be.lt(quoteBalanceBefore, "Quote token balance should decrease");
+        expect(tacCCLBalanceBefore).to.be.lt(tacCCLBalanceAfter, "CCL TAC token balance should increase");
+
+        const baseAmountRemoved = baseBalanceBefore - baseBalanceAfter;
+        const quoteAmountRemoved = quoteBalanceBefore - quoteBalanceAfter;
+        const nativeAmountAdded = tacCCLBalanceAfter - tacCCLBalanceBefore;
+
+        expect(baseAmountRemoved).to.be.gte(baseMinAmount, "Base amount removed is less than minimum");
+        expect(quoteAmountRemoved).to.be.gte(quoteMinAmount, "Quote amount removed is less than minimum");
+        expect(nativeAmountAdded).to.be.eq(quoteAmountRemoved, "delta wTAC = delta TAC");
+
+        expect(outMessages.length).to.be.equal(1, "Should have one outbound message");
+        const outMessage = outMessages[0];
+
+        expect(outMessage.operationId).to.be.equal(operationId);
+        expect(outMessage.shardsKey).to.be.equal(shardsKey);
+        expect(outMessage.callerAddress).to.be.equal(await tacoProxy.getAddress());
+        expect(outMessage.targetAddress).to.be.equal(tvmWalletCaller);
+        expect(outMessage.payload).to.be.equal("");
+        expect(outMessage.tokensLocked.length).to.be.equal(1, "Should bridge 0 tokens back to TON");
+        expect(outMessage.tokensBurned.length).to.be.equal(1, "Should bridge 1 tokens back to TON");
+
+        const burnedTokens = outMessage.tokensBurned.map(t => t.evmAddress);
+        expect(burnedTokens).to.include(sttonTokenAddress, "Base token not bridged back");
+
+        const baseTokenBridge = outMessage.tokensBurned.find(t => t.evmAddress === sttonTokenAddress);
+        expect(baseTokenBridge?.amount).to.be.equal(baseAmountRemoved, "Incorrect base token amount bridged");
+
+        const lockedTokens = outMessage.tokensLocked.map(t => t.evmAddress);
+        expect(lockedTokens).to.include(tacoNativeAddress, "Quote token not bridged back");
+    });
 });

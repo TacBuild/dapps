@@ -63,11 +63,11 @@ describe("CurveLiteTwocryptoswapProxy", function () {
 
         const sttonTokenMintInfo: TokenMintInfo = {
             info: sttonTokenInfo,
-            mintAmount: mintAmount,
+            amount: mintAmount,
         }
         const tacTokenMintInfo: TokenMintInfo = {
             info: tacTokenInfo,
-            mintAmount: mintAmount,
+            amount: mintAmount,
         }
 
         
@@ -146,11 +146,11 @@ describe("CurveLiteTwocryptoswapProxy", function () {
 
         const sttonTokenMintInfo: TokenMintInfo = {
             info: sttonTokenInfo,
-            mintAmount: amountA,
+            amount: amountA,
         }
         const tacTokenMintInfo: TokenMintInfo = {
             info: tacTokenInfo,
-            mintAmount: amountB,
+            amount: amountB,
         }
 
         const encodedParameters = new ethers.AbiCoder().encode(
@@ -216,11 +216,11 @@ describe("CurveLiteTwocryptoswapProxy", function () {
 
         const sttonTokenMintInfo: TokenMintInfo = {
             info: sttonTokenInfo,
-            mintAmount: amount,
+            amount: amount,
         }
         const tacTokenMintInfo: TokenMintInfo = {
             info: tacTokenInfo,
-            mintAmount: amount,
+            amount: amount,
         }
 
         const encodedParameters = new ethers.AbiCoder().encode(
