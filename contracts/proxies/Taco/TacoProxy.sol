@@ -151,6 +151,7 @@ struct MixSwapArguments {
 struct SellSharesArguments {
     address dvmAddress;
     uint256 shareAmount;
+    address to;
     uint256 baseMinAmount;
     uint256 quoteMinAmount;
     bytes data;
@@ -168,7 +169,6 @@ contract TacoProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable
     address internal  _wethAddress;
     address internal _appAddress;
     address internal  _feeRouteProxyAddress;
-    address internal  _tacoCalleeHelperAddress;
 
     /**
      * @dev Initialize the contract.
@@ -177,7 +177,6 @@ contract TacoProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable
         address adminAddress,
         address appAddress,
         address feeRouteProxyAddress,
-        address tacoCalleeHelperAddress,
         address crossChainLayer) public initializer {
         __TacProxyV1Upgradeable_init(crossChainLayer);
         __Ownable_init(adminAddress);
@@ -187,7 +186,6 @@ contract TacoProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable
         _approveAddress = IDODOV2Proxy01(IDODOV2Proxy01(appAddress)._DODO_APPROVE_PROXY_())._DODO_APPROVE_();
         _wethAddress = IDODOV2Proxy01(appAddress)._WETH_();
         _feeRouteProxyAddress = feeRouteProxyAddress;
-        _tacoCalleeHelperAddress = tacoCalleeHelperAddress;
     }
 
     /**
@@ -427,7 +425,7 @@ contract TacoProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable
         // call dApp
         (baseAmount, quoteAmount) = IDVM(arguments.dvmAddress).sellShares(
             arguments.shareAmount,
-            _tacoCalleeHelperAddress,  // use ETH helper to convert WETH to TAC
+            address(this),   // use DODO ETH helper to auto convert WETH to TAC
             arguments.baseMinAmount,
             arguments.quoteMinAmount,
             arguments.data,

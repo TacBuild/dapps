@@ -885,11 +885,12 @@ describe("TacoProxy", function () {
         const deadline = 19010987500n;
 
         const encodedArguments = new ethers.AbiCoder().encode(
-            ['tuple(address,uint256,uint256,uint256,bytes,uint256)'],
+            ['tuple(address,uint256,address,uint256,uint256,bytes,uint256)'],
             [
                 [
                     await dvmPool.getAddress(),
                     sharesToSell,
+                    await tacoProxy.getAddress(),
                     baseMinAmount,
                     quoteMinAmount,
                     data,
@@ -981,15 +982,16 @@ describe("TacoProxy", function () {
 
         const baseMinAmount = 0n;
         const quoteMinAmount = 0n;
-        const data = "0x00";  // 0x00 to use TAACO ETH helper - to autoconvert from wTAC to native TAC
+        const data = "0x";  // 0x00 to use TACO ETH helper - to autoconvert from wTAC to native TAC
         const deadline = 19010987500n;
 
         const encodedArguments = new ethers.AbiCoder().encode(
-            ['tuple(address,uint256,uint256,uint256,bytes,uint256)'],
+            ['tuple(address,uint256,address,uint256,uint256,bytes,uint256)'],
             [
                 [
                     await dvmPool.getAddress(),
                     sharesToSell,
+                    tacoTestnetConfig.tacoCalleeHelperAddress,  // use TACO ETH helper - to autoconvert from wTAC to native TAC
                     baseMinAmount,
                     quoteMinAmount,
                     data,
@@ -1012,6 +1014,8 @@ describe("TacoProxy", function () {
             operationId,
             timestamp
         );
+
+        console.log('!!!!!!!!!!!!!!!!!!!!! >>>>>>>>>>>>>>>>.\n\n')
 
         // balances after
         const baseBalanceAfter = await tacoWETH.balanceOf(await dvmPool.getAddress());
