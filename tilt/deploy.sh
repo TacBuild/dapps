@@ -13,7 +13,7 @@ done
 
 if [ "$useTilt" = false ]; then
   # use env vars from local ".env" file
-  export "$(grep -v '^#' .env | xargs)"
+  export $(grep -v '^#' .env | xargs)
   NETWORK=""
   if [ -z "$DEPLOY_ENV" ]; then
       echo "DEPLOY_ENV undefined in .env"

@@ -452,13 +452,17 @@ contract TacoProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable
         address baseToken = IDVM(args.dvmAddress)._BASE_TOKEN_();
         address quoteToken = IDVM(args.dvmAddress)._QUOTE_TOKEN_();
 
+        // check need to unwrap TAC
+        // see: https://github.com/DODOEX/contractV2/blob/main/contracts/DODOVendingMachine/impl/DVMFunding.sol#L95
+        bool isBaseNative = (baseToken == _wethAddress) && (args.data.length > 0);
+        bool isQuoteNative = (quoteToken == _wethAddress) && (args.data.length > 0);
+
         // tokens to L2->L1 transfer (bridge)
-        uint256 t = (baseToken == _wethAddress ? 0 : 1) + (quoteToken == _wethAddress ? 0 : 1);
-        TokenAmount[] memory tokensToBridge = new TokenAmount[](t);
+        TokenAmount[] memory tokensToBridge = new TokenAmount[]((isBaseNative ? 0 : 1) + (isQuoteNative ? 0 : 1));
         uint256 value = 0;
         uint256 i = 0;
 
-        if (baseToken == _wethAddress) {
+        if (isBaseNative) {
             value += baseAmount;
         } else {
             tokensToBridge[i] = TokenAmount(baseToken, baseAmount);
@@ -468,7 +472,7 @@ contract TacoProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable
             }
         }
 
-        if (quoteToken == _wethAddress) {
+        if (isQuoteNative) {
             value += quoteAmount;
         } else {
             tokensToBridge[i] = TokenAmount(quoteToken, quoteAmount);
