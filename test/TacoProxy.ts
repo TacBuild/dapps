@@ -1043,18 +1043,6 @@ describe("TacoProxy", function () {
 
         const lockedTokens = outMessage.tokensLocked.map(t => t.evmAddress);
         expect(lockedTokens).to.include(tacoNativeAddress, "Base token not bridged back");
-
-
-
-
-        // const burnedTokens = outMessage.tokensBurned.map(t => t.evmAddress);
-        // expect(burnedTokens).to.include(sttonTokenAddress, "Base token not bridged back");
-
-        // const baseTokenBridge = outMessage.tokensBurned.find(t => t.evmAddress === sttonTokenAddress);
-        // expect(baseTokenBridge?.amount).to.be.equal(baseAmountRemoved, "Incorrect quote token amount bridged");
-
-        // const lockedTokens = outMessage.tokensLocked.map(t => t.evmAddress);
-        // expect(lockedTokens).to.include(tacoNativeAddress, "Base token not bridged back");
     });
 
     it ("TACO test sell shares (remove liquidity) from quote-TAC DVM", async function () {
