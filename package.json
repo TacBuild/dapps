@@ -37,6 +37,7 @@
     "@nomicfoundation/hardhat-verify": "^2.0.11",
     "@nomicfoundation/ignition-core": "^0.15.7",
     "@ton/core": "^0.59.1",
+    "@tonappchain/evm-ccl": "0.9.16",
     "@typechain/ethers-v6": "^0.5.1",
     "@typechain/hardhat": "^9.1.0",
     "@types/cli-color": "^2.0.6",
@@ -49,9 +50,13 @@
     "hardhat": "^2.22.18",
     "hardhat-gas-reporter": "^1.0.10",
     "jest": "^29.7.0",
-    "@tonappchain/evm-ccl": "0.9.16",
     "ts-node": "^10.9.2",
     "typechain": "^8.3.2",
     "typescript": "^5.6.3"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.2.0",
+    "@openzeppelin/contracts-upgradeable": "^5.2.0",
+    "@openzeppelin/hardhat-upgrades": "^3.9.0"
   }
 }

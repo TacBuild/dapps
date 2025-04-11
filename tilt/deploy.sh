@@ -13,7 +13,10 @@ done
 
 if [ "$useTilt" = false ]; then
   # use env vars from local ".env" file
-  export "$(grep -v '^#' .env | xargs)"
+  set -a
+  . .env
+  set +a
+
   NETWORK=""
   if [ -z "$DEPLOY_ENV" ]; then
       echo "DEPLOY_ENV undefined in .env"
@@ -25,7 +28,7 @@ if [ "$useTilt" = false ]; then
   elif [ "$DEPLOY_ENV" = "mainnet" ]; then
       NETWORK="tac_mainnet"
   fi
-  npx hardhat --network $NETWORK run ./scripts/UniswapV2/deploy.ts
+  npx hardhat --network "$NETWORK" run ./scripts/UniswapV2/deploy.ts
   echo "------------------DEPLOY FINISHED------------------"
 
 elif [ "$useTilt" = true ]; then

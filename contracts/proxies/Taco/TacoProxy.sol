@@ -258,6 +258,9 @@ contract TacoProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable
             shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
+            tvmProtocolFee: 0,
+            tvmExecutorFee: 0,
+            tvmValidExecutors: new string[](0),
             toBridge: tokensToBridge
         });
         _sendMessageV1(message, 0);
@@ -348,6 +351,9 @@ contract TacoProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable
             shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
+            tvmProtocolFee: 0,
+            tvmExecutorFee: 0,
+            tvmValidExecutors: new string[](0),
             toBridge: tokensToBridge
         });
         _sendMessageV1(message, value);
@@ -413,6 +419,9 @@ contract TacoProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable
             shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
+            tvmProtocolFee: 0,
+            tvmExecutorFee: 0,
+            tvmValidExecutors: new string[](0),
             toBridge: tokensToBridge
         });
         _sendMessageV1(message, value);
