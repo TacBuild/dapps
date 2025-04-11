@@ -3,5 +3,6 @@ export const tacoMainnetConfig: TacoConfig = {
     tacoFeeRouteProxy: "",
     tacoDVMFactory: "",
     tacoApprove: "",
+    tacoCalleeHelperAddress: "",
     tacoWETH: "" // it must be our WTAC address
 }
