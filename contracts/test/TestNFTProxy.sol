@@ -48,6 +48,9 @@ contract TestNFTProxy is TacProxyV1, IERC721Receiver {
             shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller, // Original TON user
             tvmPayload: "",
+            tvmProtocolFee: 0,
+            tvmExecutorFee: 0,
+            tvmValidExecutors: new string[](0),
             toBridge: new TokenAmount[](0), // no ERC-20 bridging in this example
             toBridgeNFT: nfts         // bridging these NFTs back to TON
         });
