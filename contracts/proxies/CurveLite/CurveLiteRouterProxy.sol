@@ -89,6 +89,9 @@ contract CurveLiteRouterProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPS
             shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
+            tvmProtocolFee: 0,
+            tvmExecutorFee: 0,
+            tvmValidExecutors: new string[](0),
             toBridge: tokensToBridge
         });
         _sendMessageV1(message, value);

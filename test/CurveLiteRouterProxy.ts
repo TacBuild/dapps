@@ -47,7 +47,7 @@ describe("CurveLiteTwocryptoswapProxy", function () {
         const crossChainLayerAddress = await testSdk.create(ethers.provider);
         
         curveLiteTwocryptoswapProxy = await deployCurveLiteTwocryptoswapProxy(admin, crossChainLayerAddress);
-        curveLiteRouterProxy = await deployCurveLiteRouterProxy(admin, addresses.CurveLiteRouter, crossChainLayerAddress);
+        curveLiteRouterProxy = await deployCurveLiteRouterProxy(admin, CurveLiteTwocryptoswapTestnetConfig.CurveLiteRouter, crossChainLayerAddress);
         factoryContract = new ethers.Contract(CurveLiteTwocryptoswapTestnetConfig.CurveLiteTwocryptoswapFactory, factoryAbi, admin) as unknown as ICurveLiteTwocryptoFactory;
     });
 
