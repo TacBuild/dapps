@@ -21,7 +21,7 @@
     "start-node": "npx hardhat node",
     "start-node-headless": "npx hardhat node &",
     "kill-node": "lsof -ti:8545 | xargs kill -9",
-    "tests": "npx jest --runInBand --maxConcurrency=1",
+    "tests": "npx hardhat test",
     "deploy-and-tests": "npm run kill-node; npm run start-node & sleep 5 && npm run uniswap-deploy && sleep 7 && npx jest --runInBand --maxConcurrency=1"
   },
   "keywords": [],
@@ -53,5 +53,10 @@
     "ts-node": "^10.9.2",
     "typechain": "^8.3.2",
     "typescript": "^5.6.3"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.2.0",
+    "@openzeppelin/contracts-upgradeable": "^5.2.0",
+    "@openzeppelin/hardhat-upgrades": "^3.9.0"
   }
 }

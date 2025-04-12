@@ -3,5 +3,6 @@ type TacoConfig = {
     tacoFeeRouteProxy: string,
     tacoDVMFactory: string,
     tacoApprove: string,
+    tacoCalleeHelperAddress: string,
     tacoWETH: string
 }
