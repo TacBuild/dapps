@@ -18,18 +18,25 @@ import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { IFactory } from "./Interface/IFactory.sol";
 import "hardhat/console.sol";
 
-/**
- * @title IzumiProxy
- * @dev Proxy contract for Izumi
- */
+/// @title IzumiProxy
+/// @notice A proxy contract that interfaces with Izumi protocol for liquidity management and trading operations
+/// @dev Implements TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable, and IERC721Receiver
 contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable, IERC721Receiver {
 
+    /// @notice Structure for bridge data containing tokens and NFTs to be bridged
+    /// @param tokens Array of token addresses to bridge
+    /// @param nfts Array of NFT data to bridge
+    /// @param isRequired Whether the bridge operation is required
     struct BridgeData {
         address[] tokens;
         NFTData[] nfts;
         bool isRequired;
     }
 
+    /// @notice Structure for NFT data to be bridged
+    /// @param nft Address of the NFT contract
+    /// @param id Token ID of the NFT
+    /// @param amount Amount of NFTs to bridge
     struct NFTData {
         address nft;
         uint256 id;
@@ -37,22 +44,48 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
     }
 
     using BytesLib for bytes;
+    /// @notice Address of the pool contract
     address public poolAddress;
+    /// @notice Address of the swap contract
     address public swapAddress;
+    /// @notice Address of the limit order contract
     address public limitOrderAddress;
+    /// @notice Address of the liquidity manager contract
     address public liquidityManagerAddress;
+    /// @notice Constant address representing the gas token
     address constant private GAS_TOKEN = 0x0000000000000000000000000000000000000000;
 
+    /// @notice Emitted when a new pool is created
+    /// @param pool Address of the newly created pool
     event NewPool(address indexed pool);
+    /// @notice Emitted when a burn operation fails
     event BurnFailed();
+    /// @notice Emitted when a new liquidity position is minted
+    /// @param lid ID of the minted liquidity position
     event Mint(uint256 indexed lid);
 
+    /// @notice Arguments for creating a new pool
+    /// @param tokenX Address of the first token in the pool
+    /// @param tokenY Address of the second token in the pool
+    /// @param fee Fee tier of the pool
+    /// @param currentPoint Current price point of the pool
     struct NewPoolArguments {
         address tokenX;
         address tokenY;
         uint24 fee;
         int24 currentPoint;
     }
+
+    /// @notice Arguments for swapping token Y to token X
+    /// @param tokenX Address of token X
+    /// @param tokenY Address of token Y
+    /// @param fee Fee tier of the pool
+    /// @param boundaryPt Boundary point for the swap
+    /// @param recipient Address to receive the swapped tokens
+    /// @param amount Amount of tokens to swap
+    /// @param maxPayed Maximum amount to pay
+    /// @param minAcquired Minimum amount to acquire
+    /// @param deadline Deadline for the swap
     struct SwapY2XArguments {
         address tokenX;
         address tokenY;
@@ -65,6 +98,16 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         uint256 deadline;
     }
 
+    /// @notice Arguments for swapping token X to token Y
+    /// @param tokenX Address of token X
+    /// @param tokenY Address of token Y
+    /// @param fee Fee tier of the pool
+    /// @param boundaryPt Boundary point for the swap
+    /// @param recipient Address to receive the swapped tokens
+    /// @param amount Amount of tokens to swap
+    /// @param maxPayed Maximum amount to pay
+    /// @param minAcquired Minimum amount to acquire
+    /// @param deadline Deadline for the swap
     struct SwapX2YArguments {
         address tokenX;
         address tokenY;
@@ -77,6 +120,12 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         uint256 deadline;
     }
 
+    /// @notice Arguments for swapping a specific amount
+    /// @param path Path of tokens for the swap
+    /// @param recipient Address to receive the swapped tokens
+    /// @param amount Amount of tokens to swap
+    /// @param minAcquired Minimum amount to acquire
+    /// @param deadline Deadline for the swap
     struct SwapAmountArguments {
         bytes path;
         address recipient;
@@ -85,6 +134,12 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         uint256 deadline;
     }
 
+    /// @notice Arguments for swapping with a desired amount
+    /// @param path Path of tokens for the swap
+    /// @param recipient Address to receive the swapped tokens
+    /// @param desire Desired amount of tokens
+    /// @param maxPayed Maximum amount to pay
+    /// @param deadline Deadline for the swap
     struct SwapDesireArguments {
         bytes path;
         address recipient;
@@ -93,6 +148,12 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         uint256 deadline;
     }
 
+    /// @notice Arguments for canceling an order
+    /// @param orderIdx Index of the order to cancel
+    /// @param amount Amount to cancel
+    /// @param deadline Deadline for the cancellation
+    /// @param collectDec Amount to collect from decrease
+    /// @param collectEarn Amount to collect from earnings
     struct CancelOrderArguments {
         uint256 orderIdx;
         uint128 amount;
@@ -101,6 +162,11 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         uint128 collectEarn;
     }
 
+    /// @notice Arguments for collecting from an order
+    /// @param recipient Address to receive the collected tokens
+    /// @param orderIdx Index of the order to collect from
+    /// @param collectDec Amount to collect from decrease
+    /// @param collectEarn Amount to collect from earnings
     struct CollectOrderArguments {
         address recipient;
         uint256 orderIdx;
@@ -108,11 +174,20 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         uint128 collectEarn;
     }
 
+    /// @notice Arguments for creating a new limit order
+    /// @param idx Index for the new order
+    /// @param originAddLimitOrderParam Original limit order parameters
     struct NewLimOrderArguments {
         uint256 idx;
         ILimitOrderManager.AddLimOrderParam originAddLimitOrderParam;
     }
 
+    /// @notice Initializes the proxy contract
+    /// @param crossChainLayer Address of the cross-chain layer contract
+    /// @param _poolAddress Address of the pool contract
+    /// @param _swapAddress Address of the swap contract
+    /// @param _limitOrderAddress Address of the limit order contract
+    /// @param _liquidityManagerAddress Address of the liquidity manager contract
     function initialize(
         address crossChainLayer,
         address _poolAddress,
@@ -129,12 +204,16 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         liquidityManagerAddress = _liquidityManagerAddress;
     }
 
+    /// @notice Internal function to authorize upgrades
+    /// @param newImplementation Address of the new implementation
     function _authorizeUpgrade(address newImplementation)
         internal
         override
         onlyOwner
     {}
 
+    /// @notice Creates a new pool
+    /// @param arguments Encoded pool creation arguments
     function newPool(
          bytes calldata,
          bytes calldata arguments
@@ -151,6 +230,9 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         emit NewPool(pool);
     }
 
+    /// @notice Swaps token Y for token X
+    /// @param tacHeader TAC header data
+    /// @param arguments Encoded swap arguments
     function swapY2X(
         bytes calldata tacHeader,
         bytes calldata arguments
@@ -179,6 +261,9 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         _bridgeTokens(tacHeader, tokensToBridge, new NFTTokenAmount[](0), "");
     }
 
+    /// @notice Swaps tokens along a specified path for a specific amount
+    /// @param tacHeader TAC header data
+    /// @param arguments Encoded swap amount arguments
     function swapAmount(
         bytes calldata tacHeader,
         bytes calldata arguments
@@ -208,6 +293,9 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         _bridgeTokens(tacHeader, tokensToBridge, new NFTTokenAmount[](0), "");
     }
 
+    /// @notice Swaps token X for token Y
+    /// @param tacHeader TAC header data
+    /// @param arguments Encoded swap arguments
     function swapX2Y(
         bytes calldata tacHeader,
         bytes calldata arguments
@@ -236,6 +324,9 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         _bridgeTokens(tacHeader, tokensToBridge, new NFTTokenAmount[](0), "");
     }
 
+    /// @notice Swaps token X for token Y with a desired amount of Y
+    /// @param tacHeader TAC header data
+    /// @param arguments Encoded swap arguments
     function swapX2YDesireY(
         bytes calldata tacHeader,
         bytes calldata arguments
@@ -264,6 +355,9 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         _bridgeTokens(tacHeader, tokensToBridge, new NFTTokenAmount[](0), "");
     }
 
+    /// @notice Swaps token Y for token X with a desired amount of X
+    /// @param tacHeader TAC header data
+    /// @param arguments Encoded swap arguments
     function swapY2XDesireX(
         bytes calldata tacHeader,
         bytes calldata arguments
@@ -292,6 +386,9 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         _bridgeTokens(tacHeader, tokensToBridge, new NFTTokenAmount[](0), "");
     }
 
+    /// @notice Swaps tokens along a specified path with a desired amount
+    /// @param tacHeader TAC header data
+    /// @param arguments Encoded swap desire arguments
     function swapDesire(
         bytes calldata tacHeader,
         bytes calldata arguments
@@ -322,6 +419,9 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         _bridgeTokens(tacHeader, tokensToBridge, new NFTTokenAmount[](0), "");
     }
 
+    /// @notice Cancels an existing order
+    /// @param tacHeader TAC header data
+    /// @param arguments Encoded cancel order arguments
     function cancelOrder(
         bytes calldata tacHeader,
         bytes calldata arguments
@@ -370,6 +470,9 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         _bridgeTokens(tacHeader, tokensToBridge, new NFTTokenAmount[](0), "");
     }
 
+    /// @notice Collects tokens from an order
+    /// @param tacHeader TAC header data
+    /// @param arguments Encoded collect order arguments
     function collectOrder(
         bytes calldata tacHeader,
         bytes calldata arguments
@@ -401,6 +504,9 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         _bridgeTokens(tacHeader, tokensToBridge, new NFTTokenAmount[](0), "");
     }
 
+    /// @notice Creates a new limit order
+    /// @param tacHeader TAC header data
+    /// @param arguments Encoded new limit order arguments
     function newLimOrder(
         bytes calldata tacHeader,
         bytes calldata arguments
@@ -429,6 +535,9 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         } 
     }
 
+    /// @notice Mints a new liquidity position
+    /// @param tacHeader TAC header data
+    /// @param arguments Encoded mint arguments
     function mint(
         bytes calldata tacHeader,
         bytes calldata arguments
@@ -468,6 +577,9 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         _bridgeTokens(tacHeader, tokensToBridge, nftsToBridge, "");
     }
 
+    /// @notice Adds liquidity to an existing position
+    /// @param tacHeader TAC header data
+    /// @param arguments Encoded add liquidity arguments
     function addLiquidity(
         bytes calldata tacHeader,
         bytes calldata arguments
@@ -495,6 +607,9 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         _bridgeTokens(tacHeader, tokensToBridge, nftsToBridge, "");
     }
 
+    /// @notice Decreases liquidity in a position
+    /// @param tacHeader TAC header data
+    /// @param arguments Encoded decrease liquidity arguments
     function decLiquidity(
         bytes calldata tacHeader,
         bytes calldata arguments
@@ -534,9 +649,11 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         nftsToBridge[0] = NFTTokenAmount(address(liquidityManagerAddress), lid, 0);
 
         _bridgeTokens(tacHeader, tokensToBridge, nftsToBridge, "");
-
     }
 
+    /// @notice Collects fees from a liquidity position
+    /// @param tacHeader TAC header data
+    /// @param arguments Encoded collect arguments
     function collect(
         bytes calldata tacHeader,
         bytes calldata arguments
@@ -563,6 +680,9 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         _bridgeTokens(tacHeader, tokensToBridge, nftsToBridge, "");
     }
 
+    /// @notice Burns a liquidity position
+    /// @param tacHeader TAC header data
+    /// @param arguments Encoded burn arguments
     function burn(
         bytes calldata tacHeader,
         bytes calldata arguments
@@ -580,11 +700,13 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         }
     }
 
+    /// @notice Executes multiple calls in a single transaction
+    /// @param tacHeader TAC header data
+    /// @param arguments Encoded multicall arguments
     function multicall(
         bytes calldata tacHeader,
         bytes calldata arguments
     ) external payable {
-
         (address[] memory to, bytes[] memory data, uint256[] memory value, BridgeData memory bridgeData) = abi.decode(arguments, (address[], bytes[], uint256[], BridgeData));
         for (uint256 i = 0; i < to.length; i++) {
             (bool success,) = to[i].call{value: value[i]}(data[i]);
@@ -606,6 +728,11 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         _bridgeTokens(tacHeader, tokensToBridge, nftsToBridge, "");
     }    
 
+    /// @notice Bridges tokens and NFTs to the cross-chain layer
+    /// @param tacHeader TAC header data
+    /// @param tokens Array of token amounts to bridge
+    /// @param nfts Array of NFT amounts to bridge
+    /// @param payload Additional payload data
     function _bridgeTokens(
         bytes calldata tacHeader,
         TokenAmount[] memory tokens,
@@ -634,7 +761,7 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
 
         _sendMessageV2(message, address(this).balance);
     }
-
+    
     function onERC721Received(
         address,
         address,
@@ -644,9 +771,13 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         return this.onERC721Received.selector;
     }
 
+    /// @notice Checks if a token is the gas token
+    /// @param token Address of the token to check
+    /// @return True if the token is the gas token
     function _isGasToken(address token) private view returns (bool) {
         return token == GAS_TOKEN;
     }
 
+    /// @notice Receives ETH
     receive() external payable {}
 }
