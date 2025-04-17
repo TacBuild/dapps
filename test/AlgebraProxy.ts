@@ -61,14 +61,21 @@ describe("AlgebraRouterProxy", function () {
     let testSdk: TacLocalTestSdk;
     let algebraRouterProxy: AlgebraRouterProxy;
     let algebraNonfungiblePositionManagerProxy: AlgebraNonfungiblePositionManagerProxy;
-    let poolAddress: string;
+    let factoryContract: Contract;
+    let nonfungiblePositionManagerContract: Contract;
+    
 
     before(async function () {
         [admin] = await ethers.getSigners();
         testSdk = new TacLocalTestSdk();
         const crossChainLayerAddress = await testSdk.create(ethers.provider);
+        factoryContract = new ethers.Contract(algebraTestnetConfig.algebraFactory, factoryABI, admin);
+        nonfungiblePositionManagerContract = new ethers.Contract(algebraTestnetConfig.algebraNonfungiblePositionManager, nonfungiblePositionManagerABI, admin);
+    
         algebraRouterProxy = await deployAlgebraRouterProxy(admin, algebraTestnetConfig, crossChainLayerAddress);
         algebraNonfungiblePositionManagerProxy = await deployAlgebraNonfungiblePositionManager(admin, algebraTestnetConfig, crossChainLayerAddress);
+    
+    
     });
 
     it("deploy tokens", async function () {
@@ -83,11 +90,11 @@ describe("AlgebraRouterProxy", function () {
 
         const sttonTokenMintInfo: TokenMintInfo = {
             info: sttonTokenInfo,
-            mintAmount: amountA,
+            amount: amountA,
         }
         const tacTokenMintInfo: TokenMintInfo = {
             info: tacTokenInfo,
-            mintAmount: amountB,
+            amount: amountB,
         }
 
         const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
@@ -116,10 +123,6 @@ describe("AlgebraRouterProxy", function () {
 
     it("Algebra pool deploy pool", async function () {
 
-        const positionManager = new ethers.Contract(algebraTestnetConfig.algebraNonfungiblePositionManager, nonfungiblePositionManagerABI, admin);
-
-        const factoryContract = new ethers.Contract(algebraTestnetConfig.algebraFactory, factoryABI, admin);
-
 
         let token0: string;
         let token1: string;
@@ -132,7 +135,8 @@ describe("AlgebraRouterProxy", function () {
             token1 = await sttonEVM.getAddress()
         }
 
-        const tx = await positionManager.createAndInitializePoolIfNecessary(
+
+        const tx = await nonfungiblePositionManagerContract.createAndInitializePoolIfNecessary(
             token0,
             token1,
             ethers.ZeroAddress, 2n ** 96n, '0x',
@@ -141,7 +145,7 @@ describe("AlgebraRouterProxy", function () {
             }
         );
         const receipt = await tx.wait();
-        poolAddress = await factoryContract.poolByPair(await sttonEVM.getAddress(), await tacEVM.getAddress());
+        const poolAddress = await factoryContract.poolByPair(await sttonEVM.getAddress(), await tacEVM.getAddress());
 
         expect(poolAddress).not.to.be.equal(ethers.ZeroAddress);
         expect(await sttonEVM.balanceOf(poolAddress)).to.be.equal(0);
@@ -160,19 +164,18 @@ describe("AlgebraRouterProxy", function () {
         const target = await algebraNonfungiblePositionManagerProxy.getAddress();
         const methodName = "mint(bytes,bytes)";
 
-        const amountA = 1000n*10n**(await sttonEVM.decimals());
-        const amountB = 1000n*10n**(await tacEVM.decimals());
+        const amountA = 1000n//*10n**(await sttonEVM.decimals());
+        const amountB = 1000n//*10n**(await tacEVM.decimals());
 
 
         const sttonTokenMintInfo: TokenMintInfo = {
             info: sttonTokenInfo,
-            mintAmount: amountA,
+            amount: amountA,
         }
         const tacTokenMintInfo: TokenMintInfo = {
             info: tacTokenInfo,
-            mintAmount: amountB,
+            amount: amountB,
         }
-
 
         let token0: string;
         let token1: string;
@@ -190,6 +193,9 @@ describe("AlgebraRouterProxy", function () {
             token1 = await sttonEVM.getAddress()
             amount1 = amountA
         }
+
+        console.log(amount0)
+        console.log(amount1)
 
         const encodedParameters = new ethers.AbiCoder().encode(
             ['tuple(address,address,address,int24,int24,uint256,uint256,uint256,uint256,address,uint256)'],
@@ -210,6 +216,23 @@ describe("AlgebraRouterProxy", function () {
             ],
         );
 
+        const poolAddress = await factoryContract.poolByPair(await sttonEVM.getAddress(), await tacEVM.getAddress());
+        console.log("poolAddress")
+        console.log(poolAddress)
+        console.log("sttonEVM")
+        console.log(await sttonEVM.getAddress())
+        console.log("tacEVM")
+        console.log(await tacEVM.getAddress())
+
+        pool = new ethers.Contract(poolAddress, poolABI, admin);
+        console.log(await pool.getReserves())
+        expect(await pool.getAddress()).to.be.equal(poolAddress);
+        // expect(await sttonEVM.balanceOf(poolAddress)).to.be.equal(0);
+        // expect(await tacEVM.balanceOf(poolAddress)).to.be.equal(0);
+        console.log(await sttonEVM.balanceOf(poolAddress))
+        console.log(await tacEVM.balanceOf(poolAddress))
+        console.log(amountA)
+        console.log(amountB)
 
         // send message
         const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
@@ -226,8 +249,7 @@ describe("AlgebraRouterProxy", function () {
             timestamp
         );
 
-        const factoryContract = new ethers.Contract(algebraTestnetConfig.algebraFactory, factoryABI, admin);
-        poolAddress = await factoryContract.poolByPair(await sttonEVM.getAddress(), await tacEVM.getAddress());
+        //const poolAddress = await factoryContract.poolByPair(await sttonEVM.getAddress(), await tacEVM.getAddress());
         console.log("poolAddress")
         console.log(poolAddress)
         console.log("sttonEVM")
@@ -237,6 +259,7 @@ describe("AlgebraRouterProxy", function () {
 
         pool = new ethers.Contract(poolAddress, poolABI, admin);
         console.log(await pool.getReserves())
+        expect(await pool.getAddress()).to.be.equal(poolAddress);
         // expect(await sttonEVM.balanceOf(poolAddress)).to.be.equal(0);
         // expect(await tacEVM.balanceOf(poolAddress)).to.be.equal(0);
         console.log(await sttonEVM.balanceOf(poolAddress))
@@ -255,11 +278,11 @@ describe("AlgebraRouterProxy", function () {
         const target = await algebraRouterProxy.getAddress();
         const methodName = "exactInputSingle(bytes,bytes)";
 
-        const amount = 1n*10n**(await sttonEVM.decimals());
+        const amount = 10n;
 
         const sttonTokenMintInfo: TokenMintInfo = {
             info: sttonTokenInfo,
-            mintAmount: amount,
+            amount: amount,
         }
 
         const encodedParameters = new ethers.AbiCoder().encode(
@@ -297,10 +320,6 @@ describe("AlgebraRouterProxy", function () {
         );
         console.log("sent")
 
-        const factoryContract = new ethers.Contract(algebraTestnetConfig.algebraFactory, factoryABI, admin);
-        poolAddress = await factoryContract.poolByPair(await sttonEVM.getAddress(), await tacEVM.getAddress());
-        console.log("poolAddress")
-        console.log(poolAddress)
 
         // expect(await sttonEVM.balanceOf(poolAddress)).to.be.equal(0);
         // expect(await tacEVM.balanceOf(poolAddress)).to.be.equal(0);
@@ -310,8 +329,8 @@ describe("AlgebraRouterProxy", function () {
         console.log(await tacEVM.balanceOf(testSdk.getCrossChainLayerAddress()))
         console.log(await sttonEVM.balanceOf(await admin.getAddress()))
         console.log(await tacEVM.balanceOf(await admin.getAddress()))
-        console.log(await sttonEVM.balanceOf(poolAddress))
-        console.log(await tacEVM.balanceOf(poolAddress))
+        console.log(await sttonEVM.balanceOf(await pool.getAddress()))
+        console.log(await tacEVM.balanceOf(await pool.getAddress()))
         console.log(amount)
     });
 
