@@ -172,6 +172,9 @@ contract UniswapV2Proxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgrad
             shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
+            tvmProtocolFee: 0,
+            tvmExecutorFee: 0,
+            tvmValidExecutors: new string[](0),
             toBridge: tokensToBridge
         });
 
@@ -220,6 +223,9 @@ contract UniswapV2Proxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgrad
             shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
+            tvmProtocolFee: 0,
+            tvmExecutorFee: 0,
+            tvmValidExecutors: new string[](0),
             toBridge: tokensToBridge
         });
 
@@ -271,6 +277,9 @@ contract UniswapV2Proxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgrad
             shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
+            tvmProtocolFee: 0,
+            tvmExecutorFee: 0,
+            tvmValidExecutors: new string[](0),
             toBridge: tokensToBridge
         });
 
@@ -332,6 +341,9 @@ contract UniswapV2Proxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgrad
             shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
+            tvmProtocolFee: 0,
+            tvmExecutorFee: 0,
+            tvmValidExecutors: new string[](0),
             toBridge: tokensToBridge
         });
         _sendMessageV1(message, 0);
@@ -389,6 +401,9 @@ contract UniswapV2Proxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgrad
             shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
+            tvmProtocolFee: 0,
+            tvmExecutorFee: 0,
+            tvmValidExecutors: new string[](0),
             toBridge: tokensToBridge
         });
         _sendMessageV1(message, 0);
@@ -441,6 +456,9 @@ contract UniswapV2Proxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgrad
             shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
+            tvmProtocolFee: 0,
+            tvmExecutorFee: 0,
+            tvmValidExecutors: new string[](0),
             toBridge: tokensToBridge
         });
         _sendMessageV1(message, ethAmount);
@@ -494,6 +512,9 @@ contract UniswapV2Proxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgrad
             shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
+            tvmProtocolFee: 0,
+            tvmExecutorFee: 0,
+            tvmValidExecutors: new string[](0),
             toBridge: tokensToBridge
         });
         _sendMessageV1(message, 0);
@@ -547,6 +568,9 @@ contract UniswapV2Proxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgrad
             shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
+            tvmProtocolFee: 0,
+            tvmExecutorFee: 0,
+            tvmValidExecutors: new string[](0),
             toBridge: tokensToBridge
         });
         _sendMessageV1(message, 0);
