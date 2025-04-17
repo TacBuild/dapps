@@ -2,7 +2,7 @@
 pragma solidity ^0.8.28;
 
 import { TransferHelper } from '@uniswap/lib/contracts/libraries/TransferHelper.sol';
-import { OutMessageV2, TokenAmount, TacHeaderV1, NFTTokenAmount } from "@tonappchain/evm-ccl/contracts/L2/Structs.sol";
+import { OutMessageV2, TokenAmount, TacHeaderV1, NFTAmount } from "@tonappchain/evm-ccl/contracts/L2/Structs.sol";
 import { ICrossChainLayer } from "@tonappchain/evm-ccl/contracts/interfaces/ICrossChainLayer.sol";
 import { TacProxyV1Upgradeable } from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
 import { IPool } from "./Interface/IPool.sol";
@@ -16,8 +16,7 @@ import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/O
 import { IERC721Receiver } from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { IFactory } from "./Interface/IFactory.sol";
-import "hardhat/console.sol";
-
+import { IWTAC } from "./Interface/IWTAC.sol";
 /// @title IzumiProxy
 /// @notice A proxy contract that interfaces with Izumi protocol for liquidity management and trading operations
 /// @dev Implements TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable, and IERC721Receiver
@@ -52,8 +51,8 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
     address public limitOrderAddress;
     /// @notice Address of the liquidity manager contract
     address public liquidityManagerAddress;
-    /// @notice Constant address representing the gas token
-    address constant private GAS_TOKEN = 0x0000000000000000000000000000000000000000;
+    /// @notice Address of the W-TAC contract
+    IWTAC public wTac;
 
     /// @notice Emitted when a new pool is created
     /// @param pool Address of the newly created pool
@@ -193,7 +192,8 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         address _poolAddress,
         address _swapAddress,
         address _limitOrderAddress,
-        address _liquidityManagerAddress
+        address _liquidityManagerAddress,
+        address _wTacAddress
     ) external initializer {
         __TacProxyV1Upgradeable_init(crossChainLayer);
         __Ownable_init(msg.sender);
@@ -202,6 +202,7 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         swapAddress = _swapAddress;
         limitOrderAddress = _limitOrderAddress;
         liquidityManagerAddress = _liquidityManagerAddress;
+        wTac = IWTAC(_wTacAddress);
     }
 
     /// @notice Internal function to authorize upgrades
@@ -258,7 +259,7 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(args.tokenX, IERC20(args.tokenX).balanceOf(address(this)));
 
-        _bridgeTokens(tacHeader, tokensToBridge, new NFTTokenAmount[](0), "");
+        _bridgeTokens(tacHeader, tokensToBridge, new NFTAmount[](0), "");
     }
 
     /// @notice Swaps tokens along a specified path for a specific amount
@@ -290,7 +291,7 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(lastToken, IERC20(lastToken).balanceOf(address(this)));
 
-        _bridgeTokens(tacHeader, tokensToBridge, new NFTTokenAmount[](0), "");
+        _bridgeTokens(tacHeader, tokensToBridge, new NFTAmount[](0), "");
     }
 
     /// @notice Swaps token X for token Y
@@ -321,7 +322,7 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(args.tokenY, IERC20(args.tokenY).balanceOf(address(this)));
 
-        _bridgeTokens(tacHeader, tokensToBridge, new NFTTokenAmount[](0), "");
+        _bridgeTokens(tacHeader, tokensToBridge, new NFTAmount[](0), "");
     }
 
     /// @notice Swaps token X for token Y with a desired amount of Y
@@ -352,7 +353,7 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(args.tokenY, IERC20(args.tokenY).balanceOf(address(this)));
 
-        _bridgeTokens(tacHeader, tokensToBridge, new NFTTokenAmount[](0), "");
+        _bridgeTokens(tacHeader, tokensToBridge, new NFTAmount[](0), "");
     }
 
     /// @notice Swaps token Y for token X with a desired amount of X
@@ -383,7 +384,7 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(args.tokenX, IERC20(args.tokenX).balanceOf(address(this)));
 
-        _bridgeTokens(tacHeader, tokensToBridge, new NFTTokenAmount[](0), "");
+        _bridgeTokens(tacHeader, tokensToBridge, new NFTAmount[](0), "");
     }
 
     /// @notice Swaps tokens along a specified path with a desired amount
@@ -416,7 +417,7 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(lastToken, IERC20(lastToken).balanceOf(address(this)));
 
-        _bridgeTokens(tacHeader, tokensToBridge, new NFTTokenAmount[](0), "");
+        _bridgeTokens(tacHeader, tokensToBridge, new NFTAmount[](0), "");
     }
 
     /// @notice Cancels an existing order
@@ -442,16 +443,12 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         );
 
         ILimitOrderManager(limitOrderAddress).collectLimOrder(
-            _isGasToken(tokenToSell) || _isGasToken(tokenToReceive) ? limitOrderAddress : address(this),
+            address(this),
             args.orderIdx,
             args.collectDec,
             args.collectEarn
         );
-
-        if (_isGasToken(tokenToSell) || _isGasToken(tokenToReceive)) {
-            ILimitOrderManager(limitOrderAddress).unwrapWETH9(0, address(this));
-            _isGasToken(tokenToSell) ? ILimitOrderManager(limitOrderAddress).sweepToken(tokenToReceive, 0, address(this)) : ILimitOrderManager(limitOrderAddress).sweepToken(tokenToSell, 0, address(this));
-        }
+        
         TokenAmount[] memory tokensToBridge;
 
         if (IERC20(tokenToSell).balanceOf(address(this)) > 0 && IERC20(tokenToReceive).balanceOf(address(this)) > 0) {
@@ -467,7 +464,7 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
             }
         }
     
-        _bridgeTokens(tacHeader, tokensToBridge, new NFTTokenAmount[](0), "");
+        _bridgeTokens(tacHeader, tokensToBridge, new NFTAmount[](0), "");
     }
 
     /// @notice Collects tokens from an order
@@ -501,7 +498,7 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
             actualCollectEarn
         );
 
-        _bridgeTokens(tacHeader, tokensToBridge, new NFTTokenAmount[](0), "");
+        _bridgeTokens(tacHeader, tokensToBridge, new NFTAmount[](0), "");
     }
 
     /// @notice Creates a new limit order
@@ -531,7 +528,7 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
                 tokenToReceive,
                 IERC20(tokenToReceive).balanceOf(address(this))
             );
-            _bridgeTokens(tacHeader, tokensToBridge, new NFTTokenAmount[](0), "");
+            _bridgeTokens(tacHeader, tokensToBridge, new NFTAmount[](0), "");
         } 
     }
 
@@ -569,8 +566,8 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
                 tokensToBridge[0] = TokenAmount(params.tokenY, tokenYBalance);
             }
         }
-        NFTTokenAmount[] memory nftsToBridge = new NFTTokenAmount[](1);
-        nftsToBridge[0] = NFTTokenAmount(address(liquidityManagerAddress), lid, 0);
+        NFTAmount[] memory nftsToBridge = new NFTAmount[](1);
+        nftsToBridge[0] = NFTAmount(address(liquidityManagerAddress), lid, 0);
 
         emit Mint(lid);
 
@@ -601,8 +598,8 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         TokenAmount[] memory tokensToBridge = new TokenAmount[](2);
         tokensToBridge[0] = TokenAmount(tokenX, IERC20(tokenX).balanceOf(address(this)));
         tokensToBridge[1] = TokenAmount(tokenY, IERC20(tokenY).balanceOf(address(this)));
-        NFTTokenAmount[] memory nftsToBridge = new NFTTokenAmount[](1);
-        nftsToBridge[0] = NFTTokenAmount(address(liquidityManagerAddress), params.lid, 0);
+        NFTAmount[] memory nftsToBridge = new NFTAmount[](1);
+        nftsToBridge[0] = NFTAmount(address(liquidityManagerAddress), params.lid, 0);
 
         _bridgeTokens(tacHeader, tokensToBridge, nftsToBridge, "");
     }
@@ -645,8 +642,8 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
             }
         }
 
-        NFTTokenAmount[] memory nftsToBridge = new NFTTokenAmount[](1);
-        nftsToBridge[0] = NFTTokenAmount(address(liquidityManagerAddress), lid, 0);
+        NFTAmount[] memory nftsToBridge = new NFTAmount[](1);
+        nftsToBridge[0] = NFTAmount(address(liquidityManagerAddress), lid, 0);
 
         _bridgeTokens(tacHeader, tokensToBridge, nftsToBridge, "");
     }
@@ -674,8 +671,8 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         TokenAmount[] memory tokensToBridge = new TokenAmount[](2);
         tokensToBridge[0] = TokenAmount(tokenX, amountX);
         tokensToBridge[1] = TokenAmount(tokenY, amountY);
-        NFTTokenAmount[] memory nftsToBridge = new NFTTokenAmount[](1);
-        nftsToBridge[0] = NFTTokenAmount(address(liquidityManagerAddress), lid, 0);
+        NFTAmount[] memory nftsToBridge = new NFTAmount[](1);
+        nftsToBridge[0] = NFTAmount(address(liquidityManagerAddress), lid, 0);
 
         _bridgeTokens(tacHeader, tokensToBridge, nftsToBridge, "");
     }
@@ -693,8 +690,8 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
 
         if (!success) {
             TokenAmount[] memory tokensToBridge = new TokenAmount[](0);
-            NFTTokenAmount[] memory nftsToBridge = new NFTTokenAmount[](1);
-            nftsToBridge[0] = NFTTokenAmount(address(liquidityManagerAddress), lid, 0);
+            NFTAmount[] memory nftsToBridge = new NFTAmount[](1);
+            nftsToBridge[0] = NFTAmount(address(liquidityManagerAddress), lid, 0);
             _bridgeTokens(tacHeader, tokensToBridge, nftsToBridge, "");
             emit BurnFailed();
         }
@@ -720,9 +717,9 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
             tokensToBridge[i] = TokenAmount(bridgeData.tokens[i], IERC20(bridgeData.tokens[i]).balanceOf(address(this)));
         }
 
-        NFTTokenAmount[] memory nftsToBridge = new NFTTokenAmount[](bridgeData.nfts.length);
+        NFTAmount[] memory nftsToBridge = new NFTAmount[](bridgeData.nfts.length);
         for (uint256 i = 0; i < bridgeData.nfts.length; i++) {
-            nftsToBridge[i] = NFTTokenAmount(bridgeData.nfts[i].nft, bridgeData.nfts[i].id, bridgeData.nfts[i].amount);
+            nftsToBridge[i] = NFTAmount(bridgeData.nfts[i].nft, bridgeData.nfts[i].id, bridgeData.nfts[i].amount);
         }
 
         _bridgeTokens(tacHeader, tokensToBridge, nftsToBridge, "");
@@ -736,7 +733,7 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
     function _bridgeTokens(
         bytes calldata tacHeader,
         TokenAmount[] memory tokens,
-        NFTTokenAmount[] memory nfts,
+        NFTAmount[] memory nfts,
         string memory payload
     ) private {
         for (uint256 i = 0; i < tokens.length; i++) {
@@ -755,6 +752,9 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
             shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: payload,
+            tvmProtocolFee: 0,
+            tvmExecutorFee: 0,
+            tvmValidExecutors: new string[](0),
             toBridge: tokens,
             toBridgeNFT: nfts
         });
@@ -771,13 +771,8 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         return this.onERC721Received.selector;
     }
 
-    /// @notice Checks if a token is the gas token
-    /// @param token Address of the token to check
-    /// @return True if the token is the gas token
-    function _isGasToken(address token) private view returns (bool) {
-        return token == GAS_TOKEN;
-    }
-
     /// @notice Receives ETH
-    receive() external payable {}
+    receive() external payable {
+        IWTAC(wTac).deposit{value: msg.value}(0);
+    }
 }

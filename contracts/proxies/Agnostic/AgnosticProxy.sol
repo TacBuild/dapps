@@ -3,7 +3,7 @@
 pragma solidity ^0.8.28;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { TacProxyV1Upgradeable } from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
-import { OutMessageV2, TokenAmount, TacHeaderV1, NFTTokenAmount } from "@tonappchain/evm-ccl/contracts/L2/Structs.sol";
+import { OutMessageV2, TokenAmount, TacHeaderV1, NFTAmount } from "@tonappchain/evm-ccl/contracts/L2/Structs.sol";
 import { IERC721Receiver } from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { TransferHelper } from '@uniswap/lib/contracts/libraries/TransferHelper.sol';
@@ -51,9 +51,9 @@ contract AgnosticProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgrade
                 tokensToBridge[i] = TokenAmount(bridgeData.tokens[i], IERC20(bridgeData.tokens[i]).balanceOf(address(this)));
             }
 
-            NFTTokenAmount[] memory nftsToBridge = new NFTTokenAmount[](bridgeData.nfts.length);
+            NFTAmount[] memory nftsToBridge = new NFTAmount[](bridgeData.nfts.length);
             for (uint256 i = 0; i < bridgeData.nfts.length; i++) {
-                nftsToBridge[i] = NFTTokenAmount(bridgeData.nfts[i].nft, bridgeData.nfts[i].id, bridgeData.nfts[i].amount);
+                nftsToBridge[i] = NFTAmount(bridgeData.nfts[i].nft, bridgeData.nfts[i].id, bridgeData.nfts[i].amount);
             }
 
             _bridgeTokens(tacHeader, tokensToBridge, nftsToBridge, "");
@@ -69,7 +69,7 @@ contract AgnosticProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgrade
     function _bridgeTokens(
         bytes calldata tacHeader,
         TokenAmount[] memory tokens,
-        NFTTokenAmount[] memory nfts,
+        NFTAmount[] memory nfts,
         string memory payload
     ) private {
         for (uint256 i = 0; i < tokens.length; i++) {
@@ -88,6 +88,9 @@ contract AgnosticProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgrade
             shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: payload,
+            tvmProtocolFee: 0,
+            tvmExecutorFee: 0,
+            tvmValidExecutors: new string[](0),
             toBridge: tokens,
             toBridgeNFT: nfts
         });

@@ -4,7 +4,7 @@ import { expect } from "chai";
 
 import { deployIzumiProxy } from "../scripts/Izumi/deployIzumiProxy";
 import { izumiTestnetConfig } from "../scripts/Izumi/config/testnetConfig";
-import { TacLocalTestSdk, TokenMintInfo, NFTInfo, NFTMintInfo, NFTUnlockInfo} from "@tonappchain/evm-ccl";
+import { TacLocalTestSdk, TokenMintInfo, NFTUnlockInfo} from "@tonappchain/evm-ccl";
 import { sttonTokenInfo, tacTokenInfo } from '../scripts/common/info/tokensInfo';
 import { IzumiPoolAbi } from "./abis/IzumiPool";
 import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types";
