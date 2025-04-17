@@ -26,7 +26,8 @@ export async function deployIzumiProxy(
             config.poolAddress,
             config.swapAddress,
             config.limitOrderAddress,
-            config.liquidityManagerAddress],
+            config.liquidityManagerAddress,
+            config.wTacAddress],
         proxyOptsUUPS,
         undefined,
         true

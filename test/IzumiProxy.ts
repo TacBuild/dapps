@@ -4,7 +4,7 @@ import { expect } from "chai";
 
 import { deployIzumiProxy } from "../scripts/Izumi/deployIzumiProxy";
 import { izumiTestnetConfig } from "../scripts/Izumi/config/testnetConfig";
-import { TacLocalTestSdk, TokenMintInfo, NFTInfo, NFTMintInfo, NFTUnlockInfo} from "@tonappchain/evm-ccl";
+import { TacLocalTestSdk, TokenMintInfo, NFTUnlockInfo} from "@tonappchain/evm-ccl";
 import { sttonTokenInfo, tacTokenInfo } from '../scripts/common/info/tokensInfo';
 import { IzumiPoolAbi } from "./abis/IzumiPool";
 import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types";
@@ -22,6 +22,7 @@ describe("IzumiProxy", function () {
     let swap: ISwap;
     let limitOrderManager: ILimitOrderManager;
     let liquidityManager: ILiquidityManager;
+    let izumiMintId: string;
 
     before(async function () {
         [admin] = await ethers.getSigners();
@@ -165,7 +166,22 @@ describe("IzumiProxy", function () {
             timestamp
         );
 
-        const liquidityInfo = await liquidityManager.liquidities(3n);        
+        let abi = [
+            "event Mint(uint256 indexed lid)"
+        ];
+
+        const IzumiProxyContract = new ethers.Contract(await izumiProxy.getAddress(), abi, admin);
+        const eventFilter = IzumiProxyContract.filters.Mint
+        const events = await IzumiProxyContract.queryFilter(eventFilter, -1);
+        
+        const event = events[0] as unknown as { args: { lid: string } };
+        izumiMintId = event.args.lid
+        
+
+        expect(izumiMintId).to.not.equal(0);
+
+
+        const liquidityInfo = await liquidityManager.liquidities(izumiMintId);        
         expect(liquidityInfo.liquidity).to.be.gt(0);
     });
 
@@ -183,7 +199,7 @@ describe("IzumiProxy", function () {
         const encodedArguments = new ethers.AbiCoder().encode(
             ['tuple(uint256,uint128,uint128,uint128,uint128,uint256)'],
             [[
-                3, // lid
+                izumiMintId, // lid
                 amount, // xLim
                 amount, // yLim
                 0, // amountXMin
@@ -205,10 +221,10 @@ describe("IzumiProxy", function () {
 
         const unlockNft : NFTUnlockInfo = {
             evmAddress: izumiTestnetConfig.liquidityManagerAddress,
-            tokenId: 3n,
+            tokenId: BigInt(izumiMintId),
             amount: 0n
         }
-        const liquidityInfoBefore = await liquidityManager.liquidities(3n);
+        const liquidityInfoBefore = await liquidityManager.liquidities(izumiMintId);
 
         await testSdk.sendMessageWithNFT(
             shardsKey,
@@ -227,7 +243,7 @@ describe("IzumiProxy", function () {
 
         );
 
-        const liquidityInfoAfter = await liquidityManager.liquidities(3n);
+        const liquidityInfoAfter = await liquidityManager.liquidities(izumiMintId);
         expect(liquidityInfoAfter.liquidity).to.be.gt(liquidityInfoBefore.liquidity);
     });
 
@@ -493,7 +509,7 @@ describe("IzumiProxy", function () {
             ethers.zeroPadValue(tacEVMAddress, 20)
         ]);
 
-        const desire = ethers.parseUnits("0.1", sttonTokenInfo.decimals);
+        const desire = 10n
         const maxPayed = ethers.MaxUint256;
 
         const encodedArguments = new ethers.AbiCoder().encode(
@@ -514,9 +530,10 @@ describe("IzumiProxy", function () {
         const initialStTonBalance = await stTon.balanceOf(poolAddress);
         const initialTacBalance = await tac.balanceOf(poolAddress);
 
-        const mintTokens: TokenMintInfo[] = [{
-            info: sttonTokenInfo,
-            amount: ethers.parseUnits("100000000", sttonTokenInfo.decimals)
+        const mintTokens: TokenMintInfo[] = [
+        {
+            info: tacTokenInfo,
+            amount: ethers.parseUnits("1000000000", tacTokenInfo.decimals)
         }
     ];
 
@@ -537,8 +554,8 @@ describe("IzumiProxy", function () {
         const finalStTonBalance = await stTon.balanceOf(poolAddress);
         const finalTacBalance = await tac.balanceOf(poolAddress);
 
-        // expect(finalStTonBalance).to.be.gt(initialStTonBalance);
-        // expect(finalTacBalance).to.be.lt(initialTacBalance);
+        expect(finalStTonBalance).to.be.lt(initialStTonBalance);
+        expect(finalTacBalance).to.be.gt(initialTacBalance);
     });
 
     it("Izumi test new limit order", async function () {
@@ -694,7 +711,7 @@ describe("IzumiProxy", function () {
         const poolContract = new ethers.Contract(poolAddress, IzumiPoolAbi, admin);
         
         // Get initial liquidity info
-        const liquidityInfoBefore = await liquidityManager.liquidities(3n);
+        const liquidityInfoBefore = await liquidityManager.liquidities(izumiMintId);
         expect(liquidityInfoBefore.liquidity).to.be.gt(0n);
 
         // Get initial token balances
@@ -712,7 +729,7 @@ describe("IzumiProxy", function () {
         const encodedArguments = new ethers.AbiCoder().encode(
             ['tuple(uint256,uint128,uint256,uint256,uint256)'],
             [[
-                3n,             // lid
+                izumiMintId,             // lid
                 liquidDelta,    // liquidDelta
                 amountXMin,     // amountXMin
                 amountYMin,     // amountYMin
@@ -722,7 +739,7 @@ describe("IzumiProxy", function () {
 
         const unlockNft: NFTUnlockInfo = {
             evmAddress: izumiTestnetConfig.liquidityManagerAddress,
-            tokenId: 3n,
+            tokenId: BigInt(izumiMintId),
             amount: 0n
         };
 
@@ -743,7 +760,7 @@ describe("IzumiProxy", function () {
         );
 
         // Verify liquidity was decreased
-        const liquidityInfoAfter = await liquidityManager.liquidities(3n);
+        const liquidityInfoAfter = await liquidityManager.liquidities(izumiMintId);
         expect(liquidityInfoAfter.liquidity).to.be.lt(liquidityInfoBefore.liquidity);
         expect(liquidityInfoAfter.liquidity).to.equal(liquidityInfoBefore.liquidity - liquidDelta);
 
@@ -766,7 +783,7 @@ describe("IzumiProxy", function () {
         const poolContract = new ethers.Contract(poolAddress, IzumiPoolAbi, admin);
         
         // Get initial liquidity info
-        const liquidityInfoBefore = await liquidityManager.liquidities(3n);
+        const liquidityInfoBefore = await liquidityManager.liquidities(izumiMintId);
         expect(liquidityInfoBefore.liquidity).to.be.equal(0n);
 
         // Get initial token balances
@@ -778,7 +795,7 @@ describe("IzumiProxy", function () {
         const encodedArguments = new ethers.AbiCoder().encode(
             ['tuple(uint256,uint128,uint128)'],
             [[
-                3n,             // lid
+                izumiMintId,             // lid
                 liquidityInfoBefore.remainTokenX, // amountXLim
                 liquidityInfoBefore.remainTokenY  // amountYLim
             ]]
@@ -786,7 +803,7 @@ describe("IzumiProxy", function () {
 
         const unlockNft: NFTUnlockInfo = {
             evmAddress: izumiTestnetConfig.liquidityManagerAddress,
-            tokenId: 3n,
+            tokenId: BigInt(izumiMintId),
             amount: 0n
         };
 
@@ -807,7 +824,7 @@ describe("IzumiProxy", function () {
         );
 
         // Verify the liquidity was collected
-        const liquidityInfoAfter = await liquidityManager.liquidities(3n);
+        const liquidityInfoAfter = await liquidityManager.liquidities(izumiMintId);
         expect(liquidityInfoAfter.liquidity).to.be.equal(0n);
     });
 
@@ -828,7 +845,7 @@ describe("IzumiProxy", function () {
         const poolContract = new ethers.Contract(poolAddress, IzumiPoolAbi, admin);
         
         // Get initial liquidity info
-        const liquidityInfoBefore = await liquidityManager.liquidities(3n);
+        const liquidityInfoBefore = await liquidityManager.liquidities(izumiMintId);
         expect(liquidityInfoBefore.liquidity).to.be.equal(0n);
         
 
@@ -843,13 +860,13 @@ describe("IzumiProxy", function () {
         const encodedArguments = new ethers.AbiCoder().encode(
             ['tuple(uint256)'],
             [[
-                3n  // lid - the liquidity position ID to burn
+                izumiMintId  // lid - the liquidity position ID to burn
             ]]
         );
 
         const unlockNft: NFTUnlockInfo = {
             evmAddress: izumiTestnetConfig.liquidityManagerAddress,
-            tokenId: 3n,
+            tokenId: BigInt(izumiMintId),
             amount: 0n
         };
 
@@ -870,7 +887,7 @@ describe("IzumiProxy", function () {
         );
 
         // Verify liquidity position was burned
-        const liquidityInfoAfter = await liquidityManager.liquidities(3n);
+        const liquidityInfoAfter = await liquidityManager.liquidities(izumiMintId);
         expect(liquidityInfoAfter.liquidity).to.equal(0n);
     });
 

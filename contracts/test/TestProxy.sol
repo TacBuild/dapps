@@ -32,6 +32,9 @@ contract TestProxy is TacProxyV1 {
                 header.shardsKey,
                 header.tvmCaller,
                 "",
+                0,
+                0,
+                new string[](0),
                 receivedTokens
             ),
             0

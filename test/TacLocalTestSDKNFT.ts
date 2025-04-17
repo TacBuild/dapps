@@ -19,7 +19,7 @@ describe("TacLocalTestSDK NFT", () => {
         testSdk = new TacLocalTestSdk();
         const crossChainLayerAddress = testSdk.create(ethers.provider);
 
-        existedERC721 = await deploy<TestERC721Token>(admin, hre.artifacts.readArtifactSync("TestERC721Token"), ["ExistedNFTToken", "NFTTokenE", "https://test-token.com/"], undefined, false);
+        existedERC721 = await deploy<TestERC721Token>(admin, hre.artifacts.readArtifactSync("TestERC721Token"), ["ExistedNFT", "NFTE", "https://test-token.com/"], undefined, false);
         testNFTProxy = await deploy<TestNFTProxy>(admin, hre.artifacts.readArtifactSync("TestNFTProxy"), [crossChainLayerAddress], undefined, false);
 
     });
@@ -116,13 +116,13 @@ describe("TacLocalTestSDK NFT", () => {
         expect(outMessage.tokensBurned.length).to.be.eq(0);
         // check locked erc20 token
         expect(outMessage.tokensLocked.length).to.be.eq(0);
-        // check burned nft token
-        expect(outMessage.nftTokensBurned.length).to.be.eq(1);
-        expect(outMessage.nftTokensBurned[0].evmAddress).to.be.eq(calculatedNftTokenAddress);
-        expect(outMessage.nftTokensBurned[0].tokenId).to.be.eq(nftMintInfo.tokenId);
-        // check locked nft token
-        expect(outMessage.nftTokensLocked.length).to.be.eq(1);
-        expect(outMessage.nftTokensLocked[0].evmAddress).to.be.eq(nftUnlockInfo.evmAddress);
-        expect(outMessage.nftTokensLocked[0].tokenId).to.be.eq(nftUnlockInfo.tokenId);
+        // check burned nft
+        expect(outMessage.nftsBurned.length).to.be.eq(1);
+        expect(outMessage.nftsBurned[0].evmAddress).to.be.eq(calculatedNftTokenAddress);
+        expect(outMessage.nftsBurned[0].tokenId).to.be.eq(nftMintInfo.tokenId);
+        // check locked nft
+        expect(outMessage.nftsLocked.length).to.be.eq(1);
+        expect(outMessage.nftsLocked[0].evmAddress).to.be.eq(nftUnlockInfo.evmAddress);
+        expect(outMessage.nftsLocked[0].tokenId).to.be.eq(nftUnlockInfo.tokenId);
     });
 });

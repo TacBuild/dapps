@@ -5,7 +5,7 @@ import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { IERC721Receiver } from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
 import { TacProxyV1 } from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1.sol";
-import { OutMessageV2, TacHeaderV1, TokenAmount, NFTTokenAmount } from "@tonappchain/evm-ccl/contracts/L2/Structs.sol";
+import { OutMessageV2, TacHeaderV1, TokenAmount, NFTAmount } from "@tonappchain/evm-ccl/contracts/L2/Structs.sol";
 
 
 contract TestNFTProxy is TacProxyV1, IERC721Receiver {
@@ -36,10 +36,10 @@ contract TestNFTProxy is TacProxyV1, IERC721Receiver {
     }
 
     function receiveNFT(bytes calldata tacHeader, bytes calldata arguments) external {
-        NFTTokenAmount[] memory nftTokens = abi.decode(arguments, (NFTTokenAmount[]));
+        NFTAmount[] memory nfts = abi.decode(arguments, (NFTAmount[]));
 
-        for (uint i; i < nftTokens.length; i++) {
-            IERC721(nftTokens[i].l2Address).approve(_getCrossChainLayerAddress(), nftTokens[i].tokenId);
+        for (uint i; i < nfts.length; i++) {
+            IERC721(nfts[i].l2Address).approve(_getCrossChainLayerAddress(), nfts[i].tokenId);
         }
 
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
@@ -48,8 +48,11 @@ contract TestNFTProxy is TacProxyV1, IERC721Receiver {
             shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller, // Original TON user
             tvmPayload: "",
+            tvmProtocolFee: 0,
+            tvmExecutorFee: 0,
+            tvmValidExecutors: new string[](0),
             toBridge: new TokenAmount[](0), // no ERC-20 bridging in this example
-            toBridgeNFT: nftTokens         // bridging these NFTs back to TON
+            toBridgeNFT: nfts         // bridging these NFTs back to TON
         });
         _sendMessageV2(outMessage, 0);
     }
