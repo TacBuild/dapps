@@ -2,7 +2,7 @@
 pragma solidity ^0.8.28;
 
 import {TransferHelper} from "@uniswap/lib/contracts/libraries/TransferHelper.sol";
-import {OutMessageV2, TokenAmount, TacHeaderV1, NFTTokenAmount} from "@tonappchain/evm-ccl/contracts/L2/Structs.sol";
+import {OutMessageV2, TokenAmount, TacHeaderV1, NFTAmount} from "@tonappchain/evm-ccl/contracts/L2/Structs.sol";
 import {ICrossChainLayer} from "@tonappchain/evm-ccl/contracts/interfaces/ICrossChainLayer.sol";
 import {TacProxyV1Upgradeable} from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
@@ -265,7 +265,7 @@ contract MorphoProxy is
         emit Deposit(args.vault, args.assets);
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(args.vault, shares);
-        _bridgeTokens(tacHeader, tokensToBridge, new NFTTokenAmount[](0), "");
+        _bridgeTokens(tacHeader, tokensToBridge, "");
     }
 
     /// @notice Mints shares in a vault
@@ -290,7 +290,7 @@ contract MorphoProxy is
             args.vault,
             shares
         );
-        _bridgeTokens(tacHeader, tokensToBridge, new NFTTokenAmount[](0), "");
+        _bridgeTokens(tacHeader, tokensToBridge, "");
     }
 
     /// @notice Withdraws assets from a vault
@@ -316,7 +316,7 @@ contract MorphoProxy is
             IMorphoVault(args.vault).asset(),
             assets
         );
-        _bridgeTokens(tacHeader, tokensToBridge, new NFTTokenAmount[](0), "");
+        _bridgeTokens(tacHeader, tokensToBridge, "");
     }
 
     /// @notice Redeems shares from a vault
@@ -339,7 +339,7 @@ contract MorphoProxy is
             IMorphoVault(args.vault).asset(),
             assets
         );
-        _bridgeTokens(tacHeader, tokensToBridge, new NFTTokenAmount[](0), "");
+            _bridgeTokens(tacHeader, tokensToBridge, "");
     }
 
 
@@ -359,7 +359,7 @@ contract MorphoProxy is
         emit Claim(args.account, args.reward, amount);
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(args.reward, amount);
-        _bridgeTokens(tacHeader, tokensToBridge, new NFTTokenAmount[](0), "");
+        _bridgeTokens(tacHeader, tokensToBridge, "");
     }
 
 
@@ -409,7 +409,7 @@ contract MorphoProxy is
             args.marketParams.collateralToken,
             IERC20(args.marketParams.collateralToken).balanceOf(address(this))
         );
-        _bridgeTokens(tacHeader, tokensToBridge, new NFTTokenAmount[](0), "");
+        _bridgeTokens(tacHeader, tokensToBridge, "");
     }
 
     /// @notice Borrows assets from a market
@@ -432,7 +432,7 @@ contract MorphoProxy is
             args.marketParams.loanToken,
             IERC20(args.marketParams.loanToken).balanceOf(address(this))
         );
-        _bridgeTokens(tacHeader, tokensToBridge, new NFTTokenAmount[](0), "");
+        _bridgeTokens(tacHeader, tokensToBridge, "");
     }
 
     /// @notice Repays a loan in a market
@@ -461,7 +461,7 @@ contract MorphoProxy is
                 args.marketParams.loanToken,
                 IERC20(args.marketParams.loanToken).balanceOf(address(this))
             );
-            _bridgeTokens(tacHeader, tokensToBridge, new NFTTokenAmount[](0), "");
+            _bridgeTokens(tacHeader, tokensToBridge, "");
         }
     }
 
@@ -528,12 +528,10 @@ contract MorphoProxy is
     /// @notice Bridges tokens to the cross-chain layer
     /// @param tacHeader TAC header data
     /// @param tokens Array of token amounts to bridge
-    /// @param nfts Array of NFT amounts to bridge
     /// @param payload Additional payload data
     function _bridgeTokens(
         bytes calldata tacHeader,
         TokenAmount[] memory tokens,
-        NFTTokenAmount[] memory nfts,
         string memory payload
     ) private {
         for (uint256 i = 0; i < tokens.length; i++) {
@@ -549,8 +547,11 @@ contract MorphoProxy is
             shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: payload,
+            tvmProtocolFee: 0,
+            tvmExecutorFee: 0,
+            tvmValidExecutors: new string[](0),
             toBridge: tokens,
-            toBridgeNFT: nfts
+            toBridgeNFT: new NFTAmount[](0)
         });
 
         _sendMessageV2(message, address(this).balance);

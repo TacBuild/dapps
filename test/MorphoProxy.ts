@@ -40,8 +40,6 @@ describe("MorphoProxy", function () {
         const tacEVMAddress = testSdk.getEVMJettonAddress(tacTokenInfo.tvmAddress);
         stton = new ethers.Contract(sttonEVMAddress, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;
         tac = new ethers.Contract(tacEVMAddress, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;
-        console.log("stton", await stton.getAddress());
-        console.log("tac", await tac.getAddress());
         
     });
 
@@ -150,7 +148,6 @@ describe("MorphoProxy", function () {
 
 
         const supColAfter = await morpho.position(marketParamsId, onBehalf);
-        console.log("supColAfter", supColAfter);
         expect(supColAfter.collateral).to.be.greaterThan(0);
     });
 
