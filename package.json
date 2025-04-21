@@ -26,7 +26,6 @@
   },
   "keywords": [],
   "author": "",
-  "main": "index.js",
   "devDependencies": {
     "@nomicfoundation/hardhat-chai-matchers": "^2.0.7",
     "@nomicfoundation/hardhat-ethers": "^3.0.8",
@@ -57,6 +56,8 @@
   "dependencies": {
     "@openzeppelin/contracts": "^5.2.0",
     "@openzeppelin/contracts-upgradeable": "^5.2.0",
-    "@openzeppelin/hardhat-upgrades": "^3.9.0"
+    "@openzeppelin/hardhat-upgrades": "^3.9.0",
+    "@types/inquirer": "^9.0.7",
+    "inquirer": "^12.5.2"
   }
 }
