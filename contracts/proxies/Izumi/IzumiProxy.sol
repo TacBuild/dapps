@@ -624,11 +624,18 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
 
         ILiquidityManager.Liquidity memory liq = ILiquidityManager(liquidityManagerAddress).liquidities(lid);
         (address tokenX, address tokenY,) = ILiquidityManager(liquidityManagerAddress).poolMetas(liq.poolId);
+
+        TokenAmount[] memory tokensToBridge = _getTokensToBridge(tokenX, tokenY);
         
+        NFTAmount[] memory nftsToBridge = new NFTAmount[](1);
+        nftsToBridge[0] = NFTAmount(address(liquidityManagerAddress), lid, 0);
+
+        _bridgeTokens(tacHeader, tokensToBridge, nftsToBridge, "");
+    }
+
+    function _getTokensToBridge(address tokenX, address tokenY) private view returns (TokenAmount[] memory tokensToBridge) {
         uint256 tokenXBalance = IERC20(tokenX).balanceOf(address(this));
         uint256 tokenYBalance = IERC20(tokenY).balanceOf(address(this));
-
-        TokenAmount[] memory tokensToBridge;
         if (tokenXBalance > 0 && tokenYBalance > 0) {
             tokensToBridge = new TokenAmount[](2);
             tokensToBridge[0] = TokenAmount(tokenX, tokenXBalance);
@@ -641,11 +648,7 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
                 tokensToBridge[0] = TokenAmount(tokenY, tokenYBalance);
             }
         }
-
-        NFTAmount[] memory nftsToBridge = new NFTAmount[](1);
-        nftsToBridge[0] = NFTAmount(address(liquidityManagerAddress), lid, 0);
-
-        _bridgeTokens(tacHeader, tokensToBridge, nftsToBridge, "");
+        return tokensToBridge;
     }
 
     /// @notice Collects fees from a liquidity position
