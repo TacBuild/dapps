@@ -85,31 +85,9 @@ describe("AgnosticProxy", function () {
                 functionName: "approve",
                 params: [izumiTestnetConfig.liquidityManagerAddress, ethers.MaxUint256]
             },
-            {
-                to: izumiTestnetConfig.liquidityManagerAddress,
-                functionName: "mint",
-                    params: [[
-                                target, // miner
-                                tokenX,
-                                tokenY, // tokenX
-                                fee, // fee
-                                207240n, // pl (leftPoint)
-                                214200n,  // pr (rightPoint)
-                                amountX, // xLim
-                                amountY, // yLim
-                                0n, // amountXMin
-                                0n, // amountYMin
-                                ethers.MaxUint256 // deadline
-                    ]]
-            },
-            {
-                to: izumiTestnetConfig.liquidityManagerAddress,
-                functionName: "addLiquidity",
-                params: [[3, amount, amount, 0, 0, ethers.MaxUint256]]
-            }
         ];
 
-        const zapCallData = agnosticProxySDK.createZapTransaction(contractInterfaces, calls, [], [{nft: izumiTestnetConfig.liquidityManagerAddress, id: 3n, amount: 0n}], true);
+        const zapCallData = agnosticProxySDK.createZapTransaction(contractInterfaces, calls, [], [], false);
 
         const mintTokens: TokenMintInfo[] = [
                     {
