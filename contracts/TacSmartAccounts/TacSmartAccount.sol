@@ -18,7 +18,7 @@ contract TacSmartAccount is Initializable {
         owner = _owner;
     }
 
-    function execute(address target, uint256 value, bytes calldata data) external onlyOwner {
+    function execute(address target, uint256 value, bytes calldata data) external payable onlyOwner {
         (bool success,) = target.call{value: value}(data);
         require(success, "Execution failed");
         emit Executed(target, value, data);
