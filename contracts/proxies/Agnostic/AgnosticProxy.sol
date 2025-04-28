@@ -3,7 +3,7 @@
 pragma solidity ^0.8.28;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { TacProxyV1Upgradeable } from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
-import { OutMessageV2, TokenAmount, TacHeaderV1, NFTAmount } from "@tonappchain/evm-ccl/contracts/L2/Structs.sol";
+import { OutMessageV1, TokenAmount, TacHeaderV1, NFTAmount } from "@tonappchain/evm-ccl/contracts/L2/Structs.sol";
 import { IERC721Receiver } from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { TransferHelper } from '@uniswap/lib/contracts/libraries/TransferHelper.sol';
@@ -84,7 +84,7 @@ contract AgnosticProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgrade
             IERC721(nfts[i].l2Address).approve(_getCrossChainLayerAddress(), nfts[i].tokenId);
         }
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
-        OutMessageV2 memory message = OutMessageV2({
+        OutMessageV1 memory message = OutMessageV1({
             shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: payload,
@@ -95,7 +95,7 @@ contract AgnosticProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgrade
             toBridgeNFT: nfts
         });
 
-        _sendMessageV2(message, address(this).balance);
+        _sendMessageV1(message, address(this).balance);
     }
 
     function onERC721Received(

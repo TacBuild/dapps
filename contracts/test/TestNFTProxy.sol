@@ -5,7 +5,7 @@ import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { IERC721Receiver } from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
 import { TacProxyV1 } from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1.sol";
-import { OutMessageV2, TacHeaderV1, TokenAmount, NFTAmount } from "@tonappchain/evm-ccl/contracts/L2/Structs.sol";
+import { OutMessageV1, TacHeaderV1, TokenAmount, NFTAmount } from "@tonappchain/evm-ccl/contracts/L2/Structs.sol";
 
 
 contract TestNFTProxy is TacProxyV1, IERC721Receiver {
@@ -44,7 +44,7 @@ contract TestNFTProxy is TacProxyV1, IERC721Receiver {
 
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         // bridge nft back
-        OutMessageV2 memory outMessage = OutMessageV2({
+        OutMessageV1 memory outMessage = OutMessageV1({
             shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller, // Original TON user
             tvmPayload: "",
@@ -54,6 +54,6 @@ contract TestNFTProxy is TacProxyV1, IERC721Receiver {
             toBridge: new TokenAmount[](0), // no ERC-20 bridging in this example
             toBridgeNFT: nfts         // bridging these NFTs back to TON
         });
-        _sendMessageV2(outMessage, 0);
+        _sendMessageV1(outMessage, 0);
     }
 }
