@@ -61,7 +61,7 @@ describe("MidasProxy", function () {
 
         
 
-        // depositInstant
+        
         const encodedArgs = new ethers.AbiCoder().encode(
             ["address", "uint256", "uint256", "bytes32"],
             [await tokenIn.getAddress(), mintAmount, 0, ethers.ZeroHash]
@@ -69,7 +69,7 @@ describe("MidasProxy", function () {
 
         const method = "depositInstant(bytes,bytes)";
 
-        // Выполняем кроссчейн вызов
+        
         const { outMessages } = await testSdk.sendMessage(
             shardsKey,
             target,
@@ -84,7 +84,7 @@ describe("MidasProxy", function () {
             timestamp
         );
 
-        // Проверяем результат
+        
         expect(outMessages.length).to.equal(1);
         const outMessage = outMessages[0];
 
