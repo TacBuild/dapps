@@ -7,13 +7,13 @@ import { HardhatUserConfig } from "hardhat/config";
 dotenv.config();
 
 const TAC_TESTNET_URL = process.env.TAC_TESTNET_URL || "http://127.0.0.1:8545";
+const TAC_TESTNET_SPB_URL = process.env.TAC_TESTNET_SPB_URL || "http://127.0.0.1:8545";
 
 const config: HardhatUserConfig = {
   solidity: {
     compilers: [
       {
         version: "0.8.28",
-        
         settings: {
           optimizer: {
             enabled: true,
@@ -43,7 +43,12 @@ const config: HardhatUserConfig = {
       timeout: 3600000
     },
     tac_testnet: {
+      chainId: 2390,
       url: TAC_TESTNET_URL
+    },
+    tac_testnet_spb: {
+      chainId: 2391,
+      url: TAC_TESTNET_SPB_URL
     },
   },
   gasReporter: {
