@@ -4,7 +4,7 @@ import { getCCLArtifacts, loadTacContracts } from "@tonappchain/evm-ccl";
 import { CrossChainLayerToken } from "@tonappchain/evm-ccl/dist/typechain-types";
 import { loadContractFromFile } from "../utils";
 import { sendSimpleMessageV1 } from '@tonappchain/evm-ccl';
-import { InMessageV1Struct } from "@tonappchain/evm-ccl/dist/typechain-types/contracts/CCL/Structs.sol/IStructsInterface";
+import { InMessageV1Struct } from "@tonappchain/evm-ccl/dist/typechain-types/contracts/core/Structs.sol/IStructsInterface";
 
 
 async function main() {

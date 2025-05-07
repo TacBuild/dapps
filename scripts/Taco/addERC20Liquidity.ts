@@ -2,7 +2,7 @@ import { ethers } from 'hardhat';
 import { printEvents, printBalances } from '../utils';
 import { ERC20 } from '@tonappchain/evm-ccl/dist/typechain-types';
 import { sendSimpleMessageV1 } from '@tonappchain/evm-ccl';
-import { InMessageV1Struct } from '@tonappchain/evm-ccl/dist/typechain-types/contracts/CCL/Structs.sol/IStructsInterface';
+import { InMessageV1Struct } from '@tonappchain/evm-ccl/dist/typechain-types/contracts/core/Structs.sol/IStructsInterface';
 import { loadTacoTestEnv } from './utils';
 
 async function main(showEvents=false) {

@@ -1,7 +1,7 @@
 import hre, { ethers } from 'hardhat';
 import { sendSimpleMessageV1, simulateReceiveMessageV1, decodeCrossChainLayerErrorData } from '@tonappchain/evm-ccl';
 import { printEvents, printBalances } from '../utils';
-import { InMessageV1Struct } from '@tonappchain/evm-ccl/dist/typechain-types/contracts/CCL/Structs.sol/IStructsInterface';
+import { InMessageV1Struct } from '@tonappchain/evm-ccl/dist/typechain-types/contracts/core/Structs.sol/IStructsInterface';
 import { loadUniswapTestEnv } from './utils';
 import { ERC20 } from '@tonappchain/evm-ccl/dist/typechain-types';
 
