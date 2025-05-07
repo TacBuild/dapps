@@ -137,9 +137,9 @@ describe("TacLocalTestSDK", () => {
                 expect(typedEvent.args.tvmCaller).to.be.eq(tvmWalletCaller);
                 expect(typedEvent.args.extraData).to.be.eq(extraData);
                 expect(typedEvent.args.receivedTokens.length).to.be.eq(2);
-                expect(typedEvent.args.receivedTokens[0].l2Address).to.be.eq(calculatedTokenAddress);
+                expect(typedEvent.args.receivedTokens[0].evmAddress).to.be.eq(calculatedTokenAddress);
                 expect(typedEvent.args.receivedTokens[0].amount).to.be.eq(tokenMintInfo.amount);
-                expect(typedEvent.args.receivedTokens[1].l2Address).to.be.eq(tokenUnlockInfo.evmAddress);
+                expect(typedEvent.args.receivedTokens[1].evmAddress).to.be.eq(tokenUnlockInfo.evmAddress);
                 expect(typedEvent.args.receivedTokens[1].amount).to.be.eq(tokenUnlockInfo.amount);
             }
         });

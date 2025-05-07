@@ -9,7 +9,7 @@ import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/O
 import { IUniswapV2Router02 } from '@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol';
 import { TransferHelper } from '@uniswap/lib/contracts/libraries/TransferHelper.sol';
 import { TacProxyV1Upgradeable } from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
-import { OutMessageV1, TokenAmount, NFTAmount, TacHeaderV1 } from "@tonappchain/evm-ccl/contracts/L2/Structs.sol";
+import { OutMessageV1, TokenAmount, NFTAmount, TacHeaderV1 } from "@tonappchain/evm-ccl/contracts/core/Structs.sol";
 import { UniswapV2Library } from "contracts/proxies/UniswapV2/CompilerVersionAdapters.sol";
 import { ICrossChainLayer } from "@tonappchain/evm-ccl/contracts/interfaces/ICrossChainLayer.sol";
 
@@ -140,7 +140,7 @@ contract UniswapV2Proxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgrad
 
         tokensToBridge[0] = TokenAmount(arguments.token, arguments.amountTokenDesired - amountToken);
 
-        // tokens to L2->L1 transfer (lock)
+        // tokens to EVM->TVM transfer (lock)
         address tokenLiquidity = UniswapV2Library.pairFor(IUniswapV2Router02(_appAddress).factory(), IUniswapV2Router02(_appAddress).WETH(), arguments.token);
         tokensToBridge[1] = TokenAmount(tokenLiquidity, liquidity);
 
@@ -160,7 +160,7 @@ contract UniswapV2Proxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgrad
 
         uint i;
         for (; i < tokensToBridge.length;) {
-            TransferHelper.safeApprove(tokensToBridge[i].l2Address, _getCrossChainLayerAddress(), tokensToBridge[i].amount);
+            TransferHelper.safeApprove(tokensToBridge[i].evmAddress, _getCrossChainLayerAddress(), tokensToBridge[i].amount);
             unchecked {
                 i++;
             }
@@ -212,7 +212,7 @@ contract UniswapV2Proxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgrad
 
         uint i;
         for (; i < tokensToBridge.length;) {
-            TransferHelper.safeApprove(tokensToBridge[i].l2Address, _getCrossChainLayerAddress(), tokensToBridge[i].amount);
+            TransferHelper.safeApprove(tokensToBridge[i].evmAddress, _getCrossChainLayerAddress(), tokensToBridge[i].amount);
             unchecked {
                 i++;
             }
@@ -267,7 +267,7 @@ contract UniswapV2Proxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgrad
 
         uint i;
         for (; i < tokensToBridge.length;) {
-            TransferHelper.safeApprove(tokensToBridge[i].l2Address, _getCrossChainLayerAddress(), tokensToBridge[i].amount);
+            TransferHelper.safeApprove(tokensToBridge[i].evmAddress, _getCrossChainLayerAddress(), tokensToBridge[i].amount);
             unchecked {
                 i++;
             }
@@ -332,7 +332,7 @@ contract UniswapV2Proxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgrad
 
         uint i;
         for (; i < tokensToBridge.length;) {
-            TransferHelper.safeApprove(tokensToBridge[i].l2Address, _getCrossChainLayerAddress(), tokensToBridge[i].amount);
+            TransferHelper.safeApprove(tokensToBridge[i].evmAddress, _getCrossChainLayerAddress(), tokensToBridge[i].amount);
             unchecked {
                 i++;
             }
@@ -393,7 +393,7 @@ contract UniswapV2Proxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgrad
 
         uint i;
         for (; i < tokensToBridge.length;) {
-            TransferHelper.safeApprove(tokensToBridge[i].l2Address, _getCrossChainLayerAddress(), tokensToBridge[i].amount);
+            TransferHelper.safeApprove(tokensToBridge[i].evmAddress, _getCrossChainLayerAddress(), tokensToBridge[i].amount);
             unchecked {
                 i++;
             }
@@ -449,7 +449,7 @@ contract UniswapV2Proxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgrad
 
         uint i;
         for (; i < tokensToBridge.length;) {
-            TransferHelper.safeApprove(tokensToBridge[i].l2Address, _getCrossChainLayerAddress(), tokensToBridge[i].amount);
+            TransferHelper.safeApprove(tokensToBridge[i].evmAddress, _getCrossChainLayerAddress(), tokensToBridge[i].amount);
             unchecked {
                 i++;
             }
@@ -506,7 +506,7 @@ contract UniswapV2Proxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgrad
 
         uint i;
         for (; i < tokensToBridge.length;) {
-            TransferHelper.safeApprove(tokensToBridge[i].l2Address, _getCrossChainLayerAddress(), tokensToBridge[i].amount);
+            TransferHelper.safeApprove(tokensToBridge[i].evmAddress, _getCrossChainLayerAddress(), tokensToBridge[i].amount);
             unchecked {
                 i++;
             }
@@ -563,7 +563,7 @@ contract UniswapV2Proxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgrad
 
         uint i;
         for (; i < tokensToBridge.length;) {
-            TransferHelper.safeApprove(tokensToBridge[i].l2Address, _getCrossChainLayerAddress(), tokensToBridge[i].amount);
+            TransferHelper.safeApprove(tokensToBridge[i].evmAddress, _getCrossChainLayerAddress(), tokensToBridge[i].amount);
             unchecked {
                 i++;
             }
