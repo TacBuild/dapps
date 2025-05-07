@@ -9,7 +9,7 @@ import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/O
 import { IUniswapV2Router02 } from '@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol';
 import { TransferHelper } from '@uniswap/lib/contracts/libraries/TransferHelper.sol';
 import { TacProxyV1Upgradeable } from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
-import { OutMessageV1, TokenAmount, TacHeaderV1 } from "@tonappchain/evm-ccl/contracts/L2/Structs.sol";
+import { OutMessageV1, TokenAmount, NFTAmount, TacHeaderV1 } from "@tonappchain/evm-ccl/contracts/L2/Structs.sol";
 import { UniswapV2Library } from "contracts/proxies/UniswapV2/CompilerVersionAdapters.sol";
 import { ICrossChainLayer } from "@tonappchain/evm-ccl/contracts/interfaces/ICrossChainLayer.sol";
 
@@ -175,7 +175,8 @@ contract UniswapV2Proxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgrad
             tvmProtocolFee: 0,
             tvmExecutorFee: 0,
             tvmValidExecutors: new string[](0),
-            toBridge: tokensToBridge
+            toBridge: tokensToBridge,
+            toBridgeNFT: new NFTAmount[](0)
         });
 
         _sendMessageV1(message, msg.value - amountETH);
@@ -226,7 +227,8 @@ contract UniswapV2Proxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgrad
             tvmProtocolFee: 0,
             tvmExecutorFee: 0,
             tvmValidExecutors: new string[](0),
-            toBridge: tokensToBridge
+            toBridge: tokensToBridge,
+            toBridgeNFT: new NFTAmount[](0)
         });
 
         _sendMessageV1(message, 0);
@@ -280,7 +282,8 @@ contract UniswapV2Proxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgrad
             tvmProtocolFee: 0,
             tvmExecutorFee: 0,
             tvmValidExecutors: new string[](0),
-            toBridge: tokensToBridge
+            toBridge: tokensToBridge,
+            toBridgeNFT: new NFTAmount[](0)
         });
 
         _sendMessageV1(message, amountETH);
@@ -344,7 +347,8 @@ contract UniswapV2Proxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgrad
             tvmProtocolFee: 0,
             tvmExecutorFee: 0,
             tvmValidExecutors: new string[](0),
-            toBridge: tokensToBridge
+            toBridge: tokensToBridge,
+            toBridgeNFT: new NFTAmount[](0)
         });
         _sendMessageV1(message, 0);
     }
@@ -404,7 +408,8 @@ contract UniswapV2Proxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgrad
             tvmProtocolFee: 0,
             tvmExecutorFee: 0,
             tvmValidExecutors: new string[](0),
-            toBridge: tokensToBridge
+            toBridge: tokensToBridge,
+            toBridgeNFT: new NFTAmount[](0)
         });
         _sendMessageV1(message, 0);
     }
@@ -459,7 +464,8 @@ contract UniswapV2Proxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgrad
             tvmProtocolFee: 0,
             tvmExecutorFee: 0,
             tvmValidExecutors: new string[](0),
-            toBridge: tokensToBridge
+            toBridge: tokensToBridge,
+            toBridgeNFT: new NFTAmount[](0)
         });
         _sendMessageV1(message, ethAmount);
     }
@@ -515,7 +521,8 @@ contract UniswapV2Proxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgrad
             tvmProtocolFee: 0,
             tvmExecutorFee: 0,
             tvmValidExecutors: new string[](0),
-            toBridge: tokensToBridge
+            toBridge: tokensToBridge,
+            toBridgeNFT: new NFTAmount[](0)
         });
         _sendMessageV1(message, 0);
     }
@@ -571,7 +578,8 @@ contract UniswapV2Proxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgrad
             tvmProtocolFee: 0,
             tvmExecutorFee: 0,
             tvmValidExecutors: new string[](0),
-            toBridge: tokensToBridge
+            toBridge: tokensToBridge,
+            toBridgeNFT: new NFTAmount[](0)
         });
         _sendMessageV1(message, 0);
     }
