@@ -1,6 +1,6 @@
 import hre, { ethers } from 'hardhat';
 import { sendSimpleMessageV1, simulateReceiveMessageV1, decodeCrossChainLayerErrorData } from '@tonappchain/evm-ccl';
-import { InMessageV1Struct } from '@tonappchain/evm-ccl/dist/typechain-types/contracts/L2/Structs.sol/IStructsInterface';
+import { InMessageV1Struct } from '@tonappchain/evm-ccl/dist/typechain-types/contracts/CCL/Structs.sol/IStructsInterface';
 import path from 'path';
 import {getCoinsFromPool} from './utils'
 import { loadTacContracts } from "@tonappchain/evm-ccl";
@@ -30,8 +30,8 @@ async function main(proxyAddress: string, poolAddress: string, amountA: bigint, 
         ),
         caller: 'EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk',
         mint: [
-            { l2Address: coins[0], amount: amountA },
-            { l2Address: coins[1], amount: amountB },
+            { evmAddress: coins[0], amount: amountA },
+            { evmAddress: coins[1], amount: amountB },
         ],
         unlock: [],
         meta: [],  // fill if the tokens are new

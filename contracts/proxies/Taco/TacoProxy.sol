@@ -12,7 +12,7 @@ import { TransferHelper } from '@uniswap/lib/contracts/libraries/TransferHelper.
 
 import { TacProxyV1Upgradeable } from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
 
-import { OutMessageV1, TokenAmount, NFTAmount, TacHeaderV1 } from "@tonappchain/evm-ccl/contracts/L2/Structs.sol";
+import { OutMessageV1, TokenAmount, NFTAmount, TacHeaderV1 } from "@tonappchain/evm-ccl/contracts/CCL/Structs.sol";
 import { UniswapV2Library } from "contracts/proxies/UniswapV2/CompilerVersionAdapters.sol";
 import { ICrossChainLayer } from "@tonappchain/evm-ccl/contracts/interfaces/ICrossChainLayer.sol";
 
@@ -247,12 +247,12 @@ contract TacoProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable
         // call dApp
         (address newVendingMachine, uint256 shares) = _createDODOVendingMachine(args);
 
-        // tokens to L2->L1 transfer (bridge)
+        // tokens to EVM->TVM transfer (bridge)
         TransferHelper.safeApprove(newVendingMachine, _getCrossChainLayerAddress(), shares);
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(newVendingMachine, shares);
 
-        // CCL L2->L1 callback
+        // CCL EVM->TVM callback
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         OutMessageV1 memory message = OutMessageV1({
             shardsKey: header.shardsKey,
@@ -318,7 +318,7 @@ contract TacoProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable
         // approve share to CCL
         TransferHelper.safeApprove(args.dvmAddress, _getCrossChainLayerAddress(), shares);
 
-        // tokens to L2->L1 transfer (bridge)
+        // tokens to EVM->TVM transfer (bridge)
         address baseToken = IDVM(args.dvmAddress)._BASE_TOKEN_();
         address quoteToken = IDVM(args.dvmAddress)._QUOTE_TOKEN_();
         uint256 t = (baseToken == _ETH_ADDRESS_ ? 0 : 1) + (quoteToken == _ETH_ADDRESS_ ? 0 : 1) + 1;
@@ -346,7 +346,7 @@ contract TacoProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable
         }
         tokensToBridge[i] = TokenAmount(args.dvmAddress, shares);
 
-        // CCL L2->L1 callback
+        // CCL EVM->TVM callback
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         OutMessageV1 memory message = OutMessageV1({
             shardsKey: header.shardsKey,
@@ -402,7 +402,7 @@ contract TacoProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable
         // call dApp
         (uint256 returnAmount) = _mixSwap(args);
 
-        // tokens to L2->L1 transfer (bridge)
+        // tokens to EVM->TVM transfer (bridge)
         uint256 value;
         TokenAmount[] memory tokensToBridge;
         if (args.toToken == _ETH_ADDRESS_) {
@@ -415,7 +415,7 @@ contract TacoProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable
             value = 0;
         }
 
-        // CCL L2->L1 callback
+        // CCL EVM->TVM callback
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         OutMessageV1 memory message = OutMessageV1({
             shardsKey: header.shardsKey,
@@ -469,7 +469,7 @@ contract TacoProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable
         bool isBaseNative = (baseToken == _wethAddress) && (args.data.length > 0);
         bool isQuoteNative = (quoteToken == _wethAddress) && (args.data.length > 0);
 
-        // tokens to L2->L1 transfer (bridge)
+        // tokens to EVM->TVM transfer (bridge)
         TokenAmount[] memory tokensToBridge = new TokenAmount[]((isBaseNative ? 0 : 1) + (isQuoteNative ? 0 : 1));
         uint256 value = 0;
         uint256 i = 0;
@@ -494,7 +494,7 @@ contract TacoProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable
             }
         }
 
-        // CCL L2->L1 callback
+        // CCL EVM->TVM callback
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         OutMessageV1 memory message = OutMessageV1({
             shardsKey: header.shardsKey,

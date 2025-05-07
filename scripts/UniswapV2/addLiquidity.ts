@@ -2,7 +2,7 @@ import hre, { ethers } from 'hardhat';
 import { printEvents, printBalances } from '../utils';
 import { ERC20 } from '@tonappchain/evm-ccl/dist/typechain-types';
 import { sendSimpleMessageV1, simulateReceiveMessageV1, decodeCrossChainLayerErrorData } from '@tonappchain/evm-ccl';
-import { InMessageV1Struct } from '@tonappchain/evm-ccl/dist/typechain-types/contracts/L2/Structs.sol/IStructsInterface';
+import { InMessageV1Struct } from '@tonappchain/evm-ccl/dist/typechain-types/contracts/CCL/Structs.sol/IStructsInterface';
 import { loadUniswapTestEnv } from './utils';
 
 
@@ -53,8 +53,8 @@ async function main(showEvents=false) {
         ),
         caller: 'EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk',
         mint: [
-            {l2Address: await sttonToken.getAddress(), amount: amountADesired},
-            {l2Address: await tacToken.getAddress(), amount: amountBDesired},
+            {evmAddress: await sttonToken.getAddress(), amount: amountADesired},
+            {evmAddress: await tacToken.getAddress(), amount: amountBDesired},
         ],
         unlock: [],
         meta: [],  // tokens are already exist, no need to fill meta

@@ -3,7 +3,7 @@ import path from 'path';
 import { printEvents, loadERC20FromFile } from '../utils';
 import { loadTacoTestEnv } from './utils';
 import { sendSimpleMessageV1 } from '@tonappchain/evm-ccl';
-import { InMessageV1Struct } from '@tonappchain/evm-ccl/dist/typechain-types/contracts/L2/Structs.sol/IStructsInterface';
+import { InMessageV1Struct } from '@tonappchain/evm-ccl/dist/typechain-types/contracts/CCL/Structs.sol/IStructsInterface';
 
 
 async function main(showEvents=false) {
@@ -66,10 +66,10 @@ async function main(showEvents=false) {
         ),
         caller: 'EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk',
         mint: [
-            {l2Address: await tokenA.getAddress(), amount: quoteInAmount},
+            {evmAddress: await tokenA.getAddress(), amount: quoteInAmount},
         ],
         unlock: [
-            {l2Address: tacNativeAddress, amount: baseInAmount},
+            {evmAddress: tacNativeAddress, amount: baseInAmount},
         ],
         meta: [],  // tokens are already exist, no need to fill meta
     };

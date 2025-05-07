@@ -4,7 +4,7 @@ import { getCCLArtifacts, loadTacContracts } from "@tonappchain/evm-ccl";
 import { CrossChainLayerToken } from "@tonappchain/evm-ccl/dist/typechain-types";
 import { loadContractFromFile } from "../utils";
 import { sendSimpleMessageV1 } from '@tonappchain/evm-ccl';
-import { InMessageV1Struct } from "@tonappchain/evm-ccl/dist/typechain-types/contracts/L2/Structs.sol/IStructsInterface";
+import { InMessageV1Struct } from "@tonappchain/evm-ccl/dist/typechain-types/contracts/CCL/Structs.sol/IStructsInterface";
 
 
 async function main() {
@@ -34,8 +34,8 @@ async function main() {
         arguments: new ethers.AbiCoder().encode([],[]),
         caller: 'EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk',
         mint: [
-            {l2Address: await tacToken.getAddress(),   amount: 10000000n * 10n**9n},
-            {l2Address: await sttonToken.getAddress(), amount: 10000000n * 10n**9n},
+            {evmAddress: await tacToken.getAddress(),   amount: 10000000n * 10n**9n},
+            {evmAddress: await sttonToken.getAddress(), amount: 10000000n * 10n**9n},
         ],
         unlock: [
         ],

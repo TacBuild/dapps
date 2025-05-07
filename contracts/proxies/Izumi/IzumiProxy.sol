@@ -2,7 +2,7 @@
 pragma solidity ^0.8.28;
 
 import { TransferHelper } from '@uniswap/lib/contracts/libraries/TransferHelper.sol';
-import { OutMessageV1, TokenAmount, TacHeaderV1, NFTAmount } from "@tonappchain/evm-ccl/contracts/L2/Structs.sol";
+import { OutMessageV1, TokenAmount, TacHeaderV1, NFTAmount } from "@tonappchain/evm-ccl/contracts/CCL/Structs.sol";
 import { ICrossChainLayer } from "@tonappchain/evm-ccl/contracts/interfaces/ICrossChainLayer.sol";
 import { TacProxyV1Upgradeable } from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
 import { IPool } from "./Interface/IPool.sol";
@@ -741,14 +741,14 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
     ) private {
         for (uint256 i = 0; i < tokens.length; i++) {
             TransferHelper.safeApprove(
-                tokens[i].l2Address,
+                tokens[i].evmAddress,
                 _getCrossChainLayerAddress(),
                 tokens[i].amount
             );
         }
 
         for (uint256 i = 0; i < nfts.length; i++) {
-            IERC721(nfts[i].l2Address).approve(_getCrossChainLayerAddress(), nfts[i].tokenId);
+            IERC721(nfts[i].evmAddress).approve(_getCrossChainLayerAddress(), nfts[i].tokenId);
         }
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         OutMessageV1 memory message = OutMessageV1({

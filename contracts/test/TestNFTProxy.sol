@@ -5,7 +5,7 @@ import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { IERC721Receiver } from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
 import { TacProxyV1 } from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1.sol";
-import { OutMessageV1, TacHeaderV1, TokenAmount, NFTAmount } from "@tonappchain/evm-ccl/contracts/L2/Structs.sol";
+import { OutMessageV1, TacHeaderV1, TokenAmount, NFTAmount } from "@tonappchain/evm-ccl/contracts/CCL/Structs.sol";
 
 
 contract TestNFTProxy is TacProxyV1, IERC721Receiver {
@@ -39,7 +39,7 @@ contract TestNFTProxy is TacProxyV1, IERC721Receiver {
         NFTAmount[] memory nfts = abi.decode(arguments, (NFTAmount[]));
 
         for (uint i; i < nfts.length; i++) {
-            IERC721(nfts[i].l2Address).approve(_getCrossChainLayerAddress(), nfts[i].tokenId);
+            IERC721(nfts[i].evmAddress).approve(_getCrossChainLayerAddress(), nfts[i].tokenId);
         }
 
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
