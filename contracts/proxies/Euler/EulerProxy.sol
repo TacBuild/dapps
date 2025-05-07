@@ -21,14 +21,23 @@ contract EulerProxy is
     IEthereumVaultConnector public eulerVaultConnector;
     TacSAFactory public tacSAFactory;
 
-    struct SmartAccountActions {
-        bool isNeededApprove;
-        address[] tokensToApprove;
-        uint256[] amountsToApprove;
-        address[] toApprove;
-        bool isPostActionTransferToSmartAccountNeeded;
-        address[] tokensToTransferToSmartAccount;
-        uint256[] amountsToTransferToSmartAccount;
+    struct SmartAccountPreHookData {
+        address[] callee;
+        uint256[] value;
+        bytes[] data;
+    }
+
+    struct SmartAccountPostHookData {
+        address[] callee;
+        uint256[] value;
+        bytes[] data;
+    }
+
+    struct CallAction {
+        address targetContract;
+        address onBehalfOfAccount;
+        uint256 value;
+        bytes data;
     }
 
     event Call(bytes indexed result);
@@ -61,49 +70,61 @@ contract EulerProxy is
     function call(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable {
-        (address targetContract, address onBehalfOfAccount, uint256 value, bytes memory data, address[] memory tokens, SmartAccountActions memory smartAccountActions) = abi.decode(arguments, (address, address, uint256, bytes, address[], SmartAccountActions));
+    ) external payable _onlyCrossChainLayer {
+        (CallAction memory callAction, address[] memory tokensToBridge, SmartAccountPreHookData memory preHookData, SmartAccountPostHookData memory postHookData) = abi.decode(arguments, (CallAction, address[], SmartAccountPreHookData, SmartAccountPostHookData));
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user, ) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
-        if (smartAccountActions.isNeededApprove) {
-            for (uint256 i = 0; i < smartAccountActions.tokensToApprove.length; i++) {
-                ITacSmartAccount(user).approve(smartAccountActions.tokensToApprove[i], smartAccountActions.toApprove[i], smartAccountActions.amountsToApprove[i]);
+        if (preHookData.callee.length > 0) {
+            for (uint256 i = 0; i < preHookData.callee.length; i++) {
+                ITacSmartAccount(user).execute{value: preHookData.value[i]}(preHookData.callee[i], preHookData.value[i], preHookData.data[i]);
             }
         }
-        ITacSmartAccount(user).execute{value: value}(address(eulerVaultConnector), value, abi.encodeWithSelector(IEthereumVaultConnector.call.selector, targetContract, onBehalfOfAccount, value, data));
-        if (smartAccountActions.isPostActionTransferToSmartAccountNeeded) {
-            for (uint256 i = 0; i < smartAccountActions.tokensToTransferToSmartAccount.length; i++) {
-                TransferHelper.safeTransfer(smartAccountActions.tokensToTransferToSmartAccount[i], user, smartAccountActions.amountsToTransferToSmartAccount[i]);
+        ITacSmartAccount(user).execute{value: callAction.value}(address(eulerVaultConnector), callAction.value, abi.encodeWithSelector(IEthereumVaultConnector.call.selector, callAction.targetContract, callAction.onBehalfOfAccount, callAction.value, callAction.data));
+        if (postHookData.callee.length > 0) {
+            for (uint256 i = 0; i < postHookData.callee.length; i++) {
+                ITacSmartAccount(user).execute{value: postHookData.value[i]}(postHookData.callee[i], postHookData.value[i], postHookData.data[i]);
             }
         }
-        if (tokens.length > 0) {
-            TokenAmount[] memory tokenAmounts = new TokenAmount[](tokens.length);
-            for (uint256 i = 0; i < tokens.length; i++) {
+        if (tokensToBridge.length > 0) {
+            TokenAmount[] memory tokenAmounts = new TokenAmount[](tokensToBridge.length);
+            for (uint256 i = 0; i < tokensToBridge.length; i++) {
                 tokenAmounts[i] = TokenAmount({
-                    l2Address: tokens[i],
-                    amount: IERC20(tokens[i]).balanceOf(address(this))
+                    l2Address: tokensToBridge[i],
+                    amount: IERC20(tokensToBridge[i]).balanceOf(address(this))
                 });
             }
-            _bridgeTokens(msg.data, tokenAmounts, "");
+            _bridgeTokens(tacHeader, tokenAmounts, "");
         }
-        // emit Call(result);
+        emit Call(abi.encode(callAction));
     }
 
     function batch(
-        bytes calldata,
+        bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable {
-        (IEthereumVaultConnector.BatchItem[] memory items, address[] memory tokens) = abi.decode(arguments, (IEthereumVaultConnector.BatchItem[], address[]));
+    ) external payable _onlyCrossChainLayer {
+        (IEthereumVaultConnector.BatchItem[] memory items, address[] memory tokensToBridge, SmartAccountPreHookData memory preHookData, SmartAccountPostHookData memory postHookData) = abi.decode(arguments, (IEthereumVaultConnector.BatchItem[], address[], SmartAccountPreHookData, SmartAccountPostHookData));
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
+        (address user, ) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
+        if (preHookData.callee.length > 0) {
+            for (uint256 i = 0; i < preHookData.callee.length; i++) {
+                ITacSmartAccount(user).execute{value: preHookData.value[i]}(preHookData.callee[i], preHookData.value[i], preHookData.data[i]);
+            }
+        }
         eulerVaultConnector.batch(items);
-        if (tokens.length > 0) {
-            TokenAmount[] memory tokenAmounts = new TokenAmount[](tokens.length);
-            for (uint256 i = 0; i < tokens.length; i++) {
+        if (postHookData.callee.length > 0) {
+            for (uint256 i = 0; i < postHookData.callee.length; i++) {
+                ITacSmartAccount(user).execute{value: postHookData.value[i]}(postHookData.callee[i], postHookData.value[i], postHookData.data[i]);
+            }
+        }
+        if (tokensToBridge.length > 0) {
+            TokenAmount[] memory tokenAmounts = new TokenAmount[](tokensToBridge.length);
+            for (uint256 i = 0; i < tokensToBridge.length; i++) {
                 tokenAmounts[i] = TokenAmount({
-                    l2Address: tokens[i],
-                    amount: IERC20(tokens[i]).balanceOf(address(this))
+                    l2Address: tokensToBridge[i],
+                    amount: IERC20(tokensToBridge[i]).balanceOf(address(this))
                 });
             }
-            _bridgeTokens(msg.data, tokenAmounts, "");
+            _bridgeTokens(tacHeader, tokenAmounts, "");
         }
         emit Batch(items);
     }
@@ -111,27 +132,31 @@ contract EulerProxy is
     function batchSimulation(
         bytes calldata,
         bytes calldata arguments
-    ) external payable {
+    ) external payable _onlyCrossChainLayer {
         IEthereumVaultConnector.BatchItem[] memory items = abi.decode(arguments, (IEthereumVaultConnector.BatchItem[]));
         (IEthereumVaultConnector.BatchItemResult[] memory batchItemsResult, IEthereumVaultConnector.StatusCheckResult[] memory accountsStatusCheckResult, IEthereumVaultConnector.StatusCheckResult[] memory vaultsStatusCheckResult) = eulerVaultConnector.batchSimulation(items);
         emit BatchSimulation(batchItemsResult, accountsStatusCheckResult, vaultsStatusCheckResult);
     }
 
     function setOperator(
-        bytes calldata,
+        bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable {
+    ) external payable _onlyCrossChainLayer {
         (bytes19 addressPrefix, address operator, uint256 operatorBitField) = abi.decode(arguments, (bytes19, address, uint256));
-        eulerVaultConnector.setOperator(addressPrefix, operator, operatorBitField);
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);    
+        (address user, ) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
+        ITacSmartAccount(user).execute{value: 0}(address(eulerVaultConnector), 0, abi.encodeWithSelector(IEthereumVaultConnector.setOperator.selector, addressPrefix, operator, operatorBitField));
         emit SetOperator(addressPrefix, operator, operatorBitField);
     }
 
     function setAccountOperator(
-        bytes calldata,
+        bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable {
+    ) external payable _onlyCrossChainLayer {
         (address account, address operator, bool authorized) = abi.decode(arguments, (address, address, bool));
-        eulerVaultConnector.setAccountOperator(account, operator, authorized);
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);    
+        (address user, ) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
+        ITacSmartAccount(user).execute{value: 0}(address(eulerVaultConnector), 0, abi.encodeWithSelector(IEthereumVaultConnector.setAccountOperator.selector, account, operator, authorized));
         emit SetAccountOperator(account, operator, authorized);
     }
 
