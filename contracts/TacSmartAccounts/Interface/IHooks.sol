@@ -24,20 +24,19 @@ interface IHooks {
     }
 
     struct NFTBridgeHook {
-        bool isFromSAPerspective;
         address tokenAddress;
         uint256 tokenId;
         uint256 amount;
     }
 
     struct TokenBridgeHook {
-        bool isFromSAPerspective;
         address tokenAddress;
     }
 
     struct BridgeHook {
         NFTBridgeHook[] nftBridgeHooks;
         TokenBridgeHook[] tokenBridgeHooks;
+        bool isFromSAPerspective;
     }
 
     struct SaHooks{

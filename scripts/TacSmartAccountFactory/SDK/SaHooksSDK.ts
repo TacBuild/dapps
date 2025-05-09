@@ -22,20 +22,19 @@ export interface MainCallHook {
 }
 
 export interface NFTBridgeHook {
-    isFromSAPerspective: boolean;
     tokenAddress: string;
     tokenId: bigint;
     amount: bigint;
 }
 
 export interface TokenBridgeHook {
-    isFromSAPerspective: boolean;
     tokenAddress: string;
 }
 
 export interface BridgeHook {
     nftBridgeHooks: NFTBridgeHook[];
     tokenBridgeHooks: TokenBridgeHook[];
+    isFromSAPerspective: boolean;
 }
 
 export interface SaHooks {

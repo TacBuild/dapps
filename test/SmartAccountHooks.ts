@@ -74,19 +74,13 @@ describe("Sa hooks test", function () {
             []
         )
 
-        hooksSdk.addPostHookCallFromSelf(
-            sttonEVMAddress,
-            "transfer",
-            [admin.address, amount]
-        )
-
         hooksSdk.addTokenBridgeHookFromSelf(
             sttonEVMAddress
         )
 
-        hooksSdk.addTokenBridgeHookFromSelf(
-            tacEVMAddress
-        )
+        // hooksSdk.addTokenBridgeHookFromSelf(
+        //     tacEVMAddress
+        // )
 
         console.log(hooksSdk.build())
 
