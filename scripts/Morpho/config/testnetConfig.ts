@@ -9,6 +9,8 @@ export interface MorphoProxyDeployments {
     proxyAddress: string;
     MockOracleAddress: string;
     vaultAddress: string;
+    smartAccountFactoryAddress: string;
+    crossChainLayerAddress: string;
 }
 
 export const morphoTestnetConfig: MorphoTestnetConfig = {
@@ -19,7 +21,9 @@ export const morphoTestnetConfig: MorphoTestnetConfig = {
 }; 
 
 export const morphoProxyDeployments: MorphoProxyDeployments = {
-    proxyAddress: "0xd3e1AEf84Ac1fadfc9CE7b98641F09291A13957f",
+    proxyAddress: "0xfb1070cF7CE5173B24FC26A2F8581cC9D7A05924",
     MockOracleAddress: "0x9CFa108412593e27893FFd71d2D39F3A212a3700",
-    vaultAddress: "0x752165E0098205C576f15bEB1158E3bAe4db2192"
+    vaultAddress: "0x4C46008D989D2B7dd931c909bc7C0cC35Ab79829",
+    smartAccountFactoryAddress: "0x95e23BBa93b6c9Ef89A1bFB2659B020e9382C060",
+    crossChainLayerAddress: "0x20B33b63fADd3cf09943b493ef79FC8C0845d577"
 };
