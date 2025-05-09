@@ -248,7 +248,7 @@ contract MorphoProxy is
     function deposit(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable {
+    ) external payable _onlyCrossChainLayer {
         DepositArguments memory args = abi.decode(
             arguments,
             (DepositArguments)
@@ -275,7 +275,7 @@ contract MorphoProxy is
     function mint(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable {
+    ) external payable _onlyCrossChainLayer {
         MintArguments memory args = abi.decode(arguments, (MintArguments));
         uint256 assets = IMorphoVault(args.vault).previewMint(args.shares);
         TransferHelper.safeApprove(
@@ -300,7 +300,7 @@ contract MorphoProxy is
     function withdraw(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable {
+    ) external payable _onlyCrossChainLayer {
         WithdrawArguments memory args = abi.decode(
             arguments,
             (WithdrawArguments)
@@ -326,7 +326,7 @@ contract MorphoProxy is
     function redeem(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable {
+    ) external payable _onlyCrossChainLayer {
         RedeemArguments memory args = abi.decode(arguments, (RedeemArguments));
         uint256 assets = IMorphoVault(args.vault).redeem(
             args.shares,
@@ -353,7 +353,7 @@ contract MorphoProxy is
     function claim(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable {
+    ) external payable _onlyCrossChainLayer {
         ClaimArguments memory args = abi.decode(arguments, (ClaimArguments));
         uint256 amount = urd.claim(args.account, args.reward, args.claimable, args.proof);
         emit Claim(args.account, args.reward, amount);
@@ -373,7 +373,7 @@ contract MorphoProxy is
     function supplyCollateral(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable {
+    ) external payable _onlyCrossChainLayer {
         SupplyCollateralArguments memory args = abi.decode(arguments, (SupplyCollateralArguments));
         TransferHelper.safeApprove(
             args.marketParams.collateralToken,
@@ -395,7 +395,7 @@ contract MorphoProxy is
     function withdrawCollateral(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable {
+    ) external payable _onlyCrossChainLayer {
         WithdrawCollateralArguments memory args = abi.decode(arguments, (WithdrawCollateralArguments));
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user, bool isNewAccount) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
@@ -418,7 +418,7 @@ contract MorphoProxy is
     function borrow(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable {
+    ) external payable _onlyCrossChainLayer {
         BorrowArguments memory args = abi.decode(arguments, (BorrowArguments));
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user, bool isNewAccount) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
@@ -441,7 +441,7 @@ contract MorphoProxy is
     function repay(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable {
+    ) external payable _onlyCrossChainLayer {
         RepayArguments memory args = abi.decode(arguments, (RepayArguments));
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user, bool isNewAccount) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
@@ -473,7 +473,7 @@ contract MorphoProxy is
     function supply(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable {
+    ) external payable _onlyCrossChainLayer {
         SupplyArguments memory args = abi.decode(arguments, (SupplyArguments));
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user,) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
@@ -495,7 +495,7 @@ contract MorphoProxy is
     function createMarket(
         bytes calldata ,
         bytes calldata arguments
-    ) external {
+    ) external payable _onlyCrossChainLayer {
         CreateMarketArguments memory args = abi.decode(arguments, (CreateMarketArguments));
         morpho.createMarket(args.marketParams);
         emit MarketCreated(args.marketParams.id());
@@ -507,7 +507,7 @@ contract MorphoProxy is
     function createVault(
         bytes calldata,
         bytes calldata arguments
-    ) external payable {
+    ) external payable _onlyCrossChainLayer {
         CreateVaultArguments memory args = abi.decode(arguments, (CreateVaultArguments));
         address vault = metaMorphoV1_1.createMetaMorpho(args.initialOwner, args.initialTimeLock, args.asset, args.name, args.symbol, args.salt);
         emit VaultCreated(vault);

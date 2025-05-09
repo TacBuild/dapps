@@ -1,6 +1,0 @@
-export const TESTNET_URL = process.env.TAC_TESTNET_URL;
-export const MAINNET_URL = process.env.TAC_MAINNET_URL;
-export const DEPLOYER_PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY;
-
-export const CROSS_CHAIN_LAYER_ADDRESS_TESTNET = "0xAd2fBeB7CE5f6e4F9C21090C7e4018081f4b323d";
-export const CROSS_CHAIN_LAYER_ADDRESS_MAINNET = "";
