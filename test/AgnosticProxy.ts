@@ -111,7 +111,7 @@ describe("AgnosticProxy", function () {
             0n,
             extraData,
             operationId,
-            timestamp
+            timestamp,
         );
 
         // Verify pool creation

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.28;
 
 import {TransferHelper} from "@uniswap/lib/contracts/libraries/TransferHelper.sol";
-import {OutMessageV2, TokenAmount, TacHeaderV1, NFTAmount} from "@tonappchain/evm-ccl/contracts/L2/Structs.sol";
+import {OutMessageV1, TokenAmount, TacHeaderV1, NFTAmount} from "@tonappchain/evm-ccl/contracts/core/Structs.sol";
 import {ICrossChainLayer} from "@tonappchain/evm-ccl/contracts/interfaces/ICrossChainLayer.sol";
 import {TacProxyV1Upgradeable} from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
@@ -536,14 +536,14 @@ contract MorphoProxy is
     ) private {
         for (uint256 i = 0; i < tokens.length; i++) {
             TransferHelper.safeApprove(
-                tokens[i].l2Address,
+                tokens[i].evmAddress,
                 _getCrossChainLayerAddress(),
                 tokens[i].amount
             );
         }
 
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
-        OutMessageV2 memory message = OutMessageV2({
+        OutMessageV1 memory message = OutMessageV1({
             shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: payload,
@@ -554,7 +554,7 @@ contract MorphoProxy is
             toBridgeNFT: new NFTAmount[](0)
         });
 
-        _sendMessageV2(message, address(this).balance);
+        _sendMessageV1(message, address(this).balance);
     }
 
     /// @notice Receives ETH
