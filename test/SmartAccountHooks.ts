@@ -29,7 +29,7 @@ describe("Sa hooks test", function () {
         hooksSdk = new SaHooksBuilder()
         hooksSdk.addContractInterface(await testContract.getAddress(), [
             "function increment()",
-            "function mainCall(uint256)"
+            "function mainCall(uint256,address)"
         ])
        
 
@@ -49,6 +49,15 @@ describe("Sa hooks test", function () {
 
         const sttonEVMAddress = testSdk.getEVMJettonAddress(sttonTokenInfo.tvmAddress);
         const tacEVMAddress = testSdk.getEVMJettonAddress(tacTokenInfo.tvmAddress);
+        const counter = await testContract.counter()
+        const flag = await testContract.mainCallExecuted()
+        const tokenToBridge = await testContract.tokenToBridge()
+        const user = await tacSAFactory.predictSmartAccountAddress(tvmWalletCaller, await testContract.getAddress())
+
+        expect(counter).to.equal(0)
+        expect(flag).to.equal(false)
+        expect(tokenToBridge).to.equal(ethers.ZeroAddress)
+
         hooksSdk.addContractInterface(sttonEVMAddress, [
             "function transfer(address to, uint256 amount)",
         ])
@@ -65,7 +74,7 @@ describe("Sa hooks test", function () {
         hooksSdk.setMainCallHookCallFromSA(
             await testContract.getAddress(),
             "mainCall",
-            [1]
+            [1, sttonEVMAddress]
         )
 
         hooksSdk.addPostHookCallFromSA(
@@ -74,15 +83,6 @@ describe("Sa hooks test", function () {
             []
         )
 
-        hooksSdk.addTokenBridgeHookFromSelf(
-            sttonEVMAddress
-        )
-
-        // hooksSdk.addTokenBridgeHookFromSelf(
-        //     tacEVMAddress
-        // )
-
-        console.log(hooksSdk.build())
 
         const calldata = hooksSdk.encode();
 
@@ -110,9 +110,12 @@ describe("Sa hooks test", function () {
             operationId,
             timestamp,
         );
-        console.log(3)
 
-        
+        expect(await testContract.counter()).to.equal(2)
+        expect(await testContract.mainCallExecuted()).to.equal(true)
+        expect(await testContract.tokenToBridge()).to.equal(sttonEVMAddress)
+        expect(await testContract.user()).to.not.equal(await testContract.getAddress())
+        expect(user).to.equal(await testContract.user())
     });
 
 });

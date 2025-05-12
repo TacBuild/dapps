@@ -34,7 +34,7 @@ contract TacSAFactory is OwnableUpgradeable, UUPSUpgradeable {
         if (smartAccounts[msg.sender][id] != address(0)) {
             return (smartAccounts[msg.sender][id], false);
         }
-        address account = _createSmartAccount();
+        address account = _createSmartAccount(tvmWallet, msg.sender);
         smartAccounts[msg.sender][id] = account;
         return (account, true);
     }
@@ -47,12 +47,44 @@ contract TacSAFactory is OwnableUpgradeable, UUPSUpgradeable {
         return smartAccounts[application][id];
     }
 
-    function _createSmartAccount() internal returns (address) {
-        BeaconProxy proxy = new BeaconProxy(
+    function predictSmartAccountAddress(
+        string memory tvmWallet,
+        address application
+    ) external view returns (address) {
+        bytes32 id = keccak256(abi.encodePacked(tvmWallet));
+        if (smartAccounts[application][id] != address(0)) {
+            return smartAccounts[application][id];
+        }
+        
+        // Predict the address using the same logic as _createSmartAccount
+        bytes memory bytecode = abi.encodePacked(
+            type(BeaconProxy).creationCode,
+            abi.encode(
+                address(beacon),
+                abi.encodeWithSelector(
+                    TacSmartAccount.initialize.selector,
+                    application
+                )
+            )
+        );
+        
+        bytes32 salt = keccak256(abi.encodePacked(application, id));
+        return address(uint160(uint256(keccak256(abi.encodePacked(
+            bytes1(0xff),
+            address(this),
+            salt,
+            keccak256(bytecode)
+        )))));
+    }
+
+    function _createSmartAccount(string memory tvmWallet, address application) internal returns (address) {
+        bytes32 id = keccak256(abi.encodePacked(tvmWallet));
+        bytes32 salt = keccak256(abi.encodePacked(application, id));
+        BeaconProxy proxy = new BeaconProxy{salt: salt}(
             address(beacon),
             abi.encodeWithSelector(
                 TacSmartAccount.initialize.selector,
-                msg.sender
+                application
             )
         );
         emit SmartAccountCreated(address(proxy));

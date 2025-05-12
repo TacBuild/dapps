@@ -9,12 +9,14 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 import {TacSAFactory} from "../TacSmartAccounts/TacSAFactory.sol";
 import {TacHeaderV1, TokenAmount, NFTAmount, OutMessageV1} from "@tonappchain/evm-ccl/contracts/L2/Structs.sol";
 import {TransferHelper} from "@uniswap/lib/contracts/libraries/TransferHelper.sol";
-
-contract TestSmartAccountProxyUser is UUPSUpgradeable, OwnableUpgradeable, TacProxyV1Upgradeable {
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+contract TestSmartAccountProxyUser is UUPSUpgradeable, TacProxyV1Upgradeable {
 
     TacSAFactory public tacSAFactory;
     uint256 public counter;
     bool public mainCallExecuted;
+    address public tokenToBridge;
+    address public user;
     struct MainCallStruct{
         uint256 value;
     }
@@ -24,25 +26,29 @@ contract TestSmartAccountProxyUser is UUPSUpgradeable, OwnableUpgradeable, TacPr
         address _tacSAFactory
     ) external initializer {
         __TacProxyV1Upgradeable_init(_crossChainLayer);
-        __Ownable_init(msg.sender);
         __UUPSUpgradeable_init();        
         tacSAFactory = TacSAFactory(_tacSAFactory);
     }
 
     function _authorizeUpgrade(
         address newImplementation
-    ) internal override onlyOwner {}
+    ) internal override {}
     
     function test(bytes calldata tacHeader, bytes calldata arguments) public _onlyCrossChainLayer {
 
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
-        (address user,) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
+        (address createdUser,) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
 
         (IHooks.SaHooks memory hooks) = abi.decode(arguments, (IHooks.SaHooks));
-        SaHelper.executePreHooks(user, hooks);
-        SaHelper.executeMainCall(user, hooks);
-        SaHelper.executePostHooks(user, hooks);
-        SaHelper.executeBridgeHooks(user, hooks, tacHeader, "payload", _getCrossChainLayerAddress());
+        SaHelper.executePreHooks(createdUser, hooks);
+        SaHelper.executeMainCall(createdUser, hooks);
+        SaHelper.executePostHooks(createdUser, hooks);
+        TokenAmount[] memory tokens = new TokenAmount[](1);
+        tokens[0] = TokenAmount({
+            l2Address: tokenToBridge,
+            amount: IERC20(tokenToBridge).balanceOf(address(this))
+        });
+        _bridgeTokens(tacHeader, tokens, "payload");
     }
 
     function increment() public {
@@ -50,8 +56,42 @@ contract TestSmartAccountProxyUser is UUPSUpgradeable, OwnableUpgradeable, TacPr
         emit Incremented(counter, msg.sender);
     }
 
-    function mainCall(uint256) public {
+    function mainCall(uint256, address _tokenToBrdige) public {
         mainCallExecuted = true;
+        tokenToBridge = _tokenToBrdige;
+        user = msg.sender;
+    }
+
+    /// @notice Bridges tokens to the cross-chain layer
+    /// @param tacHeader TAC header data
+    /// @param tokens Array of token amounts to bridge
+    /// @param payload Additional payload data
+    function _bridgeTokens(
+        bytes calldata tacHeader,
+        TokenAmount[] memory tokens,
+        string memory payload
+    ) private {
+        for (uint256 i = 0; i < tokens.length; i++) {
+            TransferHelper.safeApprove(
+                tokens[i].l2Address,
+                _getCrossChainLayerAddress(),
+                tokens[i].amount
+            );
+        }
+
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
+        OutMessageV1 memory message = OutMessageV1({
+            shardsKey: header.shardsKey,
+            tvmTarget: header.tvmCaller,
+            tvmPayload: payload,
+            tvmProtocolFee: 0,
+            tvmExecutorFee: 0,
+            tvmValidExecutors: new string[](0),
+            toBridge: tokens,
+            toBridgeNFT: new NFTAmount[](0)
+        });
+
+        _sendMessageV1(message, address(this).balance);
     }
     
 }

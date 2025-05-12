@@ -31,16 +31,9 @@ export interface TokenBridgeHook {
     tokenAddress: string;
 }
 
-export interface BridgeHook {
-    nftBridgeHooks: NFTBridgeHook[];
-    tokenBridgeHooks: TokenBridgeHook[];
-    isFromSAPerspective: boolean;
-}
-
 export interface SaHooks {
     preHooks: PreHook[];
     postHooks: PostHook[];
-    bridgeHooks: BridgeHook;
     mainCallHook: MainCallHook;
 }
 
@@ -52,10 +45,6 @@ export class SaHooksBuilder {
         this.hooks = {
             preHooks: [],
             postHooks: [],
-            bridgeHooks: {
-                nftBridgeHooks: [],
-                tokenBridgeHooks: []
-            },
             mainCallHook: {
                 isFromSAPerspective: false,
                 contractAddress: ethers.ZeroAddress,
@@ -268,49 +257,6 @@ export class SaHooksBuilder {
         return this.setMainCallHookFromSelf(contractAddress, value, data);
     }
 
-    // Bridge hooks methods
-    private _addNFTBridgeHook(hook: NFTBridgeHook): SaHooksBuilder {
-        this.hooks.bridgeHooks.nftBridgeHooks.push(hook);
-        return this;
-    }
-
-    private _addTokenBridgeHook(hook: TokenBridgeHook): SaHooksBuilder {
-        this.hooks.bridgeHooks.tokenBridgeHooks.push(hook);
-        return this;
-    }
-
-    addNFTBridgeHookFromSA(tokenAddress: string, tokenId: bigint, amount: bigint): SaHooksBuilder {
-        return this._addNFTBridgeHook({
-            isFromSAPerspective: true,
-            tokenAddress,
-            tokenId,
-            amount
-        });
-    }
-
-    addNFTBridgeHookFromSelf(tokenAddress: string, tokenId: bigint, amount: bigint): SaHooksBuilder {
-        return this._addNFTBridgeHook({
-            isFromSAPerspective: false,
-            tokenAddress,
-            tokenId,
-            amount
-        });
-    }
-
-    addTokenBridgeHookFromSA(tokenAddress: string): SaHooksBuilder {
-        return this._addTokenBridgeHook({
-            isFromSAPerspective: true,
-            tokenAddress
-        });
-    }
-
-    addTokenBridgeHookFromSelf(tokenAddress: string): SaHooksBuilder {
-        return this._addTokenBridgeHook({
-            isFromSAPerspective: false,
-            tokenAddress
-        });
-    }
-
     // Helper methods for common operations
     addApprovePreHook(tokenAddress: string, spenderAddress: string, amount: bigint): SaHooksBuilder {
         return this.addPreHookCallFromSA(
@@ -344,6 +290,8 @@ export class SaHooksBuilder {
         );
     }
 
+    // addTransferFromToSaHook()
+
     // Build and encode methods
     build(): SaHooks {
         return this.hooks;
@@ -355,10 +303,6 @@ export class SaHooksBuilder {
                 "tuple(" +
                 "tuple(bool isFromSAPerspective, address contractAddress, uint256 value, bytes data)[] preHooks," +
                 "tuple(bool isFromSAPerspective, address contractAddress, uint256 value, bytes data)[] postHooks," +
-                "tuple(" +
-                    "tuple(bool isFromSAPerspective, address tokenAddress, uint256 tokenId, uint256 amount)[] nftBridgeHooks," +
-                    "tuple(bool isFromSAPerspective, address tokenAddress)[] tokenBridgeHooks" +
-                ") bridgeHooks," +
                 "tuple(bool isFromSAPerspective, address contractAddress, uint256 value, bytes data) mainCallHook" +
             ")"
             ],

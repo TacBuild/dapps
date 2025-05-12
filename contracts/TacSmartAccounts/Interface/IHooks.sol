@@ -22,27 +22,9 @@ interface IHooks {
         uint256 value;
         bytes data;
     }
-
-    struct NFTBridgeHook {
-        address tokenAddress;
-        uint256 tokenId;
-        uint256 amount;
-    }
-
-    struct TokenBridgeHook {
-        address tokenAddress;
-    }
-
-    struct BridgeHook {
-        NFTBridgeHook[] nftBridgeHooks;
-        TokenBridgeHook[] tokenBridgeHooks;
-        bool isFromSAPerspective;
-    }
-
     struct SaHooks{
         PreHook[] preHooks;
         PostHook[] postHooks;
-        BridgeHook bridgeHooks;
         MainCallHook mainCallHook;
     }
     

@@ -45,27 +45,4 @@ library SaHelper {
         (bool success,) = to.call{value: value}(data);
         require(success, "Self call failed");
     }
-
-    function executeBridgeHooks(address sa, IHooks.SaHooks memory hooks, bytes calldata tacHeader, string memory payload, address crossChainLayer) internal {
-        IHooks.BridgeHook memory bridgeHooks = hooks.bridgeHooks;
-
-        TokenAmount[] memory tokens = new TokenAmount[](bridgeHooks.tokenBridgeHooks.length);
-        NFTAmount[] memory nfts = new NFTAmount[](bridgeHooks.nftBridgeHooks.length);
-        for (uint256 i = 0; i < bridgeHooks.tokenBridgeHooks.length; i++) {
-            tokens[i] = TokenAmount({
-                    l2Address: bridgeHooks.tokenBridgeHooks[i].tokenAddress,
-                    amount: IERC20(bridgeHooks.tokenBridgeHooks[i].tokenAddress).balanceOf(address(this))
-            });
-        }
-
-        for (uint256 i = 0; i < bridgeHooks.nftBridgeHooks.length; i++) {
-            nfts[i] = NFTAmount({
-                l2Address: bridgeHooks.nftBridgeHooks[i].tokenAddress,
-                tokenId: bridgeHooks.nftBridgeHooks[i].tokenId,
-                amount: bridgeHooks.nftBridgeHooks[i].amount
-            });
-        }
-
-        ITacSmartAccount(sa).bridgeTokens(tacHeader, tokens, nfts, payload, crossChainLayer);
-    }
 }
