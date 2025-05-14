@@ -1,0 +1,12 @@
+.idea
+.vscode
+
+artifacts
+cache
+build
+node_modules
+typechain-types
+
+.env
+.env.example
+addresses.json

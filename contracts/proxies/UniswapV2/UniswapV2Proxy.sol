@@ -1,11 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
+
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+
 import { IUniswapV2Router02 } from '@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol';
 import { TransferHelper } from '@uniswap/lib/contracts/libraries/TransferHelper.sol';
-
-import { AppProxy } from "contracts/L2/AppProxy.sol";
-import { OutMessageV1, TokenAmount, TacHeaderV1 } from "@tonappchain/evm-ccl/contracts/L2/Structs.sol";
+import { TacProxyV1Upgradeable } from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
+import { OutMessageV1, TokenAmount, NFTAmount, TacHeaderV1 } from "@tonappchain/evm-ccl/contracts/core/Structs.sol";
 import { UniswapV2Library } from "contracts/proxies/UniswapV2/CompilerVersionAdapters.sol";
 import { ICrossChainLayer } from "@tonappchain/evm-ccl/contracts/interfaces/ICrossChainLayer.sol";
 
@@ -83,13 +87,32 @@ struct SwapExactTokensForETHArguments {
  * @title UniswapV2Proxy
  * @dev Proxy contract UniswapV2, namely UniswapV2Router02
  */
-contract UniswapV2Proxy is AppProxy {
+contract UniswapV2Proxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
+    // State variables
+    address internal _appAddress;
+    
     /**
-     * @dev Constructor function to initialize the contract with initial state.
-     * @param appAddress Application address.
-     * @param crossChainLayer Cross chain layer contract address.
+     * @dev Initialize the contract.
      */
-    constructor(address appAddress, address crossChainLayer) AppProxy(appAddress, crossChainLayer) {
+    function initialize(address adminAddress,address appAddress, address crossChainLayer) public initializer {
+        __TacProxyV1Upgradeable_init(crossChainLayer);
+        __Ownable_init(adminAddress);
+        __UUPSUpgradeable_init();
+        
+        _appAddress = appAddress;
+    }
+
+    /**
+     * @dev Upgrades the contract.
+     */
+    function _authorizeUpgrade(address) internal override onlyOwner {}
+
+    /**
+     * @dev Returns the application address.
+     * @return address The application address.
+     */
+    function getAppAddress() external view returns (address) {
+        return _appAddress;
     }
 
     function WETH() external view returns (address) {
@@ -117,7 +140,7 @@ contract UniswapV2Proxy is AppProxy {
 
         tokensToBridge[0] = TokenAmount(arguments.token, arguments.amountTokenDesired - amountToken);
 
-        // tokens to L2->L1 transfer (lock)
+        // tokens to EVM->TVM transfer (lock)
         address tokenLiquidity = UniswapV2Library.pairFor(IUniswapV2Router02(_appAddress).factory(), IUniswapV2Router02(_appAddress).WETH(), arguments.token);
         tokensToBridge[1] = TokenAmount(tokenLiquidity, liquidity);
 
@@ -137,7 +160,7 @@ contract UniswapV2Proxy is AppProxy {
 
         uint i;
         for (; i < tokensToBridge.length;) {
-            TransferHelper.safeApprove(tokensToBridge[i].l2Address, _getCrossChainLayerAddress(), tokensToBridge[i].amount);
+            TransferHelper.safeApprove(tokensToBridge[i].evmAddress, _getCrossChainLayerAddress(), tokensToBridge[i].amount);
             unchecked {
                 i++;
             }
@@ -149,7 +172,11 @@ contract UniswapV2Proxy is AppProxy {
             shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
-            toBridge: tokensToBridge
+            tvmProtocolFee: 0,
+            tvmExecutorFee: 0,
+            tvmValidExecutors: new string[](0),
+            toBridge: tokensToBridge,
+            toBridgeNFT: new NFTAmount[](0)
         });
 
         _sendMessageV1(message, msg.value - amountETH);
@@ -185,7 +212,7 @@ contract UniswapV2Proxy is AppProxy {
 
         uint i;
         for (; i < tokensToBridge.length;) {
-            TransferHelper.safeApprove(tokensToBridge[i].l2Address, _getCrossChainLayerAddress(), tokensToBridge[i].amount);
+            TransferHelper.safeApprove(tokensToBridge[i].evmAddress, _getCrossChainLayerAddress(), tokensToBridge[i].amount);
             unchecked {
                 i++;
             }
@@ -197,7 +224,11 @@ contract UniswapV2Proxy is AppProxy {
             shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
-            toBridge: tokensToBridge
+            tvmProtocolFee: 0,
+            tvmExecutorFee: 0,
+            tvmValidExecutors: new string[](0),
+            toBridge: tokensToBridge,
+            toBridgeNFT: new NFTAmount[](0)
         });
 
         _sendMessageV1(message, 0);
@@ -236,7 +267,7 @@ contract UniswapV2Proxy is AppProxy {
 
         uint i;
         for (; i < tokensToBridge.length;) {
-            TransferHelper.safeApprove(tokensToBridge[i].l2Address, _getCrossChainLayerAddress(), tokensToBridge[i].amount);
+            TransferHelper.safeApprove(tokensToBridge[i].evmAddress, _getCrossChainLayerAddress(), tokensToBridge[i].amount);
             unchecked {
                 i++;
             }
@@ -248,7 +279,11 @@ contract UniswapV2Proxy is AppProxy {
             shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
-            toBridge: tokensToBridge
+            tvmProtocolFee: 0,
+            tvmExecutorFee: 0,
+            tvmValidExecutors: new string[](0),
+            toBridge: tokensToBridge,
+            toBridgeNFT: new NFTAmount[](0)
         });
 
         _sendMessageV1(message, amountETH);
@@ -297,7 +332,7 @@ contract UniswapV2Proxy is AppProxy {
 
         uint i;
         for (; i < tokensToBridge.length;) {
-            TransferHelper.safeApprove(tokensToBridge[i].l2Address, _getCrossChainLayerAddress(), tokensToBridge[i].amount);
+            TransferHelper.safeApprove(tokensToBridge[i].evmAddress, _getCrossChainLayerAddress(), tokensToBridge[i].amount);
             unchecked {
                 i++;
             }
@@ -309,7 +344,11 @@ contract UniswapV2Proxy is AppProxy {
             shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
-            toBridge: tokensToBridge
+            tvmProtocolFee: 0,
+            tvmExecutorFee: 0,
+            tvmValidExecutors: new string[](0),
+            toBridge: tokensToBridge,
+            toBridgeNFT: new NFTAmount[](0)
         });
         _sendMessageV1(message, 0);
     }
@@ -354,7 +393,7 @@ contract UniswapV2Proxy is AppProxy {
 
         uint i;
         for (; i < tokensToBridge.length;) {
-            TransferHelper.safeApprove(tokensToBridge[i].l2Address, _getCrossChainLayerAddress(), tokensToBridge[i].amount);
+            TransferHelper.safeApprove(tokensToBridge[i].evmAddress, _getCrossChainLayerAddress(), tokensToBridge[i].amount);
             unchecked {
                 i++;
             }
@@ -366,7 +405,11 @@ contract UniswapV2Proxy is AppProxy {
             shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
-            toBridge: tokensToBridge
+            tvmProtocolFee: 0,
+            tvmExecutorFee: 0,
+            tvmValidExecutors: new string[](0),
+            toBridge: tokensToBridge,
+            toBridgeNFT: new NFTAmount[](0)
         });
         _sendMessageV1(message, 0);
     }
@@ -406,7 +449,7 @@ contract UniswapV2Proxy is AppProxy {
 
         uint i;
         for (; i < tokensToBridge.length;) {
-            TransferHelper.safeApprove(tokensToBridge[i].l2Address, _getCrossChainLayerAddress(), tokensToBridge[i].amount);
+            TransferHelper.safeApprove(tokensToBridge[i].evmAddress, _getCrossChainLayerAddress(), tokensToBridge[i].amount);
             unchecked {
                 i++;
             }
@@ -418,7 +461,11 @@ contract UniswapV2Proxy is AppProxy {
             shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
-            toBridge: tokensToBridge
+            tvmProtocolFee: 0,
+            tvmExecutorFee: 0,
+            tvmValidExecutors: new string[](0),
+            toBridge: tokensToBridge,
+            toBridgeNFT: new NFTAmount[](0)
         });
         _sendMessageV1(message, ethAmount);
     }
@@ -459,7 +506,7 @@ contract UniswapV2Proxy is AppProxy {
 
         uint i;
         for (; i < tokensToBridge.length;) {
-            TransferHelper.safeApprove(tokensToBridge[i].l2Address, _getCrossChainLayerAddress(), tokensToBridge[i].amount);
+            TransferHelper.safeApprove(tokensToBridge[i].evmAddress, _getCrossChainLayerAddress(), tokensToBridge[i].amount);
             unchecked {
                 i++;
             }
@@ -471,7 +518,11 @@ contract UniswapV2Proxy is AppProxy {
             shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
-            toBridge: tokensToBridge
+            tvmProtocolFee: 0,
+            tvmExecutorFee: 0,
+            tvmValidExecutors: new string[](0),
+            toBridge: tokensToBridge,
+            toBridgeNFT: new NFTAmount[](0)
         });
         _sendMessageV1(message, 0);
     }
@@ -512,7 +563,7 @@ contract UniswapV2Proxy is AppProxy {
 
         uint i;
         for (; i < tokensToBridge.length;) {
-            TransferHelper.safeApprove(tokensToBridge[i].l2Address, _getCrossChainLayerAddress(), tokensToBridge[i].amount);
+            TransferHelper.safeApprove(tokensToBridge[i].evmAddress, _getCrossChainLayerAddress(), tokensToBridge[i].amount);
             unchecked {
                 i++;
             }
@@ -524,7 +575,11 @@ contract UniswapV2Proxy is AppProxy {
             shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
-            toBridge: tokensToBridge
+            tvmProtocolFee: 0,
+            tvmExecutorFee: 0,
+            tvmValidExecutors: new string[](0),
+            toBridge: tokensToBridge,
+            toBridgeNFT: new NFTAmount[](0)
         });
         _sendMessageV1(message, 0);
     }

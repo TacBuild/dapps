@@ -1,74 +1,36 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import { TransferHelper } from 'contracts/helpers/TransferHelper.sol';
-import { AppProxy } from "contracts/L2/AppProxy.sol";
-import { OutMessageV1, TokenAmount, TacHeaderV1 } from "@tonappchain/evm-ccl/contracts/L2/Structs.sol";
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-/**
- * @title ITwocryptoswapPool Interface
- * @notice This interface defines the core functionalities for a two-token liquidity pool in a CurveLite.
- * @dev Provides methods to add and remove liquidity, exchange tokens, and retrieve pool token addresses.
- */
-interface ITwocryptoswapPool {
-    /**
-     * @notice Adds liquidity to the pool
-     * @param amounts An array of two uint256 values representing the amounts of tokens to add
-     * @param min_mint_amount Minimum amount of LP tokens to mint
-     * @return uint256 Amount of LP tokens received by the receiver
-     */
-    function add_liquidity(
-        uint256[2] calldata amounts,
-        uint256 min_mint_amount
-    ) external returns (uint256);
-    /**
-     * @notice Removes liquidity to the pool
-     * @param amount Amount of LP tokens to burn 
-     * @param min_amounts Minimum amounts of tokens to withdraw
-     * @return uint256[2] Amount of pool tokens received by the receiver
-     */
-    function remove_liquidity(
-        uint256 amount,
-        uint256[2] calldata min_amounts
-    ) external returns (uint256[2] calldata);
-    /**
-     * @notice Exchange tokens 
-     * @param i Index value for the input coin
-     * @param j Index value for the output coin
-     * @param dx Amount of input coin being swapped in
-     * @param min_dy Minimum amount of output coin to receive
-     * @return uint256 Amount of tokens at index j received by the receiver
-     */
-    function exchange(
-        uint256 i,
-        uint256 j,
-        uint256 dx,
-        uint256 min_dy
-    ) external returns (uint256);
-    /**
-     * @notice Get token address in pool by index
-     * @param arg0 Token index
-     * @return address Token address
-     */
-    function coins(
-        uint256 arg0
-    ) external returns (address);
-}
+import { TransferHelper } from 'contracts/helpers/TransferHelper.sol';
+import { TacProxyV1Upgradeable } from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
+import { OutMessageV1, TokenAmount, NFTAmount, TacHeaderV1 } from "@tonappchain/evm-ccl/contracts/core/Structs.sol";
+
+import { ITwocryptoswapPool } from "contracts/proxies/CurveLite/ICurveLiteTwocryptoswapPool.sol";
 
 
 /**
  * @title CurveLiteTwocryptoswapProxy
  * @dev Proxy contract CurveLite, working with twocryptoswap pools contracts directly
  */
-contract CurveLiteTwocryptoswapProxy is AppProxy {
+contract CurveLiteTwocryptoswapProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
     /**
-     * @dev Constructor function to initialize the contract with initial state. 
-     * @param crossChainLayer Cross chain layer contract address.
-     * The decentralized application (dApp) operates as a dynamic pool
-     * The initial parameter, appAddress, of the AppProxy is not required. Consequently, we assign an empty address to it.
+     * @dev Initialize the contract.
      */
-    constructor(address crossChainLayer) AppProxy(address(0), crossChainLayer) {
+    function initialize(address adminAddress, address crossChainLayer) public initializer {
+        __TacProxyV1Upgradeable_init(crossChainLayer);
+        __Ownable_init(adminAddress);
+        __UUPSUpgradeable_init();
     }
+
+    /**
+     * @dev Upgrades the contract.
+     */
+    function _authorizeUpgrade(address) internal override onlyOwner {}
+
 
     /**
      * @dev A proxy to addLiquidity
@@ -105,7 +67,11 @@ contract CurveLiteTwocryptoswapProxy is AppProxy {
             shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
-            toBridge: tokensToBridge
+            tvmProtocolFee: 0,
+            tvmExecutorFee: 0,
+            tvmValidExecutors: new string[](0),
+            toBridge: tokensToBridge,
+            toBridgeNFT: new NFTAmount[](0)
         });
         _sendMessageV1(message, 0);
     }
@@ -148,7 +114,11 @@ contract CurveLiteTwocryptoswapProxy is AppProxy {
             shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
-            toBridge: tokensToBridge
+            tvmProtocolFee: 0,
+            tvmExecutorFee: 0,
+            tvmValidExecutors: new string[](0),
+            toBridge: tokensToBridge,
+            toBridgeNFT: new NFTAmount[](0)
         });
         _sendMessageV1(message, 0);
     }
@@ -188,7 +158,11 @@ contract CurveLiteTwocryptoswapProxy is AppProxy {
             shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
-            toBridge: tokensToBridge
+            tvmProtocolFee: 0,
+            tvmExecutorFee: 0,
+            tvmValidExecutors: new string[](0),
+            toBridge: tokensToBridge,
+            toBridgeNFT: new NFTAmount[](0)
         });
         _sendMessageV1(message, 0);
     }

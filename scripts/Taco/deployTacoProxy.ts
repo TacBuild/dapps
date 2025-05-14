@@ -1,15 +1,16 @@
 import hre from 'hardhat';
 import { TacoProxy } from '../../typechain-types/';
-import { deploy } from "@tonappchain/evm-ccl";
 import { Signer } from 'ethers';
-
+import { deployUpgradable } from '@tonappchain/evm-ccl'
+import { proxyOptsUUPS } from "../utils"
 
 export async function deployTacoProxy(deployer: Signer, tacoConfig: TacoConfig, crossChainLayerAddress: string): Promise<TacoProxy> {
     // Proxy
-    const tacoProxy = await deploy<TacoProxy>(
+    const tacoProxy = await deployUpgradable<TacoProxy>(
         deployer,
         hre.artifacts.readArtifactSync('TacoProxy'),
-        [tacoConfig.tacoV2Proxy02, tacoConfig.tacoFeeRouteProxy, crossChainLayerAddress],
+        [await deployer.getAddress(), tacoConfig.tacoV2Proxy02, tacoConfig.tacoFeeRouteProxy, crossChainLayerAddress],
+        proxyOptsUUPS,
         undefined,
         true
     );
