@@ -28,7 +28,7 @@ describe("IzumiProxy", function () {
         [admin] = await ethers.getSigners();
         testSdk = new TacLocalTestSdk();
         const crossChainLayerAddress = await testSdk.create(ethers.provider);
-        izumiProxy = await deployIzumiProxy(admin, izumiTestnetConfig, crossChainLayerAddress);
+        izumiProxy = await deployIzumiProxy(admin, crossChainLayerAddress);
         
         pool = new ethers.Contract(izumiTestnetConfig.poolAddress, hre.artifacts.readArtifactSync('IPool').abi, admin) as unknown as IPool;
         swap = new ethers.Contract(izumiTestnetConfig.swapAddress, hre.artifacts.readArtifactSync('ISwap').abi, admin) as unknown as ISwap;

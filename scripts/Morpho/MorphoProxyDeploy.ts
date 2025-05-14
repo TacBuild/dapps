@@ -3,7 +3,7 @@ import { MorphoProxy } from "../../typechain-types";
 import { deployUpgradable } from '@tonappchain/evm-ccl'
 import { DeployProxyOptions } from "@openzeppelin/hardhat-upgrades/dist/utils";
 import hre from 'hardhat';
-import { morphoTestnetConfig } from "./config/testnetConfig";
+import { morphoProxyDeployments, morphoTestnetConfig } from "./config/testnetConfig";
 
 const proxyOptsUUPS: DeployProxyOptions = {
     kind: "uups"
@@ -27,4 +27,11 @@ export async function deployMorphoProxy(
     
     await morphoProxy.waitForDeployment();
     return morphoProxy;
-} 
+}
+
+async function main() {
+    const [deployer] = await hre.ethers.getSigners();
+    deployMorphoProxy(deployer, morphoProxyDeployments.crossChainLayerAddress, morphoProxyDeployments.smartAccountFactoryAddress);
+}
+
+main()
