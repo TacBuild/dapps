@@ -305,7 +305,7 @@ contract MorphoProxy is
             arguments,
             (WithdrawArguments)
         );
-        uint256 assets = IMorphoVault(args.vault).withdraw(
+        IMorphoVault(args.vault).withdraw(
             args.assets,
             address(this),
             address(this)
@@ -314,7 +314,7 @@ contract MorphoProxy is
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(
             IMorphoVault(args.vault).asset(),
-            assets
+            IERC20(IMorphoVault(args.vault).asset()).balanceOf(address(this))
         );
         _bridgeTokens(tacHeader, tokensToBridge, "");
     }
@@ -328,7 +328,7 @@ contract MorphoProxy is
         bytes calldata arguments
     ) external payable _onlyCrossChainLayer {
         RedeemArguments memory args = abi.decode(arguments, (RedeemArguments));
-        uint256 assets = IMorphoVault(args.vault).redeem(
+        IMorphoVault(args.vault).redeem(
             args.shares,
             address(this),
             address(this)
@@ -337,7 +337,7 @@ contract MorphoProxy is
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(
             IMorphoVault(args.vault).asset(),
-            assets
+            IERC20(IMorphoVault(args.vault).asset()).balanceOf(address(this))
         );
             _bridgeTokens(tacHeader, tokensToBridge, "");
     }
