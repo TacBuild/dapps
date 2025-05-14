@@ -19,6 +19,7 @@ async function main() {
         true
     );
 
+
     saveContractAddress(addressesFilePath, 'stTON', await tokenA.getAddress());
 
     console.log(await tokenA.getAddress());
