@@ -7,7 +7,7 @@ import {TacProxyV1Upgradeable} from "@tonappchain/evm-ccl/contracts/proxies/TacP
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {TacSAFactory} from "../TacSmartAccounts/TacSAFactory.sol";
-import {TacHeaderV1, TokenAmount, NFTAmount, OutMessageV1} from "@tonappchain/evm-ccl/contracts/L2/Structs.sol";
+import {TacHeaderV1, TokenAmount, NFTAmount, OutMessageV1} from "@tonappchain/evm-ccl/contracts/core/Structs.sol";
 import {TransferHelper} from "@uniswap/lib/contracts/libraries/TransferHelper.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 contract TestSmartAccountProxyUser is UUPSUpgradeable, TacProxyV1Upgradeable {
@@ -45,7 +45,7 @@ contract TestSmartAccountProxyUser is UUPSUpgradeable, TacProxyV1Upgradeable {
         SaHelper.executePostHooks(createdUser, hooks);
         TokenAmount[] memory tokens = new TokenAmount[](1);
         tokens[0] = TokenAmount({
-            l2Address: tokenToBridge,
+            evmAddress: tokenToBridge,
             amount: IERC20(tokenToBridge).balanceOf(address(this))
         });
         _bridgeTokens(tacHeader, tokens, "payload");
@@ -73,7 +73,7 @@ contract TestSmartAccountProxyUser is UUPSUpgradeable, TacProxyV1Upgradeable {
     ) private {
         for (uint256 i = 0; i < tokens.length; i++) {
             TransferHelper.safeApprove(
-                tokens[i].l2Address,
+                tokens[i].evmAddress,
                 _getCrossChainLayerAddress(),
                 tokens[i].amount
             );
