@@ -5,7 +5,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { ICrossChainLayer } from "@tonappchain/evm-ccl/contracts/interfaces/ICrossChainLayer.sol";
 import { TacProxyV1 } from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1.sol";
-import { OutMessageV1, TacHeaderV1, TokenAmount } from "@tonappchain/evm-ccl/contracts/L2/Structs.sol";
+import { OutMessageV1, TacHeaderV1, TokenAmount, NFTAmount } from "@tonappchain/evm-ccl/contracts/core/Structs.sol";
 
 contract TestProxy is TacProxyV1 {
 
@@ -23,7 +23,7 @@ contract TestProxy is TacProxyV1 {
 
         // approve to bridge
         for (uint i = 0; i < receivedTokens.length; i++) {
-            IERC20(receivedTokens[i].l2Address).approve(_getCrossChainLayerAddress(), receivedTokens[i].amount);
+            IERC20(receivedTokens[i].evmAddress).approve(_getCrossChainLayerAddress(), receivedTokens[i].amount);
         }
 
         // bridge received tokens back to TON
@@ -35,7 +35,8 @@ contract TestProxy is TacProxyV1 {
                 0,
                 0,
                 new string[](0),
-                receivedTokens
+                receivedTokens,
+                new NFTAmount[](0)
             ),
             0
         );

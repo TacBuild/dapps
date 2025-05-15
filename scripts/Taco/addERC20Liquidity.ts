@@ -2,7 +2,7 @@ import { ethers } from 'hardhat';
 import { printEvents, printBalances } from '../utils';
 import { ERC20 } from '@tonappchain/evm-ccl/dist/typechain-types';
 import { sendSimpleMessageV1 } from '@tonappchain/evm-ccl';
-import { InMessageV1Struct } from '@tonappchain/evm-ccl/dist/typechain-types/contracts/L2/Structs.sol/IStructsInterface';
+import { InMessageV1Struct } from '@tonappchain/evm-ccl/dist/typechain-types/contracts/core/Structs.sol/IStructsInterface';
 import { loadTacoTestEnv } from './utils';
 
 async function main(showEvents=false) {
@@ -64,8 +64,8 @@ async function main(showEvents=false) {
         ),
         caller: 'EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk',
         mint: [
-            {l2Address: await tokenA.getAddress(), amount: baseInAmount},
-            {l2Address: await tokenB.getAddress(), amount: quoteInAmount},
+            {evmAddress: await tokenA.getAddress(), amount: baseInAmount},
+            {evmAddress: await tokenB.getAddress(), amount: quoteInAmount},
         ],
         unlock: [],
         meta: [],  // tokens are already exist, no need to fill meta

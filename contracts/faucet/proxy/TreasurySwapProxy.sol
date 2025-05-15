@@ -10,7 +10,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { TacProxyV1Upgradeable } from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
 
-import { OutMessageV1, TokenAmount, TacHeaderV1 } from "@tonappchain/evm-ccl/contracts/L2/Structs.sol";
+import { OutMessageV1, TokenAmount, NFTAmount, TacHeaderV1 } from "@tonappchain/evm-ccl/contracts/core/Structs.sol";
 
 //Faucet Proxy Imports:
 import { ITreasurySwap } from "../interfaces/ITreasurySwap.sol";
@@ -82,7 +82,7 @@ contract TreasurySwapProxy is UUPSUpgradeable, OwnableUpgradeable, TacProxyV1Upg
 
         uint i;
         for (; i < tokensToBridge.length;) {
-            IERC20(tokensToBridge[i].l2Address).safeIncreaseAllowance(_getCrossChainLayerAddress(), tokensToBridge[i].amount);
+            IERC20(tokensToBridge[i].evmAddress).safeIncreaseAllowance(_getCrossChainLayerAddress(), tokensToBridge[i].amount);
             unchecked {
                 i++;
             }
@@ -97,7 +97,8 @@ contract TreasurySwapProxy is UUPSUpgradeable, OwnableUpgradeable, TacProxyV1Upg
             tvmProtocolFee: 0,
             tvmExecutorFee: 0,
             tvmValidExecutors: new string[](0),
-            toBridge: tokensToBridge
+            toBridge: tokensToBridge,
+            toBridgeNFT: new NFTAmount[](0)
         });
 
         _sendMessageV1(message, 0);
@@ -132,7 +133,7 @@ contract TreasurySwapProxy is UUPSUpgradeable, OwnableUpgradeable, TacProxyV1Upg
 
         uint i;
         for (; i < tokensToBridge.length;) {
-            IERC20(tokensToBridge[i].l2Address).safeIncreaseAllowance(_getCrossChainLayerAddress(), tokensToBridge[i].amount);
+            IERC20(tokensToBridge[i].evmAddress).safeIncreaseAllowance(_getCrossChainLayerAddress(), tokensToBridge[i].amount);
             unchecked {
                 i++;
             }
@@ -147,7 +148,8 @@ contract TreasurySwapProxy is UUPSUpgradeable, OwnableUpgradeable, TacProxyV1Upg
             tvmProtocolFee: 0,
             tvmExecutorFee: 0,
             tvmValidExecutors: new string[](0),
-            toBridge: tokensToBridge
+            toBridge: tokensToBridge,
+            toBridgeNFT: new NFTAmount[](0)
         });
 
         _sendMessageV1(message, 0);

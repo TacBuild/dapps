@@ -1,7 +1,7 @@
 import { ethers } from "hardhat";
 import path from 'path';
 import { loadTacContracts } from "@tonappchain/evm-ccl";
-import { OutMessageV1Struct } from "../../typechain-types/@tonappchain/evm-ccl/contracts/L2/Structs.sol/IStructsInterface";
+import { OutMessageV1Struct } from "../../typechain-types/@tonappchain/evm-ccl/contracts/core/Structs.sol/IStructsInterface";
 import { encodeOutMessageV1 } from '@tonappchain/evm-ccl';
 
 async function main() {
