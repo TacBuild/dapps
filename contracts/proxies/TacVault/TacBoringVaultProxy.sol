@@ -14,11 +14,15 @@ import {ITacSmartAccount} from "../../TacSmartAccounts/Interface/ITacSmartAccoun
 import {ITellerWithMultiAssetSupport} from "./interface/ITellerWithMultiAssetSupport.sol";
 import {IBoringOnChainQueue} from "./interface/IBoringOnChainQueue.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {IBoringVault} from "./interface/IBoringVault.sol";
 contract TacBoringVaultProxy is UUPSUpgradeable, OwnableUpgradeable, TacProxyV1Upgradeable {
+
+    address public constant NATIVE_ADDRESS = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
     ITellerWithMultiAssetSupport public teller;
     IBoringOnChainQueue public boringOnChainQueue;
-
+    IBoringVault public boringVault;
+    TacSAFactory public tacSAFactory;
     struct DepositArguments {
         address depositAsset;
         uint256 depositAmount;
@@ -31,29 +35,69 @@ contract TacBoringVaultProxy is UUPSUpgradeable, OwnableUpgradeable, TacProxyV1U
         uint256 discount;
         uint256 secondsToDeadline;
     }
+
+    struct WithdrawFundsArguments {
+        address asset;
+    }
    
 
-    function initialize(address _teller, address _boringOnChainQueue) public initializer {
+    function initialize(address _teller, address _boringOnChainQueue, address _tacSAFactory, address _boringVault) public initializer {
         __UUPSUpgradeable_init();
         __Ownable_init(msg.sender);
         teller = ITellerWithMultiAssetSupport(_teller);
         boringOnChainQueue = IBoringOnChainQueue(_boringOnChainQueue);
+        tacSAFactory = TacSAFactory(_tacSAFactory);
+        boringVault = IBoringVault(_boringVault);
     }
 
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
-    function deposit(bytes memory tacHeader, bytes memory arguments) public payable _onlyCrossChainLayer{
+    function deposit(bytes calldata tacHeader, bytes calldata arguments) public payable _onlyCrossChainLayer{
         DepositArguments memory args = abi.decode(arguments, (DepositArguments));
-        TransferHelper.safeApprove(args.depositAsset, address(teller), args.depositAmount);
-        teller.deposit(ERC20(args.depositAsset), args.depositAmount, args.minimumMint);
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
+        (address user,) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
+
+        // TacSmartAccount(user).execute{value: msg.value}(args.depositAsset, args.depositAmount);
+        if(args.depositAsset != NATIVE_ADDRESS){
+            TransferHelper.safeTransfer(args.depositAsset, user, args.depositAmount);
+            TacSmartAccount(payable(user)).approve(args.depositAsset, address(teller), args.depositAmount);
+        }
+        bytes memory data = abi.encodeWithSelector(ITellerWithMultiAssetSupport.deposit.selector, ERC20(args.depositAsset), args.depositAmount, args.minimumMint);
+        TacSmartAccount(payable(user)).execute(address(teller), msg.value, data);
+        data = abi.encodeWithSelector(IERC20.transfer.selector, address(this), boringVault.balanceOf(address(user)));
+        TacSmartAccount(payable(user)).execute(address(boringVault), 0, data);
+
+        TokenAmount[] memory tokens = new TokenAmount[](1);
+        tokens[0] = TokenAmount({
+            evmAddress: address(boringVault),
+            amount: boringVault.balanceOf(address(this))
+        });
+        _bridgeTokens(tacHeader, tokens, "");
     }
 
-    function withdraw(bytes memory tacHeader, bytes memory arguments) public payable _onlyCrossChainLayer{
-
+    function withdrawRequest(bytes calldata tacHeader, bytes calldata arguments) public payable _onlyCrossChainLayer{
+        WithdrawArguments memory args = abi.decode(arguments, (WithdrawArguments));
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
+        (address user,) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
+        TransferHelper.safeTransfer(address(boringVault), user, args.amountOfShares);
+        bytes memory data = abi.encodeWithSelector(IBoringOnChainQueue.requestOnChainWithdraw.selector, args.assetOut, args.amountOfShares, args.discount, args.secondsToDeadline);
+        TacSmartAccount(payable(user)).approve(address(boringVault), address(boringOnChainQueue), args.amountOfShares);
+        TacSmartAccount(payable(user)).execute(address(boringOnChainQueue), 0, data);
     }
 
-    function depostAndStake(bytes memory tacHeader, bytes memory arguments) public payable _onlyCrossChainLayer{
+    function withdrawFunds(bytes calldata tacHeader, bytes calldata arguments) public payable _onlyCrossChainLayer{
+        WithdrawFundsArguments memory args = abi.decode(arguments, (WithdrawFundsArguments));
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
+        (address user,) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
 
+        bytes memory data = abi.encodeWithSelector(IERC20.transfer.selector, address(this), IERC20(args.asset).balanceOf(address(user)));
+        TacSmartAccount(payable(user)).execute(address(IERC20(args.asset)), 0, data);
+        TokenAmount[] memory tokens = new TokenAmount[](1);
+        tokens[0] = TokenAmount({
+            evmAddress: address(args.asset),
+            amount: IERC20(args.asset).balanceOf(address(this))
+        });
+        _bridgeTokens(tacHeader, tokens, "");
     }
 
     /// @notice Bridges tokens to the cross-chain layer
