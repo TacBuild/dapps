@@ -3,7 +3,7 @@ pragma solidity ^0.8.28;
 
 import {IHooks} from "./Interface/IHooks.sol";
 import {ITacSmartAccount} from "./Interface/ITacSmartAccount.sol";
-import {TokenAmount, NFTAmount} from "@tonappchain/evm-ccl/contracts/L2/Structs.sol";
+import {TokenAmount, NFTAmount} from "@tonappchain/evm-ccl/contracts/core/Structs.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 library SaHelper {
