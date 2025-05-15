@@ -34,7 +34,22 @@ interface IManager {
 contract YieldManagerProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
     address public constant _ETH_ADDRESS_ = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
-   address internal _appAddress;
+    address internal _appAddress;
+    address internal _tacSAFactoryAddress;
+    mapping(address => string) private evmToTvm;
+
+
+    /// @notice Arguments for claiming rewards
+    /// @param account Address of the account claiming rewards
+    /// @param reward Address of the reward token
+    /// @param claimable Amount of rewards claimable
+    /// @param proof Merkle proof for claiming rewards
+    struct ClaimArguments {
+        address account;
+        address reward;
+        uint256 claimable;
+        bytes32[] proof;
+    }
 
     /**
      * @dev Initialize the contract.
@@ -43,6 +58,7 @@ contract YieldManagerProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpg
         __TacProxyV1Upgradeable_init(crossChainLayer);
         __Ownable_init(adminAddress);
         __UUPSUpgradeable_init();
+        _tacSAFactoryAddress = tacSAFactoryAddress;
         _appAddress = appAddress;
     }
 
@@ -66,12 +82,19 @@ contract YieldManagerProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpg
 
         OrderPayload memory payload = Codec.decodeOrderPayload(_data);
 
+        (address user, bool isNewAccount) = TacSAFactory(_tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
+        evmToTvm[user] = header.tvmCaller;
+
         // grant token approvals
+        TransferHelper.safeApprove(payload.token, user, payload.amount);
 
-        TransferHelper.safeApprove(payload.token, _appAddress, payload.amount);
-
-        IManager(_appAddress).deposit(
-            _data, _sign
+        ITacSmartAccount(user).execute(
+            _appAddress,
+            0,
+            abi.encodeWithSelector(
+                IManager.deposit.selector,
+                _data, _sign
+                )
         );
 
     }
@@ -88,6 +111,9 @@ contract YieldManagerProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpg
 ) public _onlyCrossChainLayer {
     (bytes memory _data, bytes memory _sign) =
         abi.decode(arguments, (bytes, bytes));
+
+    (address user, bool isNewAccount) = TacSAFactory(_tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
+    evmToTvm[user] = header.tvmCaller;
 
     IManager(_appAddress).withdraw(_data, _sign);
 }
