@@ -10,3 +10,9 @@ services:
       dockerfile: tilt/Dockerfile
       context: ../.
     network_mode: "host"
+    volumes:
+      - tilt-shared-volume:/usr/src/app/shared
+
+volumes:
+  tilt-shared-volume:
+    name: tilt-shared-volume

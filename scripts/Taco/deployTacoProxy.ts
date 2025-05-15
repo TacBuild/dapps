@@ -1,6 +1,5 @@
 import hre from 'hardhat';
 import { TacoProxy } from '../../typechain-types/';
-import { deploy } from "@tonappchain/evm-ccl";
 import { Signer } from 'ethers';
 import { deployUpgradable } from '@tonappchain/evm-ccl'
 import { proxyOptsUUPS } from "../utils"

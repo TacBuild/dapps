@@ -27,7 +27,7 @@ describe("TreasurySwap proxy test", () => {
     const lowerBound = 50000000000000000n;
     const treasurySwapBalance = 10000000000000000000000000000n;
 
-    let wTON: string;
+    let wTONAddress = "";
     let wTONContract: ERC20;
     let crossChainLayerAddress = "";
 
@@ -37,39 +37,14 @@ describe("TreasurySwap proxy test", () => {
 
         testSdk = new TacLocalTestSdk();
         crossChainLayerAddress = await testSdk.create(ethers.provider);
+        
+        wTONAddress = testSdk.getWrappedTONAddress();
+        wTONContract = await ethers.getContractAt("ERC20", wTONAddress);
 
     });
 
     it ('Deploy treasury and proxy', async() => {
 
-        // deploy wTON via ccl
-        const wTONMintInfo: TokenMintInfo = {
-            info: {
-                tvmAddress: "NONE",
-                name: "TON Token",
-                symbol: "TON",
-                decimals: 9n
-            },
-            amount: 0n,
-        };
-
-        let {receipt, deployedTokens, } = await testSdk.sendMessage(
-            0n,
-            await admin.getAddress(),
-            "",
-            "0x",
-            "",
-            [wTONMintInfo],
-            [],
-            0n,
-            "0x"
-        );
-
-        expect(deployedTokens.length).to.be.eq(1);
-        wTON = deployedTokens[0].evmAddress;
-        expect(wTON).to.eq(testSdk.getEVMJettonAddress("NONE"));
-
-        wTONContract = await ethers.getContractAt("ERC20", wTON);
 
 
         tokenContract = await deploy<TestnetERC20>(
@@ -79,7 +54,7 @@ describe("TreasurySwap proxy test", () => {
         );
         treasurySwapContract = await deployTreasurySwap(
             admin,
-            wTON,
+            wTONAddress,
             await tokenContract.getAddress(),
             tokenValue,
             decimals,
@@ -90,7 +65,7 @@ describe("TreasurySwap proxy test", () => {
         proxyContract = await deployTreasurySwapProxy(
             admin,
             await treasurySwapContract.getAddress(),
-            wTON,
+            wTONAddress,
             crossChainLayerAddress,
             false
         );
@@ -103,7 +78,7 @@ describe("TreasurySwap proxy test", () => {
 
     it('Check address consistency', async () => {
         expect(await treasurySwapContract.token()).to.be.eq(await tokenContract.getAddress())
-        expect(await treasurySwapContract.wTON()).to.be.eq(wTON);
+        expect(await treasurySwapContract.wTON()).to.be.eq(wTONAddress);
         expect(await treasurySwapContract.tokenValue()).to.be.eq(tokenValue);
         expect(await treasurySwapContract.upperBound()).to.be.eq(upperBound);
         expect(await treasurySwapContract.lowerBound()).to.be.eq(lowerBound);
@@ -250,7 +225,7 @@ describe("TreasurySwap proxy test", () => {
 
         // check burned token
         expect(outMessage.tokensBurned.length).to.be.eq(1);
-        expect(outMessage.tokensBurned[0].evmAddress).to.be.eq(wTON);
+        expect(outMessage.tokensBurned[0].evmAddress).to.be.eq(wTONAddress);
         expect(outMessage.tokensBurned[0].amount).to.be.eq(tokenUnlockInfo.amount * 10n**9n / BigInt(tokenValue));
 
         // check locked token

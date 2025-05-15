@@ -7,6 +7,7 @@ import { HardhatUserConfig } from "hardhat/config";
 dotenv.config();
 
 const TAC_TESTNET_URL = process.env.TAC_TESTNET_URL || "http://127.0.0.1:8545";
+const TAC_TESTNET_SPB_URL = process.env.TAC_TESTNET_SPB_URL || "http://127.0.0.1:8545";
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -16,7 +17,7 @@ const config: HardhatUserConfig = {
         settings: {
           optimizer: {
             enabled: true,
-            runs: 200
+            runs: 200,
           }
         }
       },
@@ -34,7 +35,7 @@ const config: HardhatUserConfig = {
       allowBlocksWithSameTimestamp: true,
       forking: {
         url: TAC_TESTNET_URL,
-        blockNumber: 2898061,
+        blockNumber: 4727595,
       },
     },
     localhost: {
@@ -42,7 +43,13 @@ const config: HardhatUserConfig = {
       timeout: 3600000
     },
     tac_testnet: {
-      url: TAC_TESTNET_URL
+      chainId: 2390,
+      url: TAC_TESTNET_URL,
+      accounts: [process.env.DEPLOYER_PRIVATE_KEY || ""]
+    },
+    tac_testnet_spb: {
+      chainId: 2391,
+      url: TAC_TESTNET_SPB_URL
     },
   },
   gasReporter: {

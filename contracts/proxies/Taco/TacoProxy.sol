@@ -12,7 +12,7 @@ import { TransferHelper } from '@uniswap/lib/contracts/libraries/TransferHelper.
 
 import { TacProxyV1Upgradeable } from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
 
-import { OutMessageV1, TokenAmount, TacHeaderV1 } from "@tonappchain/evm-ccl/contracts/L2/Structs.sol";
+import { OutMessageV1, TokenAmount, NFTAmount, TacHeaderV1 } from "@tonappchain/evm-ccl/contracts/core/Structs.sol";
 import { UniswapV2Library } from "contracts/proxies/UniswapV2/CompilerVersionAdapters.sol";
 import { ICrossChainLayer } from "@tonappchain/evm-ccl/contracts/interfaces/ICrossChainLayer.sol";
 
@@ -26,13 +26,21 @@ interface IDVM is IERC20 {
     function _MT_FEE_RATE_MODEL_() external view returns (address);
     function getVaultReserve() external view returns (uint256 baseReserve, uint256 quoteReserve);
     function getMidPrice() external view returns (uint256 midPrice);
+    function sellShares(
+        uint256 shareAmount,
+        address to,
+        uint256 baseMinAmount,
+        uint256 quoteMinAmount,
+        bytes calldata data,
+        uint256 deadline
+    ) external returns (uint256 baseAmount, uint256 quoteAmount);
 }
 
 /**
  * @title IDVMFactory Interface (from https://github.com/DODOEX/contractV2)
  */
 interface IDVMFactory {
-    function getDODOPool(address baseToken, address quoteToken) 
+    function getDODOPool(address baseToken, address quoteToken)
         external view returns (address[] memory machines);
 }
 
@@ -140,6 +148,16 @@ struct MixSwapArguments {
     uint256 deadLine;
 }
 
+struct SellSharesArguments {
+    address dvmAddress;
+    uint256 shareAmount;
+    address to;
+    uint256 baseMinAmount;
+    uint256 quoteMinAmount;
+    bytes data;
+    uint256 deadline;
+}
+
 /**
  * @title TacoProxy
  * @dev Proxy contract Taco Protocol, namely DODOV2Proxy02(createDODOVendingMachine, addDVMLiquidity) and DODOFeeRouteProxy
@@ -149,13 +167,17 @@ contract TacoProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable
     address public constant _ETH_ADDRESS_ = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
     address internal  _approveAddress;
     address internal  _wethAddress;
-    address internal  _feeRouteProxyAddress;
     address internal _appAddress;
+    address internal  _feeRouteProxyAddress;
 
     /**
      * @dev Initialize the contract.
      */
-    function initialize(address adminAddress, address appAddress, address feeRouteProxyAddress, address crossChainLayer) public initializer {
+    function initialize(
+        address adminAddress,
+        address appAddress,
+        address feeRouteProxyAddress,
+        address crossChainLayer) public initializer {
         __TacProxyV1Upgradeable_init(crossChainLayer);
         __Ownable_init(adminAddress);
         __UUPSUpgradeable_init();
@@ -165,6 +187,8 @@ contract TacoProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable
         _wethAddress = IDODOV2Proxy01(appAddress)._WETH_();
         _feeRouteProxyAddress = feeRouteProxyAddress;
     }
+
+    receive() external payable {}
 
     /**
      * @dev Upgrades the contract.
@@ -195,7 +219,7 @@ contract TacoProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable
         }
 
         // proxy call
-        (newVendingMachine, shares) = 
+        (newVendingMachine, shares) =
             IDODOV2Proxy01(_appAddress).createDODOVendingMachine{value: msg.value}(
                 arguments.baseToken,
                 arguments.quoteToken,
@@ -223,18 +247,22 @@ contract TacoProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable
         // call dApp
         (address newVendingMachine, uint256 shares) = _createDODOVendingMachine(args);
 
-        // tokens to L2->L1 transfer (bridge)
+        // tokens to EVM->TVM transfer (bridge)
         TransferHelper.safeApprove(newVendingMachine, _getCrossChainLayerAddress(), shares);
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(newVendingMachine, shares);
 
-        // CCL L2->L1 callback
+        // CCL EVM->TVM callback
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         OutMessageV1 memory message = OutMessageV1({
             shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
-            toBridge: tokensToBridge
+            tvmProtocolFee: 0,
+            tvmExecutorFee: 0,
+            tvmValidExecutors: new string[](0),
+            toBridge: tokensToBridge,
+            toBridgeNFT: new NFTAmount[](0)
         });
         _sendMessageV1(message, 0);
     }
@@ -290,7 +318,7 @@ contract TacoProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable
         // approve share to CCL
         TransferHelper.safeApprove(args.dvmAddress, _getCrossChainLayerAddress(), shares);
 
-        // tokens to L2->L1 transfer (bridge)
+        // tokens to EVM->TVM transfer (bridge)
         address baseToken = IDVM(args.dvmAddress)._BASE_TOKEN_();
         address quoteToken = IDVM(args.dvmAddress)._QUOTE_TOKEN_();
         uint256 t = (baseToken == _ETH_ADDRESS_ ? 0 : 1) + (quoteToken == _ETH_ADDRESS_ ? 0 : 1) + 1;
@@ -318,13 +346,17 @@ contract TacoProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable
         }
         tokensToBridge[i] = TokenAmount(args.dvmAddress, shares);
 
-        // CCL L2->L1 callback
+        // CCL EVM->TVM callback
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         OutMessageV1 memory message = OutMessageV1({
             shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
-            toBridge: tokensToBridge
+            tvmProtocolFee: 0,
+            tvmExecutorFee: 0,
+            tvmValidExecutors: new string[](0),
+            toBridge: tokensToBridge,
+            toBridgeNFT: new NFTAmount[](0)
         });
         _sendMessageV1(message, value);
     }
@@ -366,11 +398,11 @@ contract TacoProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable
     ) public payable _onlyCrossChainLayer {
         // decode arguments
         MixSwapArguments memory args = abi.decode(arguments, (MixSwapArguments));
-        
+
         // call dApp
         (uint256 returnAmount) = _mixSwap(args);
 
-        // tokens to L2->L1 transfer (bridge )
+        // tokens to EVM->TVM transfer (bridge)
         uint256 value;
         TokenAmount[] memory tokensToBridge;
         if (args.toToken == _ETH_ADDRESS_) {
@@ -383,13 +415,96 @@ contract TacoProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable
             value = 0;
         }
 
-        // CCL L2->L1 callback
+        // CCL EVM->TVM callback
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         OutMessageV1 memory message = OutMessageV1({
             shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: "",
-            toBridge: tokensToBridge
+            tvmProtocolFee: 0,
+            tvmExecutorFee: 0,
+            tvmValidExecutors: new string[](0),
+            toBridge: tokensToBridge,
+            toBridgeNFT: new NFTAmount[](0)
+        });
+        _sendMessageV1(message, value);
+    }
+
+    function _sellShares(
+        SellSharesArguments memory arguments
+    ) internal returns (uint256 baseAmount, uint256 quoteAmount) {
+        // grant token approvals
+        TransferHelper.safeApprove(arguments.dvmAddress, arguments.dvmAddress, arguments.shareAmount);
+
+        // call dApp
+        (baseAmount, quoteAmount) = IDVM(arguments.dvmAddress).sellShares(
+            arguments.shareAmount,
+            arguments.to,   // use DODO ETH helper to auto convert WETH to TAC
+            arguments.baseMinAmount,
+            arguments.quoteMinAmount,
+            arguments.data,
+            arguments.deadline
+        );
+    }
+
+    /**
+     * @dev A proxy to IDVM.sellShares for removing liquidity from DVM pools.
+     */
+    function sellShares(
+        bytes calldata tacHeader,
+        bytes calldata arguments
+    ) public _onlyCrossChainLayer {
+        // decode arguments
+        SellSharesArguments memory args = abi.decode(arguments, (SellSharesArguments));
+
+        // call dApp
+        (uint256 baseAmount, uint256 quoteAmount) = _sellShares(args);
+
+        // get token addresses from the pool
+        address baseToken = IDVM(args.dvmAddress)._BASE_TOKEN_();
+        address quoteToken = IDVM(args.dvmAddress)._QUOTE_TOKEN_();
+
+        // check need to unwrap TAC
+        // see: https://github.com/DODOEX/contractV2/blob/main/contracts/DODOVendingMachine/impl/DVMFunding.sol#L95
+        bool isBaseNative = (baseToken == _wethAddress) && (args.data.length > 0);
+        bool isQuoteNative = (quoteToken == _wethAddress) && (args.data.length > 0);
+
+        // tokens to EVM->TVM transfer (bridge)
+        TokenAmount[] memory tokensToBridge = new TokenAmount[]((isBaseNative ? 0 : 1) + (isQuoteNative ? 0 : 1));
+        uint256 value = 0;
+        uint256 i = 0;
+
+        if (isBaseNative) {
+            value += baseAmount;
+        } else {
+            tokensToBridge[i] = TokenAmount(baseToken, baseAmount);
+            TransferHelper.safeApprove(baseToken, _getCrossChainLayerAddress(), baseAmount);
+            unchecked {
+                i++;
+            }
+        }
+
+        if (isQuoteNative) {
+            value += quoteAmount;
+        } else {
+            tokensToBridge[i] = TokenAmount(quoteToken, quoteAmount);
+            TransferHelper.safeApprove(quoteToken, _getCrossChainLayerAddress(), quoteAmount);
+            unchecked {
+                i++;
+            }
+        }
+
+        // CCL EVM->TVM callback
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
+        OutMessageV1 memory message = OutMessageV1({
+            shardsKey: header.shardsKey,
+            tvmTarget: header.tvmCaller,
+            tvmPayload: "",
+            tvmProtocolFee: 0,
+            tvmExecutorFee: 0,
+            tvmValidExecutors: new string[](0),
+            toBridge: tokensToBridge,
+            toBridgeNFT: new NFTAmount[](0)
         });
         _sendMessageV1(message, value);
     }

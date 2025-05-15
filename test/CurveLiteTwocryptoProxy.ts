@@ -53,19 +53,17 @@ describe("CurveLiteTwocryptoswapProxy", function () {
         const timestamp = BigInt(Math.floor(Date.now() / 1000));
         const tvmWalletCaller = "EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk";
         const target = await admin.getAddress();
-        
+
         const mintAmount = 2n
 
         const sttonTokenMintInfo: TokenMintInfo = {
             info: sttonTokenInfo,
-            mintAmount: mintAmount,
+            amount: mintAmount,
         }
         const tacTokenMintInfo: TokenMintInfo = {
             info: tacTokenInfo,
-            mintAmount: mintAmount,
+            amount: mintAmount,
         }
-
-        
 
         const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
             shardsKey, // shardsKey
@@ -141,11 +139,11 @@ describe("CurveLiteTwocryptoswapProxy", function () {
 
         const sttonTokenMintInfo: TokenMintInfo = {
             info: sttonTokenInfo,
-            mintAmount: amountA,
+            amount: amountA,
         }
         const tacTokenMintInfo: TokenMintInfo = {
             info: tacTokenInfo,
-            mintAmount: amountB,
+            amount: amountB,
         }
 
         const encodedParameters = new ethers.AbiCoder().encode(
@@ -212,7 +210,7 @@ describe("CurveLiteTwocryptoswapProxy", function () {
 
         const sttonTokenMintInfo: TokenMintInfo = {
             info: sttonTokenInfo,
-            mintAmount: amount,
+            amount: amount,
         }
 
         const encodedParameters = new ethers.AbiCoder().encode(
@@ -267,13 +265,12 @@ describe("CurveLiteTwocryptoswapProxy", function () {
         const target = await curveLiteTwocryptoswapProxy.getAddress();
         const methodName = "removeLiquidity(bytes,bytes)";
 
-        
         const amount = 1n*10n**(await pool.decimals());
 
 
         const liquidityTokenUnlockInfo: TokenUnlockInfo = {
             evmAddress: await pool.getAddress(),
-            unlockAmount: amount,
+            amount: amount,
         }
 
         const encodedParameters = new ethers.AbiCoder().encode(
