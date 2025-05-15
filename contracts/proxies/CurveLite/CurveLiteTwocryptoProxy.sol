@@ -124,6 +124,51 @@ contract CurveLiteTwocryptoswapProxy is TacProxyV1Upgradeable, OwnableUpgradeabl
     }
 
     /**
+     * @dev A proxy to remove_liquidity_one_coin
+     */
+    function remove_liquidity_one_coin(
+        bytes calldata tacHeader,
+        bytes calldata arguments
+    ) public _onlyCrossChainLayer {
+        (address pool, uint256 token_amount, uint256 i, uint256 min_amount) =
+                abi.decode(arguments, (address, uint256, uint256, uint256));
+        // claim tokens addresses
+        address token = ITwocryptoswapPool(pool).coins(i);
+        address tokenLiquidity = pool;
+
+        TransferHelper.safeApprove(tokenLiquidity, pool, token_amount);
+
+        uint256 amount = ITwocryptoswapPool(pool).remove_liquidity_one_coin(
+            token_amount,
+            i,
+            min_amount
+        );
+
+        // bridge tokens to TON
+        TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
+        tokensToBridge[0] = TokenAmount(token, amount);
+
+        address crossChainLayer = _getCrossChainLayerAddress();
+
+        // approve tokens to CCL
+        TransferHelper.safeApprove(token, crossChainLayer, amount);
+
+        // CCL TAC->TON callback
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
+        OutMessageV1 memory message = OutMessageV1({
+            shardsKey: header.shardsKey,
+            tvmTarget: header.tvmCaller,
+            tvmPayload: "",
+            tvmProtocolFee: 0,
+            tvmExecutorFee: 0,
+            tvmValidExecutors: new string[](0),
+            toBridge: tokensToBridge,
+            toBridgeNFT: new NFTAmount[](0)
+        });
+        _sendMessageV1(message, 0);
+    }
+
+    /**
      * @dev A proxy to exchange
      */
     function exchange(

@@ -14,7 +14,7 @@ async function main() {
 
     const deployer = new ethers.Wallet(process.env.DEPLOYER_PRIVATE_KEY!, ethers.provider);
 
-    const addressesFilePath = path.resolve(__dirname, "../addresses.json");
+    const addressesFilePath = path.resolve(__dirname, "../../addresses.json");
 
     const tacContracts = await loadTacContracts(addressesFilePath, deployer);
 
@@ -59,7 +59,7 @@ async function main() {
         saveContractAddress(addressesFilePath, `${token.tokenSymbol}_TreasuryProxy`, await proxyContract.getAddress());
 
         await tokenContract.mint(await treasurSwapContract.getAddress(), 10n ** (9n + BigInt(token.decimals)));
-
+        
         console.log("Done with ", token.tokenName);
     }
 }
