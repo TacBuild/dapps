@@ -30,6 +30,8 @@ describe("MorphoProxy", function () {
         [admin] = await ethers.getSigners();
         testSdk = new TacLocalTestSdk();
         const crossChainLayerAddress = await testSdk.create(ethers.provider);
+        console.log("crossChainLayerAddress", crossChainLayerAddress);
+        
         tacSmartAccount = await deployTacSmartAccount(admin);
         tacSAFactory = await deployTacSAFactory(admin, await tacSmartAccount.getAddress());
         morphoProxy = await deployMorphoProxy(admin, crossChainLayerAddress, await tacSAFactory.getAddress());
