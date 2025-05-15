@@ -126,7 +126,7 @@ contract CurveLiteTwocryptoswapProxy is TacProxyV1Upgradeable, OwnableUpgradeabl
     /**
      * @dev A proxy to remove_liquidity_one_coin
      */
-    function remove_liquidity_one_coin(
+    function removeLiquidityOneCoin(
         bytes calldata tacHeader,
         bytes calldata arguments
     ) public _onlyCrossChainLayer {
