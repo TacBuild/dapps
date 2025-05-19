@@ -279,4 +279,11 @@ interface IManageableVault {
      * @param user address of user
      */
     function freeFromMinAmount(address user, bool enable) external;
+
+    /**
+     * @notice returns array of stablecoins supported by the vault
+     * can be called only from permissioned actor.
+     * @return paymentTokens array of payment tokens
+     */
+    function getPaymentTokens() external view returns (address[] memory);
 }
