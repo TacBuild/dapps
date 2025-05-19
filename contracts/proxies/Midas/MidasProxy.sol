@@ -26,10 +26,6 @@ import {ITacSmartAccount} from "../../TacSmartAccounts/Interface/ITacSmartAccoun
 contract MidasProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
     address public constant _ETH_ADDRESS_ = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
     address internal _tacSAFactoryAddress;
-    address internal _depositVaultAddress;
-    address internal _redemptionVaultAddress;
-    mapping(address => string) private evmToTvm;
-
 
     /// @notice Arguments for claiming rewards
     /// @param account Address of the account claiming rewards
@@ -37,7 +33,6 @@ contract MidasProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
     /// @param claimable Amount of rewards claimable
     /// @param proof Merkle proof for claiming rewards
     struct ClaimArguments {
-        address account;
         address reward;
         uint256 claimable;
         bytes32[] proof;
@@ -46,13 +41,11 @@ contract MidasProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
     /**
      * @dev Initialize the contract.
      */
-    function initialize(address adminAddress, address tacSAFactoryAddress, address depositVaultAddress, address redemptionVaultAddress, address crossChainLayer) public initializer {
+    function initialize(address adminAddress, address tacSAFactoryAddress, address crossChainLayer) public initializer {
         __TacProxyV1Upgradeable_init(crossChainLayer);
         __Ownable_init(adminAddress);
         __UUPSUpgradeable_init();
         _tacSAFactoryAddress = tacSAFactoryAddress;
-        _depositVaultAddress=depositVaultAddress;
-        _redemptionVaultAddress=redemptionVaultAddress;
     }
 
     /**
@@ -69,23 +62,24 @@ contract MidasProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         bytes calldata tacHeader,
         bytes calldata arguments
     ) public payable _onlyCrossChainLayer {
-        (address tokenIn,
+        (address depositVaultAddress,
+        address tokenIn,
         uint256 amountToken,
         uint256 minReceiveAmount,
         bytes32 referrerId) =
-                abi.decode(arguments, (address, uint256, uint256, bytes32));
-        
+                abi.decode(arguments, (address, address, uint256, uint256, bytes32));
+
         // grant token approvals
 
-        TransferHelper.safeApprove(tokenIn, _depositVaultAddress, amountToken);
+        TransferHelper.safeApprove(tokenIn, depositVaultAddress, amountToken);
 
         uint256 tokenAmount = IERC20(tokenIn).balanceOf(address(this));
 
-        IDepositVault(_depositVaultAddress).depositInstant(
+        IDepositVault(depositVaultAddress).depositInstant(
             tokenIn, amountToken, minReceiveAmount, referrerId
         );
 
-        address mToken = IManageableVault(_depositVaultAddress).mToken();
+        address mToken = IManageableVault(depositVaultAddress).mToken();
 
         uint256 amountOut = IERC20(mToken).balanceOf(address(this));
 
@@ -108,21 +102,22 @@ contract MidasProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         bytes calldata tacHeader,
         bytes calldata arguments
     ) public payable _onlyCrossChainLayer {
-        (address tokenIn,
+        (address depositVaultAddress,
+        address tokenIn,
         uint256 amountToken,
-        bytes32 referrerId) = abi.decode(arguments, (address, uint256, bytes32));
+        bytes32 referrerId) = abi.decode(arguments, (address, address, uint256, bytes32));
 
 
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user, bool isNewAccount) = TacSAFactory(_tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
-        evmToTvm[user] = header.tvmCaller;
+
 
 
         // grant token approvals
-        TransferHelper.safeApprove(tokenIn, user, amountToken);
+        TransferHelper.safeTransfer(tokenIn, user, amountToken); 
         
         ITacSmartAccount(user).execute(
-            _depositVaultAddress,
+            depositVaultAddress,
             0,
             abi.encodeWithSelector(
                 IDepositVault.depositRequest.selector,
@@ -131,8 +126,6 @@ contract MidasProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
                 referrerId
                 )
         );
-
-
     }
 
      /**
@@ -144,16 +137,17 @@ contract MidasProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         bytes calldata tacHeader,
         bytes calldata arguments
     ) public payable _onlyCrossChainLayer {
-        (address tokenOut,
+        (address redemptionVaultAddress,
+        address tokenOut,
         uint256 amountMTokenIn,
-        uint256 minReceiveAmount) = abi.decode(arguments, (address, uint256, uint256));
+        uint256 minReceiveAmount) = abi.decode(arguments, (address, address, uint256, uint256));
         
-        address mToken = IManageableVault(_redemptionVaultAddress).mToken();
+        address mToken = IManageableVault(redemptionVaultAddress).mToken();
 
         // grant token approvals
-        TransferHelper.safeApprove(mToken, _redemptionVaultAddress, amountMTokenIn);
+        TransferHelper.safeApprove(mToken, redemptionVaultAddress, amountMTokenIn);
 
-        IRedemptionVault(_redemptionVaultAddress).redeemInstant(
+        IRedemptionVault(redemptionVaultAddress).redeemInstant(
             tokenOut, amountMTokenIn, minReceiveAmount
         );
 
@@ -178,22 +172,22 @@ contract MidasProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         bytes calldata tacHeader,
         bytes calldata arguments
     ) public payable _onlyCrossChainLayer {
-        (address tokenOut,
-        uint256 amountMTokenIn) = abi.decode(arguments, (address, uint256));
+        (address redemptionVaultAddress,
+        address tokenOut,
+        uint256 amountMTokenIn) = abi.decode(arguments, (address, address, uint256));
         
-        address mToken = IManageableVault(_redemptionVaultAddress).mToken();
+        address mToken = IManageableVault(redemptionVaultAddress).mToken();
 
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
 
         (address user, bool isNewAccount) = TacSAFactory(_tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
-        evmToTvm[user] = header.tvmCaller;
 
         // grant token approvals
-        TransferHelper.safeApprove(mToken, user, amountMTokenIn);
+        TransferHelper.safeTransfer(mToken, user, amountMTokenIn);
 
 
         ITacSmartAccount(user).execute(
-            _redemptionVaultAddress,
+            redemptionVaultAddress,
             0,
             abi.encodeWithSelector(
                 IRedemptionVault.redeemRequest.selector,
@@ -218,10 +212,14 @@ contract MidasProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
     ) external payable _onlyCrossChainLayer {
         ClaimArguments memory args = abi.decode(arguments, (ClaimArguments));
 
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
 
-        uint256 amount = getTokenBalance(args.account, args.reward);
+        (address user, bool isNewAccount) = TacSAFactory(_tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
 
-        ITacSmartAccount(args.account).execute(
+
+        uint256 amount = getTokenBalance(user, args.reward);
+
+        ITacSmartAccount(user).execute(
         args.reward,
         0,
         abi.encodeWithSelector(
@@ -236,27 +234,7 @@ contract MidasProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(args.reward, amount);
 
-        
-        TransferHelper.safeApprove(
-            args.reward,
-            _getCrossChainLayerAddress(),
-            amount
-        );
-        
-
-        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
-        OutMessageV1 memory message = OutMessageV1({
-            shardsKey: header.shardsKey,
-            tvmTarget: evmToTvm[args.account],
-            tvmPayload: "",
-            tvmProtocolFee: 0,
-            tvmExecutorFee: 0,
-            tvmValidExecutors: new string[](0),
-            toBridge: tokensToBridge,
-            toBridgeNFT: new NFTAmount[](0)
-        });
-
-        _sendMessageV1(message, address(this).balance);
+        _bridgeTokens(tacHeader, tokensToBridge, "");
 
 
     }
