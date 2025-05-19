@@ -40,10 +40,10 @@ contract TacBoringVaultProxy is UUPSUpgradeable, OwnableUpgradeable, TacProxyV1U
         address asset;
     }
    
-
-    function initialize(address _teller, address _boringOnChainQueue, address _tacSAFactory, address _boringVault) public initializer {
+    function initialize(address _crossChainLayer, address _teller, address _boringOnChainQueue, address _boringVault, address _tacSAFactory) public initializer {
         __UUPSUpgradeable_init();
         __Ownable_init(msg.sender);
+        __TacProxyV1Upgradeable_init(_crossChainLayer);
         teller = ITellerWithMultiAssetSupport(_teller);
         boringOnChainQueue = IBoringOnChainQueue(_boringOnChainQueue);
         tacSAFactory = TacSAFactory(_tacSAFactory);
@@ -57,12 +57,15 @@ contract TacBoringVaultProxy is UUPSUpgradeable, OwnableUpgradeable, TacProxyV1U
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user,) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
 
-        // TacSmartAccount(user).execute{value: msg.value}(args.depositAsset, args.depositAmount);
         if(args.depositAsset != NATIVE_ADDRESS){
             TransferHelper.safeTransfer(args.depositAsset, user, args.depositAmount);
             TacSmartAccount(payable(user)).approve(args.depositAsset, address(teller), args.depositAmount);
+        } else {
+            require(msg.value == args.depositAmount, "Missmatched deposit amount");
+            (bool success,) = payable(user).call{value: msg.value}("");
+            require(success, "Transfer failed");
         }
-        bytes memory data = abi.encodeWithSelector(ITellerWithMultiAssetSupport.deposit.selector, ERC20(args.depositAsset), args.depositAmount, args.minimumMint);
+        bytes memory data = abi.encodeWithSelector(ITellerWithMultiAssetSupport.deposit.selector, args.depositAsset, args.depositAmount, args.minimumMint);
         TacSmartAccount(payable(user)).execute(address(teller), msg.value, data);
         data = abi.encodeWithSelector(IERC20.transfer.selector, address(this), boringVault.balanceOf(address(user)));
         TacSmartAccount(payable(user)).execute(address(boringVault), 0, data);
@@ -75,7 +78,7 @@ contract TacBoringVaultProxy is UUPSUpgradeable, OwnableUpgradeable, TacProxyV1U
         _bridgeTokens(tacHeader, tokens, "");
     }
 
-    function withdrawRequest(bytes calldata tacHeader, bytes calldata arguments) public payable _onlyCrossChainLayer{
+    function withdrawRequest(bytes calldata tacHeader, bytes calldata arguments) public _onlyCrossChainLayer{
         WithdrawArguments memory args = abi.decode(arguments, (WithdrawArguments));
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user,) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
@@ -85,7 +88,7 @@ contract TacBoringVaultProxy is UUPSUpgradeable, OwnableUpgradeable, TacProxyV1U
         TacSmartAccount(payable(user)).execute(address(boringOnChainQueue), 0, data);
     }
 
-    function withdrawFunds(bytes calldata tacHeader, bytes calldata arguments) public payable _onlyCrossChainLayer{
+    function withdrawFunds(bytes calldata tacHeader, bytes calldata arguments) public _onlyCrossChainLayer{
         WithdrawFundsArguments memory args = abi.decode(arguments, (WithdrawFundsArguments));
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user,) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);

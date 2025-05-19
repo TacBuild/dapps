@@ -16,3 +16,4 @@ scripts/local/
 .env
 .env.*
 !.env.example
+bun.lockb

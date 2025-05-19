@@ -28,14 +28,14 @@ const config: HardhatUserConfig = {
   },
   networks: {
     hardhat: {
-      chainId: 1337,
+      chainId: 2391,
       accounts: {
         count: 50
       },
       allowBlocksWithSameTimestamp: true,
       forking: {
-        url: TAC_TESTNET_URL,
-        blockNumber: 3867934,
+        url: TAC_TESTNET_SPB_URL,
+        blockNumber: 709165,
       },
     },
     localhost: {

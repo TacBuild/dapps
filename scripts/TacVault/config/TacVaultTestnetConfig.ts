@@ -5,7 +5,7 @@ export interface TacVaultTestnetConfig {
 }
 
 export const tacVaultTestnetConfig: TacVaultTestnetConfig = {
-    teller: "0xDeeDd1b01280136c066225Fa074ed4C75DE5c8A1",
-    boringOnChainQueue: "0xB4DBd75e4b4D0705e97540F19076621fA7EeB29A",
-    boringVault: "0x2aC6fAAb83d7596EdAfC8e1f108deAf3C5B1dE66"
+    teller: "0x1B0C5171cA713777956CeE86a1e27F02D079d9Cb",
+    boringOnChainQueue: "0x652f03B86055ec6be49c359086cce957f9167238",
+    boringVault: "0x617783F76B2c4B94DC6eE7AaF62A80586941f726"
 }

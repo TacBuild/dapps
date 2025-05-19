@@ -1,30 +1,30 @@
 import { Signer } from "ethers";
-import { MorphoProxy } from "../../typechain-types";
+import { TacBoringVaultProxy } from "../../typechain-types";
 import { deployUpgradable } from '@tonappchain/evm-ccl'
 import { DeployProxyOptions } from "@openzeppelin/hardhat-upgrades/dist/utils";
 import hre from 'hardhat';
-import { morphoTestnetConfig } from "./config/testnetConfig";
+import { tacVaultTestnetConfig } from "./config/TacVaultTestnetConfig";
 
 const proxyOptsUUPS: DeployProxyOptions = {
     kind: "uups"
 };
 
-export async function deployMorphoProxy(
+export async function deployTacVault(
     deployer: Signer,
     crossChainLayerAddress: string,
     tacSAFactoryAddress: string
-): Promise<MorphoProxy> {
+): Promise<TacBoringVaultProxy> {
     
-    const morphoProxy = await deployUpgradable<MorphoProxy>(
+    const tacVaultProxy = await deployUpgradable<TacBoringVaultProxy>(
         deployer,
-        hre.artifacts.readArtifactSync('MorphoProxy'),
-        [crossChainLayerAddress, morphoTestnetConfig.morphoAddress, morphoTestnetConfig.urdAddress, morphoTestnetConfig.metaMorphoV1_1Address, tacSAFactoryAddress],
+        hre.artifacts.readArtifactSync('TacBoringVaultProxy'),
+        [crossChainLayerAddress, tacVaultTestnetConfig.teller, tacVaultTestnetConfig.boringOnChainQueue, tacVaultTestnetConfig.boringVault, tacSAFactoryAddress],
         proxyOptsUUPS,
         undefined,
         true
     );
     
     
-    await morphoProxy.waitForDeployment();
-    return morphoProxy;
+    await tacVaultProxy.waitForDeployment();
+    return tacVaultProxy;
 } 
