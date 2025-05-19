@@ -44,7 +44,8 @@ const config: HardhatUserConfig = {
     },
     tac_testnet: {
       chainId: 2390,
-      url: TAC_TESTNET_URL
+      url: TAC_TESTNET_URL,
+      accounts: [process.env.DEPLOYER_PRIVATE_KEY || ""]
     },
     tac_testnet_spb: {
       chainId: 2391,

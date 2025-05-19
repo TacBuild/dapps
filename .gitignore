@@ -17,3 +17,5 @@ scripts/local/
 .env.*
 !.env.example
 bun.lockb
+
+**/.DS_Store
