@@ -870,7 +870,7 @@
             "label": "morpho",
             "offset": 0,
             "slot": "0",
-            "type": "t_contract(IMorpho)11361",
+            "type": "t_contract(IMorpho)3768",
             "contract": "MorphoProxy",
             "src": "contracts/proxies/Morpho/MorphoProxy.sol:203"
           },
@@ -878,7 +878,7 @@
             "label": "urd",
             "offset": 0,
             "slot": "1",
-            "type": "t_contract(IURD)11494",
+            "type": "t_contract(IURD)3901",
             "contract": "MorphoProxy",
             "src": "contracts/proxies/Morpho/MorphoProxy.sol:205"
           },
@@ -886,7 +886,7 @@
             "label": "tacSAFactory",
             "offset": 0,
             "slot": "2",
-            "type": "t_contract(TacSAFactory)4542",
+            "type": "t_contract(TacSAFactory)3364",
             "contract": "MorphoProxy",
             "src": "contracts/proxies/Morpho/MorphoProxy.sol:207"
           },
@@ -894,7 +894,7 @@
             "label": "metaMorphoV1_1",
             "offset": 0,
             "slot": "3",
-            "type": "t_contract(IMetaMorpho)11220",
+            "type": "t_contract(IMetaMorpho)3627",
             "contract": "MorphoProxy",
             "src": "contracts/proxies/Morpho/MorphoProxy.sol:209"
           }
@@ -938,7 +938,7 @@
             ],
             "numberOfBytes": "32"
           },
-          "t_struct(TacProxyV1UpgradeableStorage)1565_storage": {
+          "t_struct(TacProxyV1UpgradeableStorage)1084_storage": {
             "label": "struct TacProxyV1Upgradeable.TacProxyV1UpgradeableStorage",
             "members": [
               {
@@ -954,19 +954,172 @@
             "label": "uint64",
             "numberOfBytes": "8"
           },
-          "t_contract(IMetaMorpho)11220": {
+          "t_contract(IMetaMorpho)3627": {
             "label": "contract IMetaMorpho",
             "numberOfBytes": "20"
           },
-          "t_contract(IMorpho)11361": {
+          "t_contract(IMorpho)3768": {
             "label": "contract IMorpho",
             "numberOfBytes": "20"
           },
-          "t_contract(IURD)11494": {
+          "t_contract(IURD)3901": {
             "label": "contract IURD",
             "numberOfBytes": "20"
           },
-          "t_contract(TacSAFactory)4542": {
+          "t_contract(TacSAFactory)3364": {
+            "label": "contract TacSAFactory",
+            "numberOfBytes": "20"
+          }
+        },
+        "namespaces": {
+          "erc7201:openzeppelin.storage.Ownable": [
+            {
+              "contract": "OwnableUpgradeable",
+              "label": "_owner",
+              "type": "t_address",
+              "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:24",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:tac.storage.TacProxyV1Upgradeable": [
+            {
+              "contract": "TacProxyV1Upgradeable",
+              "label": "_crossChainLayer",
+              "type": "t_address",
+              "src": "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol:30",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Initializable": [
+            {
+              "contract": "Initializable",
+              "label": "_initialized",
+              "type": "t_uint64",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+              "offset": 0,
+              "slot": "0"
+            },
+            {
+              "contract": "Initializable",
+              "label": "_initializing",
+              "type": "t_bool",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+              "offset": 8,
+              "slot": "0"
+            }
+          ]
+        }
+      }
+    },
+    "7ff6cc0d765eaf193e82797be1b3dd0eb552a936a2cc65f866c5c94deb14a886": {
+      "address": "0xd286B86E5E0C8FFA22f1Dc59fC554CEaa9B2dDfa",
+      "txHash": "0x10cc773df4de53127398ed8b33c60e890fc22697e4689a1c6cc7533cf99d20a9",
+      "layout": {
+        "solcVersion": "0.8.28",
+        "storage": [
+          {
+            "label": "morpho",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_contract(IMorpho)3505",
+            "contract": "MorphoProxy",
+            "src": "contracts/proxies/Morpho/MorphoProxy.sol:203"
+          },
+          {
+            "label": "urd",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_contract(IURD)3638",
+            "contract": "MorphoProxy",
+            "src": "contracts/proxies/Morpho/MorphoProxy.sol:205"
+          },
+          {
+            "label": "tacSAFactory",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_contract(TacSAFactory)3101",
+            "contract": "MorphoProxy",
+            "src": "contracts/proxies/Morpho/MorphoProxy.sol:207"
+          },
+          {
+            "label": "metaMorphoV1_1",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_contract(IMetaMorpho)3364",
+            "contract": "MorphoProxy",
+            "src": "contracts/proxies/Morpho/MorphoProxy.sol:209"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_struct(InitializableStorage)73_storage": {
+            "label": "struct Initializable.InitializableStorage",
+            "members": [
+              {
+                "label": "_initialized",
+                "type": "t_uint64",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_initializing",
+                "type": "t_bool",
+                "offset": 8,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(OwnableStorage)13_storage": {
+            "label": "struct OwnableUpgradeable.OwnableStorage",
+            "members": [
+              {
+                "label": "_owner",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(TacProxyV1UpgradeableStorage)1084_storage": {
+            "label": "struct TacProxyV1Upgradeable.TacProxyV1UpgradeableStorage",
+            "members": [
+              {
+                "label": "_crossChainLayer",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_uint64": {
+            "label": "uint64",
+            "numberOfBytes": "8"
+          },
+          "t_contract(IMetaMorpho)3364": {
+            "label": "contract IMetaMorpho",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IMorpho)3505": {
+            "label": "contract IMorpho",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IURD)3638": {
+            "label": "contract IURD",
+            "numberOfBytes": "20"
+          },
+          "t_contract(TacSAFactory)3101": {
             "label": "contract TacSAFactory",
             "numberOfBytes": "20"
           }
