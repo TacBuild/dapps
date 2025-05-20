@@ -6,7 +6,7 @@ import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import { TransferHelper } from 'contracts/helpers/TransferHelper.sol';
-import { TacProxyV1Upgradeable } from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
+import {TacProxyV1Upgradeable} from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
 import {OutMessageV1, TokenAmount, TacHeaderV1, NFTAmount} from "@tonappchain/evm-ccl/contracts/core/Structs.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -66,13 +66,11 @@ contract MidasProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         address tokenIn,
         uint256 amountToken,
         uint256 minReceiveAmount,
-        bytes32 referrerId) =
-                abi.decode(arguments, (address, address, uint256, uint256, bytes32));
+        bytes32 referrerId) = abi.decode(arguments, (address, address, uint256, uint256, bytes32));
 
         // grant token approvals
 
         TransferHelper.safeApprove(tokenIn, depositVaultAddress, amountToken);
-
         uint256 tokenAmount = IERC20(tokenIn).balanceOf(address(this));
 
         IDepositVault(depositVaultAddress).depositInstant(
@@ -111,11 +109,19 @@ contract MidasProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user, bool isNewAccount) = TacSAFactory(_tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
 
-
-
         // grant token approvals
-        TransferHelper.safeTransfer(tokenIn, user, amountToken); 
-        
+        TransferHelper.safeTransfer(tokenIn, user, amountToken);
+
+        ITacSmartAccount(user).execute(
+            tokenIn,
+            0,
+            abi.encodeWithSelector(
+                IERC20(tokenIn).approve.selector,
+                depositVaultAddress,
+                amountToken
+            )
+        );
+
         ITacSmartAccount(user).execute(
             depositVaultAddress,
             0,
@@ -141,7 +147,6 @@ contract MidasProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         address tokenOut,
         uint256 amountMTokenIn,
         uint256 minReceiveAmount) = abi.decode(arguments, (address, address, uint256, uint256));
-        
         address mToken = IManageableVault(redemptionVaultAddress).mToken();
 
         // grant token approvals
@@ -175,7 +180,7 @@ contract MidasProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         (address redemptionVaultAddress,
         address tokenOut,
         uint256 amountMTokenIn) = abi.decode(arguments, (address, address, uint256));
-        
+
         address mToken = IManageableVault(redemptionVaultAddress).mToken();
 
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
@@ -185,6 +190,15 @@ contract MidasProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         // grant token approvals
         TransferHelper.safeTransfer(mToken, user, amountMTokenIn);
 
+        ITacSmartAccount(user).execute(
+            mToken,
+            0,
+            abi.encodeWithSelector(
+                IERC20(mToken).approve.selector,
+                redemptionVaultAddress,
+                amountMTokenIn
+            )
+        );
 
         ITacSmartAccount(user).execute(
             redemptionVaultAddress,
@@ -216,7 +230,6 @@ contract MidasProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
 
         (address user, bool isNewAccount) = TacSAFactory(_tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
 
-
         uint256 amount = getTokenBalance(user, args.reward);
 
         ITacSmartAccount(user).execute(
@@ -229,14 +242,10 @@ contract MidasProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         )
     );
 
-
-
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(args.reward, amount);
 
         _bridgeTokens(tacHeader, tokensToBridge, "");
-
-
     }
 
 

@@ -15,6 +15,7 @@ export async function deployMidasProxy(deployer: Signer,tacSAFactoryAddress: str
         undefined,
         true
     );
-
+    await midasProxy.waitForDeployment();
     return midasProxy;
 }
+
