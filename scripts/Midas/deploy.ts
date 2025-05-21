@@ -16,11 +16,11 @@ async function main() {
 
     const tacSAFactory = await deployTacSAFactory(deployer, await tacSmartAccount.getAddress());
 
-    const CurveLiteTwocryptoswapProxy = await deployMidasProxy(deployer, await tacSAFactory.getAddress(), await  tacContracts.crossChainLayer.getAddress());
+    const midasProxy = await deployMidasProxy(deployer, await tacSAFactory.getAddress(), await  tacContracts.crossChainLayer.getAddress());
 
 
     saveContractAddress(addressesFilePath, 'MidasSA', await tacSAFactory.getAddress());
-    saveContractAddress(addressesFilePath, 'MidasProxy', await CurveLiteTwocryptoswapProxy.getAddress());
+    saveContractAddress(addressesFilePath, 'MidasProxy', await midasProxy.getAddress());
 
 }
 
