@@ -92,6 +92,9 @@ describe("CurveLiteTwocryptoswapProxy", function () {
 
     it("CurveLiteTwocryptoswap pool deploy pool", async function () {
         const poolCountBefore = await factoryContract.pool_count()
+        const tokenValue1 = Number(1n)
+        const tokenValue2 = Number(60000n)
+        const initial_price = BigInt(Math.round( tokenValue1/tokenValue2  * 10**18));
         const tx = await factoryContract.deploy_pool(
             "stTON-TAC",
             "stTON-TAC",
@@ -105,7 +108,7 @@ describe("CurveLiteTwocryptoswapProxy", function () {
             poolPresetParams.allowed_extra_profit,
             poolPresetParams.adjustment_step,
             poolPresetParams.ma_exp_time,
-            poolPresetParams.initial_price,
+            initial_price,
             {
                 gasLimit: 10000000
             }
@@ -133,8 +136,8 @@ describe("CurveLiteTwocryptoswapProxy", function () {
         const target = await curveLiteTwocryptoswapProxy.getAddress();
         const methodName = "addLiquidity(bytes,bytes)";
 
-        const amountA = 10n*10n**(await sttonEVM.decimals());
-        const amountB = 10n*10n**(await tacEVM.decimals());
+        const amountA = 1n*10n**(await sttonEVM.decimals());
+        const amountB = 60000n *10n**(await tacEVM.decimals());
 
 
         const sttonTokenMintInfo: TokenMintInfo = {

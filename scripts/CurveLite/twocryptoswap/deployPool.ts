@@ -8,18 +8,19 @@ import path from 'path';
 
 const tokens = [
     {
-        "tokenName": "",
-        "tokenSymbol": "",
-        "decimals": 0n,
-        "tokenValue": 0n,
-        "upperBound": 0n,
-        "lowerBound": 0n,
-        "tokenAddress": ""
-    },
-
+        "tokenName": "Tether USD",
+        "tokenSymbol": "USDT",
+        "decimals": 6n,
+        "tokenValue": 6400000n,
+        "upperBound": 10000000000n,
+        "lowerBound": 50000n,
+        "tokenAddress": "0x"
+    }
+    
 ]
 
-const TON_ADDRESS = ""
+
+const TON_ADDRESS = "0xb5d9b465f55af00C60bbE0E7fD1360ba5a307036"
 
 const poolPresetParams = {
     implementation_id: 0,
@@ -40,7 +41,12 @@ async function main(tokens:any) {
     for (const token of tokens) {
         const name = 'TON_' + token.tokenSymbol
         const poolParams = poolPresetParams
-        poolParams.initial_price = token.tokenValue * 10n ** BigInt(18n + 9n - token.decimals);
+
+        const tokenValue1 = 1
+        const tokenValue2 = Number(Number(token.tokenValue)/(10**Number(token.decimals)))
+        poolParams.initial_price = BigInt(Math.round( tokenValue1/tokenValue2  * 10**18));
+        
+        
         console.log(poolParams.initial_price)
         if(poolParams.initial_price >= 10n ** 30n) {
             poolParams.initial_price = 10n ** 30n - 1n
