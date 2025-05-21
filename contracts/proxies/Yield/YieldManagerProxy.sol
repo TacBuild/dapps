@@ -9,6 +9,9 @@ import { TransferHelper } from 'contracts/helpers/TransferHelper.sol';
 import {TacProxyV1Upgradeable} from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
 import {OutMessageV1, TokenAmount, TacHeaderV1, NFTAmount} from "@tonappchain/evm-ccl/contracts/core/Structs.sol";
 
+import {TacSmartAccount} from "../../TacSmartAccounts/TacSmartAccount.sol";
+import {TacSAFactory} from "../../TacSmartAccounts/TacSAFactory.sol";
+import {ITacSmartAccount} from "../../TacSmartAccounts/Interface/ITacSmartAccount.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -51,7 +54,7 @@ contract YieldManagerProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpg
     /**
      * @dev Initialize the contract.
      */
-    function initialize(address adminAddress, address appAddress, address crossChainLayer) public initializer {
+    function initialize(address adminAddress, address appAddress, address tacSAFactoryAddress, address crossChainLayer) public initializer {
         __TacProxyV1Upgradeable_init(crossChainLayer);
         __Ownable_init(adminAddress);
         __UUPSUpgradeable_init();
@@ -76,6 +79,7 @@ contract YieldManagerProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpg
         (bytes memory _data, bytes  memory  _sign) =
                 abi.decode(arguments, (bytes, bytes));
         
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
 
         OrderPayload memory payload = Codec.decodeOrderPayload(_data);
 
@@ -118,6 +122,8 @@ contract YieldManagerProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpg
 ) public _onlyCrossChainLayer {
     (bytes memory _data, bytes memory _sign) =
         abi.decode(arguments, (bytes, bytes));
+
+    TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
 
     (address user, bool isNewAccount) = TacSAFactory(_tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
 
