@@ -6,13 +6,13 @@ import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import { TransferHelper } from 'contracts/helpers/TransferHelper.sol';
-import { TacProxyV1Upgradeable } from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
-import { OutMessageV2, TokenAmount, TacHeaderV1, NFTAmount } from "@tonappchain/evm-ccl/contracts/L2/Structs.sol";
+import {TacProxyV1Upgradeable} from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
+import {OutMessageV1, TokenAmount, TacHeaderV1, NFTAmount} from "@tonappchain/evm-ccl/contracts/core/Structs.sol";
+
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import {Codec, OrderPayload} from "./Codec.sol";
-
 
 interface IManager {
     /// @notice Executes deposit based on off-chain signed payload
@@ -26,17 +26,14 @@ interface IManager {
     function withdraw(bytes calldata data, bytes memory sign) external;
 }
 
-
 /**
  * @title YieldManagerProxy
  * @dev Proxy contract for Yield Manager
  */
 contract YieldManagerProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
-    address public constant _ETH_ADDRESS_ = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
     address internal _appAddress;
     address internal _tacSAFactoryAddress;
-    mapping(address => string) private evmToTvm;
 
 
     /// @notice Arguments for claiming rewards
@@ -83,10 +80,20 @@ contract YieldManagerProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpg
         OrderPayload memory payload = Codec.decodeOrderPayload(_data);
 
         (address user, bool isNewAccount) = TacSAFactory(_tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
-        evmToTvm[user] = header.tvmCaller;
 
         // grant token approvals
-        TransferHelper.safeApprove(payload.token, user, payload.amount);
+        TransferHelper.safeTransfer(payload.token, user, payload.amount);
+
+        ITacSmartAccount(user).execute(
+            payload.token,
+            0,
+            abi.encodeWithSelector(
+                IERC20(payload.token).approve.selector,
+                _appAddress,
+                payload.amount
+            )
+        );
+
 
         ITacSmartAccount(user).execute(
             _appAddress,
@@ -113,10 +120,16 @@ contract YieldManagerProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpg
         abi.decode(arguments, (bytes, bytes));
 
     (address user, bool isNewAccount) = TacSAFactory(_tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
-    evmToTvm[user] = header.tvmCaller;
 
-    IManager(_appAddress).withdraw(_data, _sign);
+    ITacSmartAccount(user).execute(
+            _appAddress,
+            0,
+            abi.encodeWithSelector(
+                IManager.withdraw.selector,
+                _data, _sign
+                )
+        );
+
 }
-
 
 }
