@@ -5,7 +5,7 @@ import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.s
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {TransferHelper} from "@uniswap/lib/contracts/libraries/TransferHelper.sol";
 
-import {OutMessageV1, TokenAmount, TacHeaderV1, NFTAmount} from "@tonappchain/evm-ccl/contracts/L2/Structs.sol";
+import {OutMessageV1, TokenAmount, TacHeaderV1, NFTAmount} from "@tonappchain/evm-ccl/contracts/core/Structs.sol";
 import {ICrossChainLayer} from "@tonappchain/evm-ccl/contracts/interfaces/ICrossChainLayer.sol";
 
 
@@ -43,7 +43,7 @@ contract TacSmartAccount is Initializable {
     ) external onlyOwner {
         for (uint256 i = 0; i < tokens.length; i++) {
             TransferHelper.safeApprove(
-                tokens[i].l2Address,
+                tokens[i].evmAddress,
                 crossChainLayer,
                 tokens[i].amount
             );
@@ -51,7 +51,7 @@ contract TacSmartAccount is Initializable {
 
         for (uint256 i = 0; i < nfts.length; i++) {
             TransferHelper.safeApprove(
-                nfts[i].l2Address,
+                nfts[i].evmAddress,
                 crossChainLayer,
                 nfts[i].amount
             );
