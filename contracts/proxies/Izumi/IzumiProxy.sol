@@ -218,7 +218,7 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
     function newPool(
          bytes calldata,
          bytes calldata arguments
-    ) external {
+    ) external _onlyCrossChainLayer{
         NewPoolArguments memory args = abi.decode(arguments, (NewPoolArguments));
         
         address pool = IPool(poolAddress).newPool(
@@ -237,7 +237,7 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
     function swapY2X(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable {
+    ) external payable _onlyCrossChainLayer{
         SwapY2XArguments memory args = abi.decode(arguments, (SwapY2XArguments));
         
         ISwap.SwapParams memory params = ISwap.SwapParams({
@@ -268,7 +268,7 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
     function swapAmount(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable {
+    ) external payable _onlyCrossChainLayer{
         SwapAmountArguments memory args = abi.decode(arguments, (SwapAmountArguments));
         address lastToken;
         address firstToken;
@@ -300,7 +300,7 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
     function swapX2Y(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable {
+    ) external payable _onlyCrossChainLayer{
         SwapX2YArguments memory args = abi.decode(arguments, (SwapX2YArguments));
         
         ISwap.SwapParams memory params = ISwap.SwapParams({
@@ -331,7 +331,7 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
     function swapX2YDesireY(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable {
+    ) external payable _onlyCrossChainLayer{
         SwapX2YArguments memory args = abi.decode(arguments, (SwapX2YArguments));
         
         ISwap.SwapParams memory params = ISwap.SwapParams({
@@ -362,7 +362,7 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
     function swapY2XDesireX(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable {
+    ) external payable _onlyCrossChainLayer{
         SwapY2XArguments memory args = abi.decode(arguments, (SwapY2XArguments));
         
         ISwap.SwapParams memory params = ISwap.SwapParams({
@@ -393,7 +393,7 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
     function swapDesire(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable {
+    ) external payable _onlyCrossChainLayer{
         SwapDesireArguments memory args = abi.decode(arguments, (SwapDesireArguments));
 
         address lastToken;
@@ -426,7 +426,7 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
     function cancelOrder(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external {
+    ) external _onlyCrossChainLayer{
         CancelOrderArguments memory args = abi.decode(arguments, (CancelOrderArguments));
         ILimitOrderManager.LimOrder memory order = ILimitOrderManager(limitOrderAddress).getActiveOrder(
             address(this),
@@ -473,7 +473,7 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
     function collectOrder(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external {
+    ) external _onlyCrossChainLayer{
         CollectOrderArguments memory args = abi.decode(arguments, (CollectOrderArguments));
         
         ILimitOrderManager.LimOrder memory order = ILimitOrderManager(limitOrderAddress).getActiveOrder(
@@ -507,7 +507,7 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
     function newLimOrder(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable {
+    ) external payable _onlyCrossChainLayer{
         NewLimOrderArguments memory args = abi.decode(arguments, (NewLimOrderArguments));
         address tokenX = args.originAddLimitOrderParam.tokenX;
         address tokenY = args.originAddLimitOrderParam.tokenY;
@@ -538,7 +538,7 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
     function mint(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable {
+    ) external payable _onlyCrossChainLayer{
         ILiquidityManager.MintParam memory params = abi.decode(arguments, (ILiquidityManager.MintParam));
         if (params.tokenX > params.tokenY) {
             address temp = params.tokenX;
@@ -580,7 +580,7 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
     function addLiquidity(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable {
+    ) external payable _onlyCrossChainLayer{
         ILiquidityManager.AddLiquidityParam memory params = abi.decode(
             arguments,
             (ILiquidityManager.AddLiquidityParam)
@@ -610,7 +610,7 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
     function decLiquidity(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external {
+    ) external _onlyCrossChainLayer{
         (uint256 lid, uint128 liquidDelta, uint256 amountXMin, uint256 amountYMin, uint256 deadline) = 
             abi.decode(arguments, (uint256, uint128, uint256, uint256, uint256));
 
@@ -657,7 +657,7 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
     function collect(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable {
+    ) external payable _onlyCrossChainLayer{
         (uint256 lid, uint128 amountXLim, uint128 amountYLim) = 
             abi.decode(arguments, (uint256, uint128, uint128));
 
@@ -686,7 +686,7 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
     function burn(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external {
+    ) external _onlyCrossChainLayer{
         uint256 lid = abi.decode(arguments, (uint256));
         
         bool success = ILiquidityManager(liquidityManagerAddress).burn(lid);
@@ -706,7 +706,7 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
     function multicall(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable {
+    ) external payable _onlyCrossChainLayer{
         (address[] memory to, bytes[] memory data, uint256[] memory value, BridgeData memory bridgeData) = abi.decode(arguments, (address[], bytes[], uint256[], BridgeData));
         for (uint256 i = 0; i < to.length; i++) {
             (bool success,) = to[i].call{value: value[i]}(data[i]);
