@@ -124,6 +124,7 @@ library Codec {
     }
 
     function decodeOrderPayload(bytes memory _data) internal view returns (OrderPayload memory) {
+
         if (_data.length != ORDER_DATA_LENGTH) {
             revert WrongDataLength();
         }
@@ -144,7 +145,6 @@ library Codec {
         if (token == address(0) || !Common.isContract(token)) {
             revert WrongAddressEncoding();
         }
-
         return OrderPayload(token, receiver, amount, sharePrice, sAmount, fee, deadline, trxnType);
     }
 }

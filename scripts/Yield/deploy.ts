@@ -3,6 +3,8 @@ import { loadTacContracts, saveContractAddress } from "@tonappchain/evm-ccl";
 import { deployYieldProxy } from './deployProxy';
 import { deployTacSAFactory } from '../TacSmartAccountFactory/FactoryDeploy';
 import { deployTacSmartAccount } from '../TacSmartAccountFactory/SABlueprintDeploy';
+
+import { yiedTestnetConfig } from "./config/testnetConfig";
 import path from 'path';
 
 async function main() {
@@ -16,7 +18,7 @@ async function main() {
 
     const tacSAFactory = await deployTacSAFactory(deployer, await tacSmartAccount.getAddress());
 
-    const yieldManagerProxy = await deployYieldProxy(deployer, await tacSAFactory.getAddress(), await  tacContracts.crossChainLayer.getAddress());
+    const yieldManagerProxy = await deployYieldProxy(deployer, yiedTestnetConfig.managerAddress, await tacSAFactory.getAddress(), await  tacContracts.crossChainLayer.getAddress());
 
 
     saveContractAddress(addressesFilePath, 'YieldSA', await tacSAFactory.getAddress());

@@ -17,6 +17,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import {Codec, OrderPayload} from "./Codec.sol";
 
+
 interface IManager {
     /// @notice Executes deposit based on off-chain signed payload
     /// @param data Encoded OrderPayload
@@ -78,9 +79,7 @@ contract YieldManagerProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpg
     ) public payable _onlyCrossChainLayer {
         (bytes memory _data, bytes  memory  _sign) =
                 abi.decode(arguments, (bytes, bytes));
-        
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
-
         OrderPayload memory payload = Codec.decodeOrderPayload(_data);
 
         (address user, bool isNewAccount) = TacSAFactory(_tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
