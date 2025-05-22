@@ -15,6 +15,7 @@ import {ITellerWithMultiAssetSupport} from "./interface/ITellerWithMultiAssetSup
 import {IBoringOnChainQueue} from "./interface/IBoringOnChainQueue.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IBoringVault} from "./interface/IBoringVault.sol";
+import "hardhat/console.sol";
 contract TacBoringVaultProxy is UUPSUpgradeable, OwnableUpgradeable, TacProxyV1Upgradeable {
 
     address public constant NATIVE_ADDRESS = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
@@ -31,14 +32,20 @@ contract TacBoringVaultProxy is UUPSUpgradeable, OwnableUpgradeable, TacProxyV1U
 
     struct WithdrawArguments {
         address assetOut;
-        uint256 amountOfShares;
-        uint256 discount;
-        uint256 secondsToDeadline;
+        uint128 amountOfShares;
+        uint16 discount;
+        uint24 secondsToDeadline;
     }
 
     struct WithdrawFundsArguments {
         address asset;
     }
+
+    error ExecutionFailed(bytes returnData);
+    error DepositAmountMismatch(uint256 expected, uint256 actual);
+    error TransferFailed();
+
+    event SaExecutedInteraction(address sa, address target, bytes data);
    
     function initialize(address _crossChainLayer, address _teller, address _boringOnChainQueue, address _boringVault, address _tacSAFactory) public initializer {
         __UUPSUpgradeable_init();
@@ -59,16 +66,17 @@ contract TacBoringVaultProxy is UUPSUpgradeable, OwnableUpgradeable, TacProxyV1U
 
         if(args.depositAsset != NATIVE_ADDRESS){
             TransferHelper.safeTransfer(args.depositAsset, user, args.depositAmount);
-            TacSmartAccount(payable(user)).approve(args.depositAsset, address(teller), args.depositAmount);
+            TacSmartAccount(payable(user)).approve(args.depositAsset, address(boringVault), args.depositAmount);
         } else {
-            require(msg.value == args.depositAmount, "Missmatched deposit amount");
+            require(msg.value == args.depositAmount, DepositAmountMismatch(args.depositAmount, msg.value));
             (bool success,) = payable(user).call{value: msg.value}("");
-            require(success, "Transfer failed");
+            require(success, TransferFailed());
         }
+        
         bytes memory data = abi.encodeWithSelector(ITellerWithMultiAssetSupport.deposit.selector, args.depositAsset, args.depositAmount, args.minimumMint);
-        TacSmartAccount(payable(user)).execute(address(teller), msg.value, data);
+        _saExecution(user, address(teller), msg.value, data);
         data = abi.encodeWithSelector(IERC20.transfer.selector, address(this), boringVault.balanceOf(address(user)));
-        TacSmartAccount(payable(user)).execute(address(boringVault), 0, data);
+        _saExecution(user, address(boringVault), 0, data);
 
         TokenAmount[] memory tokens = new TokenAmount[](1);
         tokens[0] = TokenAmount({
@@ -81,11 +89,17 @@ contract TacBoringVaultProxy is UUPSUpgradeable, OwnableUpgradeable, TacProxyV1U
     function withdrawRequest(bytes calldata tacHeader, bytes calldata arguments) public _onlyCrossChainLayer{
         WithdrawArguments memory args = abi.decode(arguments, (WithdrawArguments));
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
+        console.log("withdrawRequest", args.assetOut, args.amountOfShares, args.secondsToDeadline);
+        console.log(IERC20(address(boringVault)).balanceOf(address(this)));
         (address user,) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
+        // TransferHelper.safeApprove(address(boringVault), address(boringOnChainQueue), args.amountOfShares);
+        // boringOnChainQueue.requestOnChainWithdraw(args.assetOut, args.amountOfShares, args.discount, args.secondsToDeadline);
         TransferHelper.safeTransfer(address(boringVault), user, args.amountOfShares);
         bytes memory data = abi.encodeWithSelector(IBoringOnChainQueue.requestOnChainWithdraw.selector, args.assetOut, args.amountOfShares, args.discount, args.secondsToDeadline);
         TacSmartAccount(payable(user)).approve(address(boringVault), address(boringOnChainQueue), args.amountOfShares);
-        TacSmartAccount(payable(user)).execute(address(boringOnChainQueue), 0, data);
+        console.log("done");
+        _saExecution(user, address(boringOnChainQueue), 0, data);
+        console.log("done2");
     }
 
     function withdrawFunds(bytes calldata tacHeader, bytes calldata arguments) public _onlyCrossChainLayer{
@@ -94,7 +108,7 @@ contract TacBoringVaultProxy is UUPSUpgradeable, OwnableUpgradeable, TacProxyV1U
         (address user,) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
 
         bytes memory data = abi.encodeWithSelector(IERC20.transfer.selector, address(this), IERC20(args.asset).balanceOf(address(user)));
-        TacSmartAccount(payable(user)).execute(address(IERC20(args.asset)), 0, data);
+        _saExecution(user, address(args.asset), 0, data);
         TokenAmount[] memory tokens = new TokenAmount[](1);
         tokens[0] = TokenAmount({
             evmAddress: address(args.asset),
@@ -133,6 +147,12 @@ contract TacBoringVaultProxy is UUPSUpgradeable, OwnableUpgradeable, TacProxyV1U
         });
 
         _sendMessageV1(message, address(this).balance);
+    }
+
+    function _saExecution(address sa, address target, uint256 value, bytes memory data) internal returns(bool success, bytes memory returnData) {
+        (success, returnData) = TacSmartAccount(payable(sa)).executeUnsafe(target, value, data);
+        require(success, ExecutionFailed(returnData));
+        emit SaExecutedInteraction(sa, target, data);   
     }
 
     /// @notice Receives ETH
