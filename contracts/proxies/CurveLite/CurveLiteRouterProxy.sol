@@ -7,7 +7,7 @@ import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/O
 
 import { TransferHelper } from 'contracts/helpers/TransferHelper.sol';
 import { TacProxyV1Upgradeable } from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
-import { OutMessageV1, TokenAmount, TacHeaderV1 } from "@tonappchain/evm-ccl/contracts/L2/Structs.sol";
+import { OutMessageV1, TokenAmount, NFTAmount, TacHeaderV1 } from "@tonappchain/evm-ccl/contracts/core/Structs.sol";
 
 import { IRouter } from "contracts/proxies/CurveLite/ICurveLiteRouter.sol";
 
@@ -92,7 +92,8 @@ contract CurveLiteRouterProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPS
             tvmProtocolFee: 0,
             tvmExecutorFee: 0,
             tvmValidExecutors: new string[](0),
-            toBridge: tokensToBridge
+            toBridge: tokensToBridge,
+            toBridgeNFT: new NFTAmount[](0)
         });
         _sendMessageV1(message, value);
     }

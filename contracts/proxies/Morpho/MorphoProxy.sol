@@ -2,7 +2,11 @@
 pragma solidity ^0.8.28;
 
 import {TransferHelper} from "@uniswap/lib/contracts/libraries/TransferHelper.sol";
+<<<<<<< HEAD
 import {OutMessageV1, TokenAmount, TacHeaderV1} from "@tonappchain/evm-ccl/contracts/L2/Structs.sol";
+=======
+import {OutMessageV1, TokenAmount, TacHeaderV1, NFTAmount} from "@tonappchain/evm-ccl/contracts/core/Structs.sol";
+>>>>>>> develop
 import {ICrossChainLayer} from "@tonappchain/evm-ccl/contracts/interfaces/ICrossChainLayer.sol";
 import {TacProxyV1Upgradeable} from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
@@ -248,7 +252,7 @@ contract MorphoProxy is
     function deposit(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable {
+    ) external payable _onlyCrossChainLayer{
         DepositArguments memory args = abi.decode(
             arguments,
             (DepositArguments)
@@ -275,7 +279,7 @@ contract MorphoProxy is
     function mint(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable {
+    ) external payable _onlyCrossChainLayer {
         MintArguments memory args = abi.decode(arguments, (MintArguments));
         uint256 assets = IMorphoVault(args.vault).previewMint(args.shares);
         TransferHelper.safeApprove(
@@ -300,12 +304,12 @@ contract MorphoProxy is
     function withdraw(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable {
+    ) external payable _onlyCrossChainLayer {
         WithdrawArguments memory args = abi.decode(
             arguments,
             (WithdrawArguments)
         );
-        uint256 assets = IMorphoVault(args.vault).withdraw(
+        IMorphoVault(args.vault).withdraw(
             args.assets,
             address(this),
             address(this)
@@ -314,7 +318,7 @@ contract MorphoProxy is
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(
             IMorphoVault(args.vault).asset(),
-            assets
+            IERC20(IMorphoVault(args.vault).asset()).balanceOf(address(this))
         );
         _bridgeTokens(tacHeader, tokensToBridge, "");
     }
@@ -326,9 +330,9 @@ contract MorphoProxy is
     function redeem(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable {
+    ) external payable _onlyCrossChainLayer {
         RedeemArguments memory args = abi.decode(arguments, (RedeemArguments));
-        uint256 assets = IMorphoVault(args.vault).redeem(
+        IMorphoVault(args.vault).redeem(
             args.shares,
             address(this),
             address(this)
@@ -337,7 +341,7 @@ contract MorphoProxy is
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(
             IMorphoVault(args.vault).asset(),
-            assets
+            IERC20(IMorphoVault(args.vault).asset()).balanceOf(address(this))
         );
             _bridgeTokens(tacHeader, tokensToBridge, "");
     }
@@ -353,7 +357,7 @@ contract MorphoProxy is
     function claim(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable {
+    ) external payable _onlyCrossChainLayer {
         ClaimArguments memory args = abi.decode(arguments, (ClaimArguments));
         uint256 amount = urd.claim(args.account, args.reward, args.claimable, args.proof);
         emit Claim(args.account, args.reward, amount);
@@ -373,7 +377,7 @@ contract MorphoProxy is
     function supplyCollateral(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable {
+    ) external payable _onlyCrossChainLayer {
         SupplyCollateralArguments memory args = abi.decode(arguments, (SupplyCollateralArguments));
         TransferHelper.safeApprove(
             args.marketParams.collateralToken,
@@ -395,7 +399,7 @@ contract MorphoProxy is
     function withdrawCollateral(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable {
+    ) external payable _onlyCrossChainLayer {
         WithdrawCollateralArguments memory args = abi.decode(arguments, (WithdrawCollateralArguments));
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user, bool isNewAccount) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
@@ -418,7 +422,7 @@ contract MorphoProxy is
     function borrow(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable {
+    ) external payable _onlyCrossChainLayer {
         BorrowArguments memory args = abi.decode(arguments, (BorrowArguments));
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user, bool isNewAccount) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
@@ -441,7 +445,7 @@ contract MorphoProxy is
     function repay(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable {
+    ) external payable _onlyCrossChainLayer {
         RepayArguments memory args = abi.decode(arguments, (RepayArguments));
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user, bool isNewAccount) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
@@ -473,7 +477,7 @@ contract MorphoProxy is
     function supply(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable {
+    ) external payable _onlyCrossChainLayer {
         SupplyArguments memory args = abi.decode(arguments, (SupplyArguments));
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user,) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
@@ -495,7 +499,7 @@ contract MorphoProxy is
     function createMarket(
         bytes calldata ,
         bytes calldata arguments
-    ) external {
+    ) external payable {
         CreateMarketArguments memory args = abi.decode(arguments, (CreateMarketArguments));
         morpho.createMarket(args.marketParams);
         emit MarketCreated(args.marketParams.id());
@@ -536,7 +540,7 @@ contract MorphoProxy is
     ) private {
         for (uint256 i = 0; i < tokens.length; i++) {
             TransferHelper.safeApprove(
-                tokens[i].l2Address,
+                tokens[i].evmAddress,
                 _getCrossChainLayerAddress(),
                 tokens[i].amount
             );
@@ -551,10 +555,6 @@ contract MorphoProxy is
         });
 
         _sendMessageV1(message, address(this).balance);
-    }
-
-    function getCrossChainLayerAddress() public view returns (address) {
-        return _getCrossChainLayerAddress();
     }
 
     /// @notice Receives ETH
