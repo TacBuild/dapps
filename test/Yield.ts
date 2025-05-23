@@ -88,8 +88,6 @@ describe("YieldProxy", function () {
 
         const fakeSignature = "0x" + "11".repeat(65);
 
-        
-        
         const encodedArguments = new ethers.AbiCoder().encode(
             ["bytes", "bytes"],
             [
@@ -104,11 +102,7 @@ describe("YieldProxy", function () {
                     amount: amount
                 }];
 
-        
-            
-        
 
-            
 
         testSdk.sendMessage(
             shardsKey,
