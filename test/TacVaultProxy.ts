@@ -27,9 +27,7 @@ describe("TacVaultProxy", function () {
         tacSmartAccount = await deployTacSmartAccount(admin);
         tacSAFactory = await deployTacSAFactory(admin, await tacSmartAccount.getAddress());
         tacVaultProxy = await deployTacVault(admin, crossChainLayerAddress, await tacSAFactory.getAddress());
-        const tonEVMAddress = testSdk.getEVMJettonAddress(TONTokenInfo.tvmAddress);
-        // console.log(tonEVMAddress);
-        // console.log(await admin.getAddress());
+        const tonEVMAddress = testSdk.getEVMJettonAddress(TONTokenInfo.tvmAddress)
         
         ton = new ethers.Contract(tonEVMAddress, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;
         teller = new ethers.Contract(tacVaultTestnetConfig.teller, hre.artifacts.readArtifactSync('ITellerWithMultiAssetSupport').abi, admin) as unknown as ITellerWithMultiAssetSupport;
@@ -51,6 +49,7 @@ describe("TacVaultProxy", function () {
         const depositAmount = ethers.parseUnits("0.001", TONTokenInfo.decimals);
         const asset = new ethers.Contract("0xe3a2296bE422768a630eb35014978A808D106899", hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;
 
+
         const encodedArguments = new ethers.AbiCoder().encode(
             ['tuple(address,uint256,uint256)'],
             [[
@@ -62,9 +61,7 @@ describe("TacVaultProxy", function () {
 
         await asset.connect(admin).transfer(target, depositAmount);
 
-        const balance = await asset.balanceOf(await tacVaultProxy.getAddress());
-
-        const {} = await testSdk.sendMessage(
+        const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
             shardsKey,
             target,
             methodName,
@@ -78,6 +75,13 @@ describe("TacVaultProxy", function () {
             timestamp
         );
 
+        const outMessage = outMessages[0];
+        expect(outMessage.tokensLocked.length).to.be.equal(1);
+
+        // check lp token locked
+        expect(outMessage.tokensLocked[0].evmAddress).to.be.equal(await boringVault.getAddress());
+        expect(outMessage.tokensLocked[0].amount).to.be.gt(0);
+
     });
 
     it("Tac vault withdraw", async function () {
@@ -90,14 +94,15 @@ describe("TacVaultProxy", function () {
         const target = await tacVaultProxy.getAddress();
         const methodName = "withdrawRequest(bytes,bytes)";
 
-        const withdrawAmount = ethers.parseUnits("0.001", sttonTokenInfo.decimals);
+        const withdrawAmount = ethers.parseUnits("0.01", 18n);
+        const asset = new ethers.Contract("0xe3a2296bE422768a630eb35014978A808D106899", hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;
 
         const encodedArguments = new ethers.AbiCoder().encode(
             ['tuple(address,uint256,uint256,uint256)'],
             [[
-                await ton.getAddress(),
+                await asset.getAddress(),
                 withdrawAmount,
-                0n,
+                1n,
                 9999n
             ]]
         );
@@ -142,7 +147,7 @@ describe("TacVaultProxy", function () {
         const encodedArguments = new ethers.AbiCoder().encode(
             ['tuple(address)'],
             [[
-                await ton.getAddress(),
+                await asset.getAddress(),
             ]]
         );
 

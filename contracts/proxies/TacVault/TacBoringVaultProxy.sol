@@ -15,7 +15,6 @@ import {ITellerWithMultiAssetSupport} from "./interface/ITellerWithMultiAssetSup
 import {IBoringOnChainQueue} from "./interface/IBoringOnChainQueue.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IBoringVault} from "./interface/IBoringVault.sol";
-import "hardhat/console.sol";
 contract TacBoringVaultProxy is UUPSUpgradeable, OwnableUpgradeable, TacProxyV1Upgradeable {
 
     address public constant NATIVE_ADDRESS = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
@@ -89,17 +88,11 @@ contract TacBoringVaultProxy is UUPSUpgradeable, OwnableUpgradeable, TacProxyV1U
     function withdrawRequest(bytes calldata tacHeader, bytes calldata arguments) public _onlyCrossChainLayer{
         WithdrawArguments memory args = abi.decode(arguments, (WithdrawArguments));
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
-        console.log("withdrawRequest", args.assetOut, args.amountOfShares, args.secondsToDeadline);
-        console.log(IERC20(address(boringVault)).balanceOf(address(this)));
         (address user,) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
-        // TransferHelper.safeApprove(address(boringVault), address(boringOnChainQueue), args.amountOfShares);
-        // boringOnChainQueue.requestOnChainWithdraw(args.assetOut, args.amountOfShares, args.discount, args.secondsToDeadline);
         TransferHelper.safeTransfer(address(boringVault), user, args.amountOfShares);
         bytes memory data = abi.encodeWithSelector(IBoringOnChainQueue.requestOnChainWithdraw.selector, args.assetOut, args.amountOfShares, args.discount, args.secondsToDeadline);
         TacSmartAccount(payable(user)).approve(address(boringVault), address(boringOnChainQueue), args.amountOfShares);
-        console.log("done");
         _saExecution(user, address(boringOnChainQueue), 0, data);
-        console.log("done2");
     }
 
     function withdrawFunds(bytes calldata tacHeader, bytes calldata arguments) public _onlyCrossChainLayer{
