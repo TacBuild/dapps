@@ -3,6 +3,6 @@ pragma solidity ^0.8.28;
 
 import {TokenAmount, NFTAmount} from "@tonappchain/evm-ccl/contracts/core/Structs.sol";
 interface ITacSmartAccount {
-    function execute(address target, uint256 value, bytes calldata data) external;
+    function execute(address target, uint256 value, bytes calldata data) external payable;
     function bridgeTokens(bytes calldata tacHeader, TokenAmount[] memory tokens, NFTAmount[] memory nfts, string memory payload, address crossChainLayer) external;
 }

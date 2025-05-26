@@ -24,14 +24,14 @@ contract TacSmartAccount is Initializable {
         owner = _owner;
     }
 
-    function execute(address target, uint256 value, bytes calldata data) external onlyOwner returns(bytes memory) {
+    function execute(address target, uint256 value, bytes calldata data) external payable onlyOwner returns(bytes memory) {
         (bool success, bytes memory returnData) = target.call{value: value}(data);
         require(success, "Execution failed");
         emit Executed(target, value, data);
         return returnData;
     }
 
-    function executeUnsafe(address target, uint256 value, bytes calldata data) external onlyOwner returns(bool success, bytes memory returnData)  {
+    function executeUnsafe(address target, uint256 value, bytes calldata data) external payable onlyOwner returns(bool success, bytes memory returnData)  {
         (success, returnData) = target.call{value: value}(data);
         emit Executed(target, value, data);
     }

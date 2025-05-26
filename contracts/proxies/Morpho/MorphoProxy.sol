@@ -2,11 +2,7 @@
 pragma solidity ^0.8.28;
 
 import {TransferHelper} from "@uniswap/lib/contracts/libraries/TransferHelper.sol";
-<<<<<<< HEAD
-import {OutMessageV1, TokenAmount, TacHeaderV1} from "@tonappchain/evm-ccl/contracts/L2/Structs.sol";
-=======
 import {OutMessageV1, TokenAmount, TacHeaderV1, NFTAmount} from "@tonappchain/evm-ccl/contracts/core/Structs.sol";
->>>>>>> develop
 import {ICrossChainLayer} from "@tonappchain/evm-ccl/contracts/interfaces/ICrossChainLayer.sol";
 import {TacProxyV1Upgradeable} from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
@@ -551,7 +547,11 @@ contract MorphoProxy is
             shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: payload,
-            toBridge: tokens
+            tvmProtocolFee: 0,
+            tvmExecutorFee: 0,
+            tvmValidExecutors: new string[](0),
+            toBridge: tokens,
+            toBridgeNFT: new NFTAmount[](0)
         });
 
         _sendMessageV1(message, address(this).balance);
