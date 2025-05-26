@@ -13,3 +13,10 @@ export const tacTokenInfo: JettonInfo  = {
     symbol: "TAC",
     decimals: 18n
 };
+
+export const TONTokenInfo: JettonInfo  = {
+    tvmAddress: "NONE",
+    name: "TON",
+    symbol: "TON",
+    decimals: 9n
+};
