@@ -24,60 +24,20 @@ contract TacSmartAccount is Initializable {
         owner = _owner;
     }
 
-    function execute(address target, uint256 value, bytes calldata data) external payable onlyOwner {
-        (bool success,) = target.call{value: value}(data);
+    function execute(address target, uint256 value, bytes calldata data) external onlyOwner returns(bytes memory) {
+        (bool success, bytes memory returnData) = target.call{value: value}(data);
         require(success, "Execution failed");
+        emit Executed(target, value, data);
+        return returnData;
+    }
+
+    function executeUnsafe(address target, uint256 value, bytes calldata data) external onlyOwner returns(bool success, bytes memory returnData)  {
+        (success, returnData) = target.call{value: value}(data);
         emit Executed(target, value, data);
     }
 
-    /// @notice Bridges tokens to the cross-chain layer
-    /// @param tacHeader TAC header data
-    /// @param tokens Array of token amounts to bridge
-    /// @param payload Additional payload data
-    function bridgeTokens(
-        bytes calldata tacHeader,
-        TokenAmount[] memory tokens,
-        NFTAmount[] memory nfts,
-        string memory payload,
-        address crossChainLayer
-    ) external onlyOwner {
-        for (uint256 i = 0; i < tokens.length; i++) {
-            TransferHelper.safeApprove(
-                tokens[i].evmAddress,
-                crossChainLayer,
-                tokens[i].amount
-            );
-        }
-
-        for (uint256 i = 0; i < nfts.length; i++) {
-            TransferHelper.safeApprove(
-                nfts[i].evmAddress,
-                crossChainLayer,
-                nfts[i].amount
-            );
-        }
-
-        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
-        OutMessageV1 memory message = OutMessageV1({
-            shardsKey: header.shardsKey,
-            tvmTarget: header.tvmCaller,
-            tvmPayload: payload,
-            tvmProtocolFee: 0,
-            tvmExecutorFee: 0,
-            tvmValidExecutors: new string[](0),
-            toBridge: tokens,
-            toBridgeNFT: nfts
-        });
-
-        _sendMessageV1(message, address(this).balance, crossChainLayer);
-    }
-
-    function _decodeTacHeader(bytes calldata tacHeader) internal pure returns (TacHeaderV1 memory) {
-        return abi.decode(tacHeader, (TacHeaderV1));
-    }
-
-    function _sendMessageV1(OutMessageV1 memory outMessage, uint256 tacAmount, address crossChainLayer) internal {
-        ICrossChainLayer(crossChainLayer).sendMessage{value: tacAmount}(TAC_OUT_MESSAGE_VERSION_1, abi.encode(outMessage));
+    function approve(address token, address to, uint256 amount) external onlyOwner{
+        IERC20(token).approve(to, amount);
     }
 
     receive() external payable {}
