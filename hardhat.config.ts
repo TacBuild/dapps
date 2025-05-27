@@ -52,6 +52,31 @@ const config: HardhatUserConfig = {
       url: TAC_TESTNET_SPB_URL
     },
   },
+  etherscan: {
+    apiKey: {
+      tac_testnet: 'empty',
+      tac_testnet_spb: 'empty'
+    },
+    customChains: [
+      {
+        network: "tac_testnet",
+        chainId: 2390,
+        urls: {
+          apiURL: "https://turin.explorer.tac.build/api",
+          browserURL: "https://turin.explorer.tac.build"
+        }
+      },
+      {
+        network: "tac_testnet_spb",
+        chainId: 2391,
+        urls: {
+          apiURL: "https://spb.explorer.tac.build/api",
+          browserURL: "https://spb.explorer.tac.build"
+        }
+      }
+    ]
+  },
+
   gasReporter: {
     enabled: false,
     currency: 'ETH',
