@@ -118,9 +118,8 @@ contract YieldManagerProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpg
             _yUSD,
             IERC20(_yUSD).balanceOf(address(this))
         );
-        NFTAmount[] memory nftsToBridge = new NFTAmount[](0);
 
-        _bridgeTokens(tacHeader, tokensToBridge, nftsToBridge, "");
+        _bridgeTokens(tacHeader, tokensToBridge, new NFTAmount[](0), "");
 
     }
 
@@ -178,11 +177,10 @@ contract YieldManagerProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpg
                 nftId
             )
         );
-        TokenAmount[] memory tokensToBridge = new TokenAmount[](0);
         NFTAmount[] memory nftsToBridge = new NFTAmount[](1);
         nftsToBridge[0] = NFTAmount(address(_sUSD), nftId, 0);
 
-        _bridgeTokens(tacHeader, tokensToBridge , nftsToBridge, "");
+        _bridgeTokens(tacHeader, new TokenAmount[](0) , nftsToBridge, "");
     }
 
     function claim(
