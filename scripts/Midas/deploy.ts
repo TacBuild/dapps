@@ -3,6 +3,7 @@ import { loadTacContracts, saveContractAddress } from "@tonappchain/evm-ccl";
 import { deployMidasProxy } from './deployMidasProxy';
 import { deployTacSAFactory } from '../TacSmartAccountFactory/FactoryDeploy';
 import { deployTacSmartAccount } from '../TacSmartAccountFactory/SABlueprintDeploy';
+import { midasTestnetConfig } from "./config/testnetConfig";
 import path from 'path';
 
 async function main() {
@@ -16,7 +17,7 @@ async function main() {
 
     const tacSAFactory = await deployTacSAFactory(deployer, await tacSmartAccount.getAddress());
 
-    const midasProxy = await deployMidasProxy(deployer, await tacSAFactory.getAddress(), await  tacContracts.crossChainLayer.getAddress());
+    const midasProxy = await deployMidasProxy(deployer, await tacSAFactory.getAddress(),midasTestnetConfig.depositVaultAddress, midasTestnetConfig.redemptionVaultAddress, await  tacContracts.crossChainLayer.getAddress());
 
 
     saveContractAddress(addressesFilePath, 'MidasSA', await tacSAFactory.getAddress());
