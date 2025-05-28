@@ -19,7 +19,6 @@ import "contracts/proxies/Algebra/IAlgebraNonfungiblePositionManager.sol";
  * @dev Proxy contract Algebra, working with NonfungiblePositionManager
  */
 contract AlgebraNonfungiblePositionManagerProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
-    address public constant _ETH_ADDRESS_ = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
     address internal _appAddress;
 
     /**
