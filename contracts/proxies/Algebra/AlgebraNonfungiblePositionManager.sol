@@ -7,9 +7,9 @@ import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/O
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
-import { TransferHelper } from 'contracts/helpers/TransferHelper.sol';
+import { TransferHelper } from '@uniswap/lib/contracts/libraries/TransferHelper.sol';
 import { TacProxyV1Upgradeable } from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
-import { OutMessageV2, TokenAmount, TacHeaderV1, NFTTokenAmount } from "@tonappchain/evm-ccl/contracts/L2/Structs.sol";
+import { OutMessageV1, TokenAmount, TacHeaderV1, NFTAmount } from "@tonappchain/evm-ccl/contracts/core/Structs.sol";
 import "contracts/proxies/Algebra/IAlgebraNonfungiblePositionManager.sol";
 
 
@@ -72,8 +72,8 @@ contract AlgebraNonfungiblePositionManagerProxy is TacProxyV1Upgradeable, Ownabl
             }
         }
 
-        NFTTokenAmount[] memory nftsToBridge = new NFTTokenAmount[](1);
-        nftsToBridge[0] = NFTTokenAmount(address(_appAddress), tokenId, 0);
+        NFTAmount[] memory nftsToBridge = new NFTAmount[](1);
+        nftsToBridge[0] = NFTAmount(address(_appAddress), tokenId, 0);
 
         _bridgeTokens(tacHeader, tokensToBridge, nftsToBridge, "");
     }
@@ -97,12 +97,10 @@ contract AlgebraNonfungiblePositionManagerProxy is TacProxyV1Upgradeable, Ownabl
         (uint128 liquidity, uint256 amount0, uint256 amount1) = INonfungiblePositionManager(_appAddress).increaseLiquidity(params);
 
 
-        NFTTokenAmount[] memory nftsToBridge = new NFTTokenAmount[](1);
-        nftsToBridge[0] = NFTTokenAmount(address(_appAddress), liquidity, 0);
-        TokenAmount[] memory tokensToBridge = new TokenAmount[](0);
+        NFTAmount[] memory nftsToBridge = new NFTAmount[](1);
+        nftsToBridge[0] = NFTAmount(address(_appAddress), params.tokenId, 0);
 
-
-        _bridgeTokens(tacHeader, tokensToBridge, nftsToBridge, "");
+        _bridgeTokens(tacHeader, new TokenAmount[](0), nftsToBridge, "");
     }
 
     /**
@@ -116,17 +114,17 @@ contract AlgebraNonfungiblePositionManagerProxy is TacProxyV1Upgradeable, Ownabl
     ) public _onlyCrossChainLayer {
         (DecreaseLiquidityParams memory params) = abi.decode(arguments, (DecreaseLiquidityParams));
 
-        (, , address _token0, address _token1, , , , , , , , ) = INonfungiblePositionManager(_appAddress).positions(params.tokenId);
+        (, , address token0, address token1, , , , , , , , ) = INonfungiblePositionManager(_appAddress).positions(params.tokenId);
 
 
         (uint256 amount0, uint256 amount1) = INonfungiblePositionManager(_appAddress).decreaseLiquidity(params);
 
-        NFTTokenAmount[] memory nftsToBridge = new NFTTokenAmount[](0);
-        TokenAmount[] memory tokensToBridge = new TokenAmount[](2);
-        tokensToBridge[0] = TokenAmount(_token0, amount0);
-        tokensToBridge[0] = TokenAmount(_token1, amount1);
 
-        _bridgeTokens(tacHeader, tokensToBridge, nftsToBridge, "");
+        TokenAmount[] memory tokensToBridge = new TokenAmount[](2);
+        tokensToBridge[0] = TokenAmount(token0, amount0);
+        tokensToBridge[1] = TokenAmount(token1, amount1);
+
+        _bridgeTokens(tacHeader, tokensToBridge, new NFTAmount[](0), "");
     }
 
     /**
@@ -156,36 +154,51 @@ contract AlgebraNonfungiblePositionManagerProxy is TacProxyV1Upgradeable, Ownabl
 
         (uint256 amount0, uint256 amount1) = INonfungiblePositionManager(_appAddress).collect(params);
 
-        // TODO: NFT WORK SEND NFT
+
+        (, , address token0, address token1, , , , , , , , ) = INonfungiblePositionManager(_appAddress).positions(params.tokenId);
+
+        TokenAmount[] memory tokensToBridge = new TokenAmount[](2);
+        tokensToBridge[0] = TokenAmount(token0, amount0);
+        tokensToBridge[1] = TokenAmount(token1, amount1);
+
+        _bridgeTokens(tacHeader, tokensToBridge, new NFTAmount[](0), "");
     }
 
+    /// @notice Bridges tokens and NFTs to the cross-chain layer
+    /// @param tacHeader TAC header data
+    /// @param tokens Array of token amounts to bridge
+    /// @param nfts Array of NFT amounts to bridge
+    /// @param payload Additional payload data
     function _bridgeTokens(
         bytes calldata tacHeader,
         TokenAmount[] memory tokens,
-        NFTTokenAmount[] memory nfts,
+        NFTAmount[] memory nfts,
         string memory payload
     ) private {
         for (uint256 i = 0; i < tokens.length; i++) {
             TransferHelper.safeApprove(
-                tokens[i].l2Address,
+                tokens[i].evmAddress,
                 _getCrossChainLayerAddress(),
                 tokens[i].amount
             );
         }
 
         for (uint256 i = 0; i < nfts.length; i++) {
-            IERC721(nfts[i].l2Address).approve(_getCrossChainLayerAddress(), nfts[i].tokenId);
+            IERC721(nfts[i].evmAddress).approve(_getCrossChainLayerAddress(), nfts[i].tokenId);
         }
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
-        OutMessageV2 memory message = OutMessageV2({
+        OutMessageV1 memory message = OutMessageV1({
             shardsKey: header.shardsKey,
             tvmTarget: header.tvmCaller,
             tvmPayload: payload,
+            tvmProtocolFee: 0,
+            tvmExecutorFee: 0,
+            tvmValidExecutors: new string[](0),
             toBridge: tokens,
             toBridgeNFT: nfts
         });
 
-        _sendMessageV2(message, address(this).balance);
+        _sendMessageV1(message, address(this).balance);
     }
 }
 
