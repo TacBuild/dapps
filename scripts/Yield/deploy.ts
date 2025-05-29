@@ -18,7 +18,7 @@ async function main() {
 
     const tacSAFactory = await deployTacSAFactory(deployer, await tacSmartAccount.getAddress());
 
-    const yieldManagerProxy = await deployYieldProxy(deployer, yiedTestnetConfig.managerAddress, await tacSAFactory.getAddress(), await  tacContracts.crossChainLayer.getAddress());
+    const yieldManagerProxy = await deployYieldProxy(deployer, yiedTestnetConfig.managerAddress, yiedTestnetConfig.receiptAddress, yiedTestnetConfig.sUSD,yiedTestnetConfig.yUSD, await tacSAFactory.getAddress(), await  tacContracts.crossChainLayer.getAddress());
 
 
     saveContractAddress(addressesFilePath, 'YieldSA', await tacSAFactory.getAddress());

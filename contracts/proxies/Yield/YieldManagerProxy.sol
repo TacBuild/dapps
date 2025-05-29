@@ -20,7 +20,6 @@ import {Codec, OrderPayload} from "./Codec.sol";
 import {IManager} from "./IManager.sol";
 import {ISToken} from "./ISToken.sol";
 
-
 /**
  * @title YieldManagerProxy
  * @dev Proxy contract for Yield Manager
@@ -28,6 +27,7 @@ import {ISToken} from "./ISToken.sol";
 contract YieldManagerProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
 
     address internal _managerAddress;
+    address internal _receiptAddress;
     address internal _sUSD;
     address internal _yUSD;
     address internal _tacSAFactoryAddress;
@@ -48,7 +48,7 @@ contract YieldManagerProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpg
     /**
      * @dev Initialize the contract.
      */
-    function initialize(address adminAddress, address managerAddress, address sUSD, address yUSD,  address tacSAFactoryAddress, address crossChainLayer) public initializer {
+    function initialize(address adminAddress, address managerAddress, address receiptAddress, address sUSD, address yUSD,  address tacSAFactoryAddress, address crossChainLayer) public initializer {
         __TacProxyV1Upgradeable_init(crossChainLayer);
         __Ownable_init(adminAddress);
         __UUPSUpgradeable_init();
@@ -56,6 +56,7 @@ contract YieldManagerProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpg
         _sUSD = sUSD;
         _yUSD = yUSD;
         _managerAddress = managerAddress;
+        _receiptAddress = receiptAddress;
     }
 
     /**
@@ -80,7 +81,6 @@ contract YieldManagerProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpg
 
         // grant token approvals
         TransferHelper.safeTransfer(payload.token, user, payload.amount);
-
         ITacSmartAccount(user).execute(
             payload.token,
             0,
@@ -91,7 +91,6 @@ contract YieldManagerProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpg
             )
         );
 
-
         ITacSmartAccount(user).execute(
             _managerAddress,
             0,
@@ -100,9 +99,8 @@ contract YieldManagerProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpg
                 _data, _sign
                 )
         );
-
+        
         uint256 yUSDSaBalance = IERC20(_yUSD).balanceOf(user);
-
         ITacSmartAccount(user).execute(
             _yUSD,
             0,
@@ -139,7 +137,7 @@ contract YieldManagerProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpg
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         OrderPayload memory payload = Codec.decodeOrderPayload(_data);
         (address user, bool isNewAccount) = TacSAFactory(_tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
-
+        
         TransferHelper.safeTransfer(_yUSD, user, payload.amount);
 
         ITacSmartAccount(user).execute(
@@ -162,23 +160,14 @@ contract YieldManagerProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpg
             );
 
 
-        uint256 balance = IERC721Enumerable(_sUSD).balanceOf(user);
+        uint256 balance = IERC721Enumerable(_receiptAddress).balanceOf(payload.receiver);
         require(balance > 0, "No NFTs");
+        
+        uint256 nftId = IERC721Enumerable(_receiptAddress).tokenOfOwnerByIndex(payload.receiver, balance - 1);
 
-        uint256 nftId = IERC721Enumerable(_sUSD).tokenOfOwnerByIndex(user, balance - 1);
 
-        ITacSmartAccount(user).execute(
-            address(_sUSD),
-            0,
-            abi.encodeWithSelector(
-                IERC721(_sUSD).transferFrom.selector,
-                user,
-                address(this),
-                nftId
-            )
-        );
         NFTAmount[] memory nftsToBridge = new NFTAmount[](1);
-        nftsToBridge[0] = NFTAmount(address(_sUSD), nftId, 0);
+        nftsToBridge[0] = NFTAmount(_receiptAddress, nftId, 0);
 
         _bridgeTokens(tacHeader, new TokenAmount[](0) , nftsToBridge, "");
     }
@@ -238,7 +227,6 @@ contract YieldManagerProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpg
             toBridge: tokens,
             toBridgeNFT: nfts
         });
-
         _sendMessageV1(message, address(this).balance);
     }
 }
