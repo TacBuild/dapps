@@ -49,11 +49,11 @@ struct RepayArguments {
 }
 
 /**
- * @title PoolProxy
+ * @title ZerolendPoolProxy
  * @dev Proxy contract for interacting with the Pool contract.
  * This contract handles supply, withdraw, borrow, and repay operations.
  */
-contract PoolProxy is
+contract ZerolendPoolProxy is
     TacProxyV1Upgradeable,
     UUPSUpgradeable,
     OwnableUpgradeable {
