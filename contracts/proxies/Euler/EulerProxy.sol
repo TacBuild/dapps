@@ -66,7 +66,7 @@ contract EulerProxy is
             _setAuthorization(user, address(this), true);
         }
         SaHelper.executePreHooks(user, hooks);
-        bytes memory result =eulerVaultConnector.call(hooks.mainCallHook.contractAddress, user, hooks.mainCallHook.value, hooks.mainCallHook.data);
+        bytes memory result = eulerVaultConnector.call(hooks.mainCallHook.contractAddress, user, hooks.mainCallHook.value, hooks.mainCallHook.data);
         SaHelper.executePostHooks(user, hooks);
 
         if (bridgeBackData.tokensToBridge.length > 0) {
