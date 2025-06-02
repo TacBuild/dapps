@@ -486,6 +486,88 @@ contract MorphoProxy is
         emit Supply(args.marketParams.id(), args.assets, args.shares);
     }
 
+
+    ///////////////////////////////
+    /////// BUNDLED OPERATIONS ////
+    ///////////////////////////////
+
+    /// @notice Supplies collateral and borrows assets
+    /// @param tacHeader TAC header data
+    /// @param arguments Encoded supply collateral and borrow arguments
+    function supplyCollateralAndBorrow(
+        bytes calldata tacHeader,
+        bytes calldata arguments
+    ) external payable _onlyCrossChainLayer {
+        (SupplyCollateralArguments memory supplyArgs, BorrowArguments memory borrowArgs) = abi.decode(arguments, (SupplyCollateralArguments, BorrowArguments));
+        // Supply collateral
+        TransferHelper.safeApprove(
+            supplyArgs.marketParams.collateralToken,
+            address(morpho),
+            supplyArgs.assets
+        );
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
+        (address user, bool isNewAccount) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
+        if (isNewAccount) {
+            _setAutorization(user);
+        }
+        morpho.supplyCollateral(supplyArgs.marketParams, supplyArgs.assets, user, supplyArgs.data);
+        emit SupplyCollateral(supplyArgs.marketParams.id(), supplyArgs.assets);
+
+        // Borrow
+        morpho.borrow(borrowArgs.marketParams, borrowArgs.assets, borrowArgs.shares, user, address(this));
+        emit Borrow(borrowArgs.marketParams.id(), borrowArgs.assets, borrowArgs.shares);
+        TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
+        tokensToBridge[0] = TokenAmount(
+            borrowArgs.marketParams.loanToken,
+            IERC20(borrowArgs.marketParams.loanToken).balanceOf(address(this))
+        );
+        _bridgeTokens(tacHeader, tokensToBridge, "");
+    }
+
+    /// @notice Repays a loan and withdraws collateral
+    /// @param tacHeader TAC header data
+    /// @param arguments Encoded repay and withdraw collateral arguments
+    function repayAndWithdrawCollateral(
+        bytes calldata tacHeader,
+        bytes calldata arguments
+    ) external payable _onlyCrossChainLayer {
+        (RepayArguments memory repayArgs, WithdrawCollateralArguments memory withdrawArgs) = abi.decode(arguments, (RepayArguments, WithdrawCollateralArguments));
+        // Repay
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
+        (address user, bool isNewAccount) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
+        if (isNewAccount) {
+            _setAutorization(user);
+        }
+        TransferHelper.safeApprove(
+            repayArgs.marketParams.loanToken,
+            address(morpho),
+            IERC20(repayArgs.marketParams.loanToken).balanceOf(address(this))
+        );
+        morpho.repay(repayArgs.marketParams, repayArgs.assets, repayArgs.shares, user, repayArgs.data);
+        emit Repay(repayArgs.marketParams.id(), repayArgs.assets, repayArgs.shares);
+
+
+        if (IERC20(repayArgs.marketParams.loanToken).balanceOf(address(this)) > 0) {
+            TokenAmount[] memory loanTokensToBridge = new TokenAmount[](1);
+            loanTokensToBridge[0] = TokenAmount(
+                repayArgs.marketParams.loanToken,
+                IERC20(repayArgs.marketParams.loanToken).balanceOf(address(this))
+            );
+            _bridgeTokens(tacHeader, loanTokensToBridge, "");
+        }
+        // Withdraw collateral
+        morpho.withdrawCollateral(withdrawArgs.marketParams, withdrawArgs.assets, user, address(this));
+        emit WithdrawCollateral(withdrawArgs.marketParams.id(), withdrawArgs.assets);
+        TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
+        tokensToBridge[0] = TokenAmount(
+            withdrawArgs.marketParams.collateralToken,
+            IERC20(withdrawArgs.marketParams.collateralToken).balanceOf(address(this))
+        );
+        _bridgeTokens(tacHeader, tokensToBridge, "");
+    }
+
+    
+
     ///////////////////////////////
     /////// CREATE FUNCTIONS ///////
     ///////////////////////////////

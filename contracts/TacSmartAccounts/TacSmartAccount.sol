@@ -11,7 +11,6 @@ import {ICrossChainLayer} from "@tonappchain/evm-ccl/contracts/interfaces/ICross
 
 contract TacSmartAccount is Initializable {
     address public owner;
-    uint256 private constant TAC_OUT_MESSAGE_VERSION_1 = 1;
 
     event Executed(address indexed target, uint256 value, bytes data);
 
