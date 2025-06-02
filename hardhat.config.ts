@@ -62,7 +62,7 @@ const config: HardhatUserConfig = {
         network: "tac_testnet",
         chainId: 2390,
         urls: {
-          apiURL: "https://turin.explorer.tac.build/api",
+          apiURL: process.env.TURIN_API_URL || "",
           browserURL: "https://turin.explorer.tac.build"
         }
       },
@@ -70,7 +70,7 @@ const config: HardhatUserConfig = {
         network: "tac_testnet_spb",
         chainId: 2391,
         urls: {
-          apiURL: "https://spb.explorer.tac.build/api",
+          apiURL: process.env.SPB_API_URL || "",
           browserURL: "https://spb.explorer.tac.build"
         }
       }
