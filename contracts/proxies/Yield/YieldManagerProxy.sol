@@ -19,6 +19,7 @@ import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {Codec, OrderPayload} from "./Codec.sol";
 import {IManager} from "./IManager.sol";
 import {ISToken} from "./ISToken.sol";
+import {IReceipt} from "./IReceipt.sol";
 
 /**
  * @title YieldManagerProxy
@@ -182,15 +183,55 @@ contract YieldManagerProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpg
 
     (address user, bool isNewAccount) = TacSAFactory(_tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
 
+    address asset = IReceipt(_receiptAddress).readAsset(receiptId);
+
     ITacSmartAccount(user).execute(
         _sUSD,
         0,
         abi.encodeWithSelector(
             ISToken(_sUSD).claim.selector,
             receiptId,
-            receiver
+            address(this)
         )
     );
+
+    TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
+        tokensToBridge[0] = TokenAmount(
+            asset,
+            IERC20(asset).balanceOf(address(this))
+        );
+
+        _bridgeTokens(tacHeader, tokensToBridge, new NFTAmount[](0), "");
+}
+
+
+    function claimSA(
+    bytes calldata tacHeader,
+    bytes calldata arguments
+) public _onlyCrossChainLayer {
+    (address asset) = abi.decode(arguments, (address));
+
+    TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
+
+    (address user, bool isNewAccount) = TacSAFactory(_tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
+
+    ITacSmartAccount(user).execute(
+        asset,
+        0,
+        abi.encodeWithSelector(
+            IERC20(asset).transfer.selector,
+            address(this),
+            IERC20(asset).balanceOf(user)
+        )
+    );
+
+    TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
+        tokensToBridge[0] = TokenAmount(
+            asset,
+            IERC20(asset).balanceOf(address(this))
+        );
+
+        _bridgeTokens(tacHeader, tokensToBridge, new NFTAmount[](0), "");
 }
 
 
