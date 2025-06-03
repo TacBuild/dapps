@@ -18,6 +18,10 @@ contract TacSmartAccount is Initializable {
         require(msg.sender == owner, "Not the owner");
         _;
     }
+    
+    constructor() {
+        _disableInitializers();
+    }
 
     function initialize(address _owner) public initializer {
         owner = _owner;
