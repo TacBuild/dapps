@@ -5,7 +5,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { console } from "hardhat/console.sol";
 
 
-contract MockPool is Ownable {
+contract MockZerolendPool is Ownable {
     address public token;
     uint256 public tokenValue;
 

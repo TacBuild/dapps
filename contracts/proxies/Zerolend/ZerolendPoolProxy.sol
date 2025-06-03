@@ -64,9 +64,9 @@ contract ZerolendPoolProxy is
 
 
 
-    function initialize(address appAddress,address tacSAFactoryAddress, address _crossChainLayer) public initializer {
+    function initialize(address deployer, address appAddress,address tacSAFactoryAddress, address _crossChainLayer) public initializer {
         __TacProxyV1Upgradeable_init(_crossChainLayer);
-        __Ownable_init(msg.sender);
+        __Ownable_init(deployer);
         __UUPSUpgradeable_init();
         _tacSAFactoryAddress = tacSAFactoryAddress;
         _appAddress = appAddress;

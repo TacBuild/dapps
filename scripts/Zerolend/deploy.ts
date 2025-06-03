@@ -4,7 +4,7 @@ import { deployZerolendPoolProxy } from './deployProxy';
 import { deployTacSAFactory } from '../TacSmartAccountFactory/FactoryDeploy';
 import { deployTacSmartAccount } from '../TacSmartAccountFactory/SABlueprintDeploy';
 
-import { ZerolendPoolConfig } from "./config/ZerolendConfig";
+import { zerolendPoolConfig } from "./config/ZerolendConfig";
 import path from 'path';
 
 async function main() {
@@ -18,7 +18,7 @@ async function main() {
 
     const tacSAFactory = await deployTacSAFactory(deployer, await tacSmartAccount.getAddress());
 
-    const zerolendPoolProxy = await deployZerolendPoolProxy(deployer, await tacSAFactory.getAddress(), await  tacContracts.crossChainLayer.getAddress());
+    const zerolendPoolProxy = await deployZerolendPoolProxy(deployer, zerolendPoolConfig.appAddress, await tacSAFactory.getAddress(), await  tacContracts.crossChainLayer.getAddress());
 
 
     saveContractAddress(addressesFilePath, 'ZerolendSA', await tacSAFactory.getAddress());

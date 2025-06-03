@@ -4,12 +4,12 @@ import { Signer } from 'ethers';
 import { deployUpgradable } from '@tonappchain/evm-ccl'
 import { proxyOptsUUPS } from "../utils"
 
-export async function deployZerolendPoolProxy(deployer: Signer, tacSAFactoryAddress: string, crossChainLayerAddress: string): Promise<ZerolendPoolProxy> {
+export async function deployZerolendPoolProxy(deployer: Signer, appAddress: string, tacSAFactoryAddress: string, crossChainLayerAddress: string): Promise<ZerolendPoolProxy> {
     // Proxy
     const zerolendPoolProxy = await deployUpgradable<ZerolendPoolProxy>(
         deployer,
         hre.artifacts.readArtifactSync('ZerolendPoolProxy'),
-        [await deployer.getAddress(), tacSAFactoryAddress, crossChainLayerAddress],
+        [await deployer.getAddress(), appAddress, tacSAFactoryAddress, crossChainLayerAddress],
         proxyOptsUUPS,
         undefined,
         true
