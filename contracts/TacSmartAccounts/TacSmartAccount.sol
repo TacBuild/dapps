@@ -3,12 +3,6 @@ pragma solidity ^0.8.28;
 
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {TransferHelper} from "@uniswap/lib/contracts/libraries/TransferHelper.sol";
-
-import {OutMessageV1, TokenAmount, TacHeaderV1, NFTAmount} from "@tonappchain/evm-ccl/contracts/core/Structs.sol";
-import {ICrossChainLayer} from "@tonappchain/evm-ccl/contracts/interfaces/ICrossChainLayer.sol";
-
-
 contract TacSmartAccount is Initializable {
     address public owner;
 
