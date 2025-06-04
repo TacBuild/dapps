@@ -8,15 +8,15 @@ import path from 'path';
 
 const tokens = [
     {
-        "tokenName": "Tether USD",
-        "tokenSymbol": "USDT",
+        "tokenName": "",
+        "tokenSymbol": "",
         "decimals": 6n,
         "tokenValue": 6400000n,
         "upperBound": 10000000000n,
         "lowerBound": 50000n,
         "tokenAddress": "0x"
     }
-    
+
 ]
 
 

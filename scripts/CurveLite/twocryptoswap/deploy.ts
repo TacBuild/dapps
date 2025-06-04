@@ -5,7 +5,7 @@ import path from 'path';
 
 async function main() {
     const deployer = new ethers.Wallet(process.env.DEPLOYER_PRIVATE_KEY!, ethers.provider);
-    
+
     const addressesFilePath = path.resolve(__dirname, '../../../addresses.json');
 
     const tacContracts = await loadTacContracts(addressesFilePath, deployer);
@@ -13,7 +13,6 @@ async function main() {
     const CurveLiteTwocryptoswapProxy = await deployCurveLiteTwocryptoswapProxy(deployer, await  tacContracts.crossChainLayer.getAddress());
 
     saveContractAddress(addressesFilePath, 'CurveLiteTwocryptoswapProxy', await CurveLiteTwocryptoswapProxy.getAddress());
-    
 }
 
 
