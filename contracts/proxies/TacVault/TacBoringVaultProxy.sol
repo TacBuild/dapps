@@ -44,8 +44,10 @@ contract TacBoringVaultProxy is UUPSUpgradeable, OwnableUpgradeable, TacProxyV1U
     error DepositAmountMismatch(uint256 expected, uint256 actual);
     error TransferFailed();
 
-    event SaExecutedInteraction(address sa, address target, bytes data);
-   
+    event SaExecutedInteraction(address indexed sa, address indexed target, bytes data);
+    event WithdrawRequest(bytes32 indexed requestId);
+    event WithdrawFunds(address indexed asset, uint256 amount, address indexed user, string indexed tvmCaller);
+
     function initialize(address _crossChainLayer, address _teller, address _boringOnChainQueue, address _boringVault, address _tacSAFactory) public initializer {
         __UUPSUpgradeable_init();
         __Ownable_init(msg.sender);
@@ -92,7 +94,9 @@ contract TacBoringVaultProxy is UUPSUpgradeable, OwnableUpgradeable, TacProxyV1U
         TransferHelper.safeTransfer(address(boringVault), user, args.amountOfShares);
         bytes memory data = abi.encodeWithSelector(IBoringOnChainQueue.requestOnChainWithdraw.selector, args.assetOut, args.amountOfShares, args.discount, args.secondsToDeadline);
         TacSmartAccount(payable(user)).approve(address(boringVault), address(boringOnChainQueue), args.amountOfShares);
-        _saExecution(user, address(boringOnChainQueue), 0, data);
+        (, bytes memory returnData) = _saExecution(user, address(boringOnChainQueue), 0, data);
+        bytes32 requestId = abi.decode(returnData, (bytes32));
+        emit WithdrawRequest(requestId);
     }
 
     function withdrawFunds(bytes calldata tacHeader, bytes calldata arguments) public _onlyCrossChainLayer{
@@ -108,6 +112,7 @@ contract TacBoringVaultProxy is UUPSUpgradeable, OwnableUpgradeable, TacProxyV1U
             amount: IERC20(args.asset).balanceOf(address(this))
         });
         _bridgeTokens(tacHeader, tokens, "");
+        emit WithdrawFunds(args.asset, IERC20(args.asset).balanceOf(address(this)), user, header.tvmCaller);
     }
 
     /// @notice Bridges tokens to the cross-chain layer
