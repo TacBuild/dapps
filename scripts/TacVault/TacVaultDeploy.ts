@@ -27,4 +27,4 @@ export async function deployTacVault(
     
     await tacVaultProxy.waitForDeployment();
     return tacVaultProxy;
-} 
+}
