@@ -309,6 +309,18 @@ export class SaHooksBuilder {
             [this.hooks]
         );
     }
+
+    tupleString(): string {
+        return "tuple(" +
+        "tuple(bool isFromSAPerspective, address contractAddress, uint256 value, bytes data)[] preHooks," +
+        "tuple(bool isFromSAPerspective, address contractAddress, uint256 value, bytes data)[] postHooks," +
+        "tuple(bool isFromSAPerspective, address contractAddress, uint256 value, bytes data) mainCallHook" +
+    ")"
+    }
+
+    bridgeString(): string {
+        return "tuple(address[])";
+    }
 }
 
 // Example usage:

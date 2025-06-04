@@ -12,13 +12,14 @@ const proxyOptsUUPS: DeployProxyOptions = {
 
 export async function deployEulerProxy(
     deployer: Signer,
-    crossChainLayerAddress: string
+    crossChainLayerAddress: string,
+    tacSAFactoryAddress?: string
 ): Promise<EulerProxy> {
     
     const eulerProxy = await deployUpgradable<EulerProxy>(
         deployer,
         hre.artifacts.readArtifactSync('EulerProxy'),
-        [crossChainLayerAddress, eulerConfig.eulerVaultConnectorAddress, tacSAFactoryDeployments.proxyAddress],
+        [crossChainLayerAddress, eulerConfig.eulerVaultConnectorAddress, tacSAFactoryAddress || tacSAFactoryDeployments.proxyAddress],
         proxyOptsUUPS,
         undefined,
         true
