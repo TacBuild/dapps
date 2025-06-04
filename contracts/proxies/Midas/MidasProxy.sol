@@ -10,6 +10,7 @@ import {TacProxyV1Upgradeable} from "@tonappchain/evm-ccl/contracts/proxies/TacP
 import {OutMessageV1, TokenAmount, TacHeaderV1, NFTAmount} from "@tonappchain/evm-ccl/contracts/core/Structs.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 import { IDepositVault } from "contracts/proxies/Midas/interface/IDepositVault.sol";
 import { IRedemptionVault } from "contracts/proxies/Midas/interface/IRedemptionVault.sol";
@@ -28,16 +29,6 @@ contract MidasProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
     address internal _depositVaultAddress;
     address internal _redemptionVaultAddress;
 
-    /// @notice Arguments for claiming rewards
-    /// @param account Address of the account claiming rewards
-    /// @param reward Address of the reward token
-    /// @param claimable Amount of rewards claimable
-    /// @param proof Merkle proof for claiming rewards
-    struct ClaimArguments {
-        address reward;
-        uint256 claimable;
-        bytes32[] proof;
-    }
 
     /**
      * @dev Initialize the contract.
@@ -74,7 +65,6 @@ contract MidasProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user, bool isNewAccount) = TacSAFactory(_tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
 
-
         TransferHelper.safeTransfer(tokenIn, user, amountToken);
 
         ITacSmartAccount(user).execute(
@@ -96,9 +86,11 @@ contract MidasProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
                 )
         );
 
+
         address mToken = IManageableVault(_depositVaultAddress).mToken();
 
-        uint256 amount = getTokenBalance(user, mToken);
+        uint256 amount = IERC20(mToken).balanceOf(user);
+
 
         ITacSmartAccount(user).execute(
             mToken,
@@ -110,10 +102,11 @@ contract MidasProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
             )
         );
 
+
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(mToken, amount);
 
-        _bridgeTokens(tacHeader, tokensToBridge, "");
+        _bridgeTokens(tacHeader, tokensToBridge, new NFTAmount[](0), "");
     }
 
     /**
@@ -132,6 +125,11 @@ contract MidasProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
 
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user, bool isNewAccount) = TacSAFactory(_tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
+
+        require(tokenIn != address(0), "Invalid token address");
+        require(amountToken > 0, "Invalid amount");
+        require(IERC20(tokenIn).balanceOf(address(this)) >= amountToken, "Insufficient balance for transfer");
+
 
         // grant token approvals
         TransferHelper.safeTransfer(tokenIn, user, amountToken);
@@ -156,6 +154,7 @@ contract MidasProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
                 referrerId
                 )
         );
+
     }
 
      /**
@@ -198,7 +197,8 @@ contract MidasProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
                 )
         );
 
-        uint256 amount = getTokenBalance(user, tokenOut);
+        uint256 amount = IERC20(tokenOut).balanceOf(user);
+
 
         ITacSmartAccount(user).execute(
             tokenOut,
@@ -213,7 +213,7 @@ contract MidasProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(tokenOut, amount);
 
-        _bridgeTokens(tacHeader, tokensToBridge, "");
+        _bridgeTokens(tacHeader, tokensToBridge, new NFTAmount[](0), "");
     }
 
      /**
@@ -259,51 +259,46 @@ contract MidasProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
 
     }
 
-    function getTokenBalance(address sa, address token) public view returns (uint256) {
-    return IERC20(token).balanceOf(sa);
-    }
+    function claimSA(
+    bytes calldata tacHeader,
+    bytes calldata arguments
+) public _onlyCrossChainLayer {
+    (address asset) = abi.decode(arguments, (address));
 
+    TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
 
-    /// @notice Claims rewards for an account
-    /// @param tacHeader TAC header data
-    /// @param arguments Encoded claim arguments
-    function claim(
-        bytes calldata tacHeader,
-        bytes calldata arguments
-    ) external _onlyCrossChainLayer {
-        ClaimArguments memory args = abi.decode(arguments, (ClaimArguments));
+    (address user, bool isNewAccount) = TacSAFactory(_tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
 
-        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
-
-        (address user, bool isNewAccount) = TacSAFactory(_tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
-
-        uint256 amount = getTokenBalance(user, args.reward);
-
-        ITacSmartAccount(user).execute(
-        args.reward,
+    ITacSmartAccount(user).execute(
+        asset,
         0,
         abi.encodeWithSelector(
-            IERC20(args.reward).transfer.selector,
+            IERC20(asset).transfer.selector,
             address(this),
-            amount
+            IERC20(asset).balanceOf(user)
         )
     );
 
-        TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
-        tokensToBridge[0] = TokenAmount(args.reward, amount);
+    TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
+        tokensToBridge[0] = TokenAmount(
+            asset,
+            IERC20(asset).balanceOf(address(this))
+        );
 
-        _bridgeTokens(tacHeader, tokensToBridge, "");
-    }
+        _bridgeTokens(tacHeader, tokensToBridge, new NFTAmount[](0), "");
+}
 
 
 
-    /// @notice Bridges tokens to the cross-chain layer
+    /// @notice Bridges tokens and NFTs to the cross-chain layer
     /// @param tacHeader TAC header data
     /// @param tokens Array of token amounts to bridge
+    /// @param nfts Array of NFT amounts to bridge
     /// @param payload Additional payload data
     function _bridgeTokens(
         bytes calldata tacHeader,
         TokenAmount[] memory tokens,
+        NFTAmount[] memory nfts,
         string memory payload
     ) private {
         for (uint256 i = 0; i < tokens.length; i++) {
@@ -314,6 +309,9 @@ contract MidasProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
             );
         }
 
+        for (uint256 i = 0; i < nfts.length; i++) {
+            IERC721(nfts[i].evmAddress).approve(_getCrossChainLayerAddress(), nfts[i].tokenId);
+        }
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         OutMessageV1 memory message = OutMessageV1({
             shardsKey: header.shardsKey,
@@ -323,10 +321,10 @@ contract MidasProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
             tvmExecutorFee: 0,
             tvmValidExecutors: new string[](0),
             toBridge: tokens,
-            toBridgeNFT: new NFTAmount[](0)
+            toBridgeNFT: nfts
         });
-
         _sendMessageV1(message, address(this).balance);
     }
-
 }
+
+
