@@ -28,14 +28,14 @@ const config: HardhatUserConfig = {
   },
   networks: {
     hardhat: {
-      chainId: 1337,
+      chainId: 2391,
       accounts: {
         count: 50
       },
       allowBlocksWithSameTimestamp: true,
       forking: {
-        url: TAC_TESTNET_URL,
-        blockNumber: 4727595,
+        url: TAC_TESTNET_SPB_URL,
+        blockNumber: 1256737,
       },
     },
     localhost: {
@@ -52,6 +52,31 @@ const config: HardhatUserConfig = {
       url: TAC_TESTNET_SPB_URL
     },
   },
+  etherscan: {
+    apiKey: {
+      tac_testnet: 'empty',
+      tac_testnet_spb: 'empty'
+    },
+    customChains: [
+      {
+        network: "tac_testnet",
+        chainId: 2390,
+        urls: {
+          apiURL: process.env.TURIN_API_URL || "",
+          browserURL: "https://turin.explorer.tac.build"
+        }
+      },
+      {
+        network: "tac_testnet_spb",
+        chainId: 2391,
+        urls: {
+          apiURL: process.env.SPB_API_URL || "",
+          browserURL: "https://spb.explorer.tac.build"
+        }
+      }
+    ]
+  },
+
   gasReporter: {
     enabled: false,
     currency: 'ETH',
