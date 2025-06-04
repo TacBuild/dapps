@@ -14,9 +14,3 @@ contract TestToken is ERC20 {
         _burn(_to, amount);
     }
 }
-
-interface ITestToken {
-    function mint(address _to, uint256 _amount) external;
-
-    function burn(address _to, uint256 amount) external;
-}

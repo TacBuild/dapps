@@ -5,7 +5,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Codec, OrderPayload} from "../proxies/Yield/Codec.sol";
 import  "../proxies/Yield/Constants.sol";
 import  "../proxies/Yield/Common.sol";
-import  {ITestToken} from "../test/TestToken.sol";
+import  {TestToken} from "../test/TestToken.sol";
 import  {IReceipt} from "../proxies/Yield/IReceipt.sol";
 
 contract ManagerMock {
@@ -42,7 +42,7 @@ contract ManagerMock {
         require(assets[payload.token] && Common.isContract(sToken) , "!token");
         require(payload.trxnType == Constants.DEPOSIT || payload.trxnType == Constants.DEPOSIT_L2, "!trxnType");
         IERC20(payload.token).transferFrom(msg.sender, sToken, payload.amount);
-        ITestToken(yToken).mint(address(this), 42);
+        TestToken(yToken).mint(address(this), 42);
         // эмулируем перевод yToken (shares) на receiver
         IERC20(yToken).transfer(payload.receiver, 42);
     }
@@ -56,7 +56,7 @@ contract ManagerMock {
         require(payload.trxnType == Constants.WITHDRAW || payload.trxnType == Constants.WITHDRAW_L2, "!trxnType");
 
         
-        ITestToken(yToken).burn(msg.sender, payload.amount);
+        TestToken(yToken).burn(msg.sender, payload.amount);
 
         IReceipt(withdrawReceipt).mint(payload.receiver, payload.token, 42, 8);
         
