@@ -45,9 +45,9 @@ contract TacBoringVaultProxy is UUPSUpgradeable, OwnableUpgradeable, TacProxyV1U
     error TransferFailed();
 
     event SaExecutedInteraction(address indexed sa, address indexed target, bytes data);
-    event WithdrawRequest(bytes32 indexed requestId);
+    event WithdrawRequest(bytes32 indexed requestId, string indexed tvmCaller);
     event WithdrawFunds(address indexed asset, uint256 amount, address indexed user, string indexed tvmCaller);
-
+    event Deposit(uint256 amount, string indexed tvmCaller, address indexed user);
     function initialize(address _crossChainLayer, address _teller, address _boringOnChainQueue, address _boringVault, address _tacSAFactory) public initializer {
         __UUPSUpgradeable_init();
         __Ownable_init(msg.sender);
@@ -84,6 +84,7 @@ contract TacBoringVaultProxy is UUPSUpgradeable, OwnableUpgradeable, TacProxyV1U
             evmAddress: address(boringVault),
             amount: boringVault.balanceOf(address(this))
         });
+        emit Deposit(tokens[0].amount, header.tvmCaller, user);
         _bridgeTokens(tacHeader, tokens, "");
     }
 
@@ -96,7 +97,7 @@ contract TacBoringVaultProxy is UUPSUpgradeable, OwnableUpgradeable, TacProxyV1U
         TacSmartAccount(payable(user)).approve(address(boringVault), address(boringOnChainQueue), args.amountOfShares);
         (, bytes memory returnData) = _saExecution(user, address(boringOnChainQueue), 0, data);
         bytes32 requestId = abi.decode(returnData, (bytes32));
-        emit WithdrawRequest(requestId);
+        emit WithdrawRequest(requestId, header.tvmCaller);
     }
 
     function withdrawFunds(bytes calldata tacHeader, bytes calldata arguments) public _onlyCrossChainLayer{
