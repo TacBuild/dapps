@@ -2,7 +2,7 @@ import hre, { ethers } from "hardhat";
 import { AddressLike, BytesLike, Signer } from "ethers";
 import { expect } from "chai";
 import { SaHooks, SaHooksBuilder } from "../scripts/TacSmartAccountFactory/SDK/SaHooksSDK";
-import { TacLocalTestSdk} from "@tonappchain/evm-ccl";
+import { TacLocalTestSdk, TokenUnlockInfo, TokenAmount} from "@tonappchain/evm-ccl";
 import { sttonTokenInfo, tacTokenInfo } from '../scripts/common/info/tokensInfo';
 import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types";
 import { deployEulerProxy } from "../scripts/Euler/EulerProxyDeploy";
@@ -64,33 +64,11 @@ describe("EulerProxy", function () {
           hooks.addPreHookCallFromSelf(assetAddress, 'transfer', [userAddress, amount])
           hooks.setMainCallHookCallFromSelf(vaultAddress, 'deposit', [amount, await eulerProxy.getAddress()])
       
-          const hookData = hooks.encode()
-          console.log(hooks.build())
-          const bridgeData = new ethers.AbiCoder().encode(
-            ['tuple(address[])'],
-            [[[vaultAddress]]],
-          )
           const callData = new ethers.AbiCoder().encode([hooks.tupleString(), hooks.bridgeString()], [hooks.build(), [[vaultAddress]]])
           console.log(await asset.balanceOf(await admin.getAddress()));
           await asset.connect(admin).transfer(await eulerProxy.getAddress(), amount)
           console.log(await asset.balanceOf(await eulerProxy.getAddress()));
         
-
-        // const fee = 3000;
-        // const currentPoint = 0;
-
-        // const encodedArguments = new ethers.AbiCoder().encode(
-        //     ['tuple(address,address,uint24,int24)'],
-        //     [[
-        //         sttonEVMAddress,
-        //         tacEVMAddress,
-        //         fee,
-        //         currentPoint
-        //     ]]
-        // );
-
-        // const initialPoolAddress = await pool.pool(sttonEVMAddress, tacEVMAddress, fee);
-        // expect(initialPoolAddress).to.equal(ethers.ZeroAddress);
 
         await testSdk.sendMessage(
             shardsKey,
@@ -105,12 +83,56 @@ describe("EulerProxy", function () {
             operationId,
             timestamp
         );
+    });
 
-        // const newPoolAddress = await pool.pool(sttonEVMAddress, tacEVMAddress, fee);
-        // expect(newPoolAddress).to.not.equal(ethers.ZeroAddress);
 
-        // const pointDelta = await pool.fee2pointDelta(fee);
-        // expect(pointDelta).to.not.equal(0);
+    it("Euler withdraw test", async function () {
+        const shardsKey = 1n;
+        const operationId = ethers.encodeBytes32String("withdraw");
+        const extraData = "0x";
+        const timestamp = BigInt(Math.floor(Date.now() / 1000));
+        const tvmWalletCaller = "EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk";
+
+        const target = await eulerProxy.getAddress();
+        const methodName = "call(bytes,bytes)";
+        const hooks = new SaHooksBuilder()
+        const amount = ethers.parseUnits("0.1", 6);
+        hooks.addContractInterface(vaultAddress, [
+            'function withdraw(uint256,address,address) external',
+            'function approve(address,uint256) external',
+            'function transfer(address,uint256) external',
+          ])
+        
+
+        const userAddress = await tacSAFactory.predictSmartAccountAddress(tvmWalletCaller, await eulerProxy.getAddress())
+          console.log(userAddress)
+          hooks.addPreHookCallFromSA(vaultAddress, 'approve', [vaultAddress, amount])
+          hooks.addPreHookCallFromSelf(vaultAddress, 'transfer', [userAddress, amount])
+          hooks.setMainCallHookCallFromSelf(vaultAddress, 'withdraw', [amount, await eulerProxy.getAddress(), userAddress])
+      
+          const callData = new ethers.AbiCoder().encode([hooks.tupleString(), hooks.bridgeString()], [hooks.build(), [[vaultAddress]]])
+
+
+
+          const unlockInfo : TokenUnlockInfo = {
+            evmAddress: vaultAddress,
+            amount: amount
+          }
+        
+
+        await testSdk.sendMessage(
+            shardsKey,
+            target,
+            methodName,
+            callData,
+            tvmWalletCaller,
+            [],
+            [unlockInfo],
+            0n,
+            extraData,
+            operationId,
+            timestamp
+        );
     });
 
     

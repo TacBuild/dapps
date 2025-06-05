@@ -67,9 +67,11 @@ contract EulerProxy is
         }
         console.log("user", user);
         SaHelper.executePreHooks(user, hooks);
+        console.log("prehook");
         bytes memory result = eulerVaultConnector.call(hooks.mainCallHook.contractAddress, user, hooks.mainCallHook.value, hooks.mainCallHook.data);
+        console.log("maincall");
         SaHelper.executePostHooks(user, hooks);
-
+        console.log("posthook");
         if (bridgeBackData.tokensToBridge.length > 0 && bridgeBackData.tokensToBridge[0] != address(0)) {
             console.log(IERC20(bridgeBackData.tokensToBridge[0]).balanceOf(address(this)));
             TokenAmount[] memory tokenAmounts = new TokenAmount[](bridgeBackData.tokensToBridge.length);
