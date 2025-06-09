@@ -5,6 +5,7 @@ import {IHooks} from "./Interface/IHooks.sol";
 import {ITacSmartAccount} from "./Interface/ITacSmartAccount.sol";
 import {TokenAmount, NFTAmount} from "@tonappchain/evm-ccl/contracts/core/Structs.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "hardhat/console.sol";
 
 library SaHelper {
     
@@ -12,8 +13,11 @@ library SaHelper {
         IHooks.PreHook[] memory preHooks = hooks.preHooks;
 
         for (uint256 i = 0; i < preHooks.length; i++) {
+            console.log("prehook", i);
             if (preHooks[i].isFromSAPerspective) {
-                ITacSmartAccount(sa).execute(preHooks[i].contractAddress, preHooks[i].value, preHooks[i].data);
+                bytes memory result = ITacSmartAccount(sa).execute(preHooks[i].contractAddress, preHooks[i].value, preHooks[i].data);
+                // console.logBytes(result);
+                // console.log("prehook result", i, result);
             } else {
                 _selfCall(preHooks[i].contractAddress, preHooks[i].value, preHooks[i].data);
             }
@@ -25,7 +29,10 @@ library SaHelper {
 
         for (uint256 i = 0; i < postHooks.length; i++) {
             if (postHooks[i].isFromSAPerspective) {
-                ITacSmartAccount(sa).execute(postHooks[i].contractAddress, postHooks[i].value, postHooks[i].data);
+                console.log("posthook", i);
+                bytes memory result = ITacSmartAccount(sa).execute(postHooks[i].contractAddress, postHooks[i].value, postHooks[i].data);
+                console.logBytes(result);
+                // console.log("posthook result", i, result);
             } else {
                 _selfCall(postHooks[i].contractAddress, postHooks[i].value, postHooks[i].data);
             }

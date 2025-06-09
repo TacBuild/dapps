@@ -2,18 +2,22 @@ import hre, { ethers } from "hardhat";
 import { AddressLike, BytesLike, Signer } from "ethers";
 import { expect } from "chai";
 import { SaHooks, SaHooksBuilder } from "../scripts/TacSmartAccountFactory/SDK/SaHooksSDK";
-import { TacLocalTestSdk, TokenUnlockInfo, TokenAmount} from "@tonappchain/evm-ccl";
+import { TacLocalTestSdk, TokenUnlockInfo, TokenAmount, TokenMintInfo} from "@tonappchain/evm-ccl";
 import { sttonTokenInfo, tacTokenInfo } from '../scripts/common/info/tokensInfo';
 import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types";
 import { deployEulerProxy } from "../scripts/Euler/EulerProxyDeploy";
 import { deployTacSmartAccount } from "../scripts/TacSmartAccountFactory/SABlueprintDeploy";
 import { deployTacSAFactory } from "../scripts/TacSmartAccountFactory/FactoryDeploy";
 import { TacSmartAccount, TacSAFactory, EulerProxy } from "../typechain-types";
+import { JettonInfo } from "@tonappchain/evm-ccl";
+
 
 export const MAXUINT128 = BigInt("340282366920938463463374607431768211455");
 const MAXUINT48 = BigInt("281474976710654");
 const vaultAddress = "0x8d5f39a9149a2cb04f9e48c1c95a36b36aa51def";
+const borrowVaultAddress = "0x4b2e3a2dc6536235196e5a48d430ff8c66e6b4d6"
 const assetAddress = "0x990e64388db00eff7a9c9f01c3748d5401df5082";
+const borrowAssetAddress = "0x3B0DE40DdCAa337CEBc1ba435c77c656AF286CA8";
 const ETH_VAULT_CONNECTOR = "0x272911fC4a3Cae478F29d13df85127f9a556B36D";
 const PERMIT_2_ADDRESS = "0x63079e13441219D3Acf1012269127EBf304616D8";
 
@@ -25,6 +29,7 @@ describe("EulerProxy", function () {
     let tacSAFactory: TacSAFactory;
     let eulerProxy: EulerProxy;
     let asset: ERC20;
+    let borrowAsset: ERC20;
     
 
     before(async function () {
@@ -36,6 +41,9 @@ describe("EulerProxy", function () {
         tacSAFactory = await deployTacSAFactory(admin, await tacSmartAccount.getAddress());
         eulerProxy = await deployEulerProxy(admin, crossChainLayerAddress, await tacSAFactory.getAddress());
         asset = new ethers.Contract(assetAddress, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;
+        console.log("asset balance", await asset.balanceOf(await admin.getAddress()));
+        borrowAsset = new ethers.Contract(borrowAssetAddress, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;
+        console.log("borrow asset balance", await borrowAsset.balanceOf(await admin.getAddress()));
         
     });
 
@@ -49,7 +57,7 @@ describe("EulerProxy", function () {
         const target = await eulerProxy.getAddress();
         const methodName = "call(bytes,bytes)";
         const hooks = new SaHooksBuilder()
-        const amount = ethers.parseUnits("0.1", 6);
+        const amount = ethers.parseUnits("70", 6);
         hooks.addContractInterface(vaultAddress, [
             'function deposit(uint256,address) external',
           ])
@@ -62,7 +70,7 @@ describe("EulerProxy", function () {
           hooks.addContractInterface(assetAddress, ['function approve(address,uint256) external', 'function transfer(address,uint256) external'])        
           hooks.addPreHookCallFromSA(assetAddress, 'approve', [vaultAddress, amount])
           hooks.addPreHookCallFromSelf(assetAddress, 'transfer', [userAddress, amount])
-          hooks.setMainCallHookCallFromSelf(vaultAddress, 'deposit', [amount, await eulerProxy.getAddress()])
+          hooks.setMainCallHookCallFromSA(vaultAddress, 'deposit', [amount, await eulerProxy.getAddress()])
       
           const callData = new ethers.AbiCoder().encode([hooks.tupleString(), hooks.bridgeString()], [hooks.build(), [[vaultAddress]]])
           console.log(await asset.balanceOf(await admin.getAddress()));
@@ -84,6 +92,184 @@ describe("EulerProxy", function () {
             timestamp
         );
     });
+
+    it("Euler deposit to borrow vault test", async function () {
+        const shardsKey = 1n;
+        const operationId = ethers.encodeBytes32String("deposit_to_borrow_vault");
+        const extraData = "0x";
+        const timestamp = BigInt(Math.floor(Date.now() / 1000));
+        const tvmWalletCaller = "EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk";
+
+        const target = await eulerProxy.getAddress();
+        const methodName = "call(bytes,bytes)";
+        const hooks = new SaHooksBuilder()
+        const amount = ethers.parseUnits("10", 18);
+        hooks.addContractInterface(borrowVaultAddress, [
+            'function deposit(uint256,address) external',
+          ])
+        
+
+        const userAddress = await tacSAFactory.predictSmartAccountAddress(tvmWalletCaller, await eulerProxy.getAddress())
+          console.log(userAddress)
+          hooks.addContractInterface(borrowAssetAddress, ['function approve(address,uint256) external', 'function transfer(address,uint256) external'])        
+          hooks.addPreHookCallFromSA(borrowAssetAddress, 'approve', [borrowVaultAddress, amount])
+          hooks.addPreHookCallFromSelf(borrowAssetAddress, 'transfer', [userAddress, amount])
+          hooks.setMainCallHookCallFromSA(borrowVaultAddress, 'deposit', [amount, await eulerProxy.getAddress()])
+      
+          const callData = new ethers.AbiCoder().encode([hooks.tupleString(), hooks.bridgeString()], [hooks.build(), [[borrowVaultAddress]]])
+          console.log(await borrowAsset.balanceOf(await admin.getAddress()));
+          await borrowAsset.connect(admin).transfer(await eulerProxy.getAddress(), amount)
+          console.log(await borrowAsset.balanceOf(await eulerProxy.getAddress()));
+        
+
+        await testSdk.sendMessage(
+            shardsKey,
+            target,
+            methodName,
+            callData,
+            tvmWalletCaller,
+            [],
+            [],
+            0n,
+            extraData,
+            operationId,
+            timestamp
+        );
+    });
+
+    it("Euler borrow test", async function () {
+        const shardsKey = 1n;
+        const operationId = ethers.encodeBytes32String("borrow");
+        const extraData = "0x";
+        const timestamp = BigInt(Math.floor(Date.now() / 1000));
+        const tvmWalletCaller = "EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk";
+
+        const target = await eulerProxy.getAddress();
+        const methodName = "call(bytes,bytes)";
+        const hooks = new SaHooksBuilder()
+        const amount = ethers.parseUnits("0.001", 18);
+        hooks.addContractInterface(vaultAddress, [
+            'function withdraw(uint256,address,address) external',
+            'function approve(address,uint256) external',
+            'function transfer(address,uint256) external',
+            "function borrow(uint256 amount, address receiver) external returns (uint256)",
+            "function repay(uint256 amount, address receiver) external returns (uint256)"
+          ])
+
+        hooks.addContractInterface(borrowVaultAddress, [
+            "function borrow(uint256 amount, address receiver) external returns (uint256)",
+            "function repay(uint256 amount, address receiver) external returns (uint256)"
+          ])
+        hooks.addContractInterface(ETH_VAULT_CONNECTOR, [
+            "function disableCollateral(address account, address vault) external payable",
+            "function disableController(address account) external payable",
+            "function enableCollateral(address account, address vault) external payable",
+            "function enableController(address account, address vault) external payable",
+          ])
+        
+
+        const userAddress = await tacSAFactory.predictSmartAccountAddress(tvmWalletCaller, await eulerProxy.getAddress())
+          console.log(userAddress)
+          hooks.addPreHookCallFromSA(ETH_VAULT_CONNECTOR, 'enableCollateral', [userAddress, vaultAddress])
+          hooks.addPreHookCallFromSA(ETH_VAULT_CONNECTOR, 'enableController', [userAddress, borrowVaultAddress])
+          hooks.addPreHookCallFromSelf(vaultAddress, 'transfer', [userAddress, ethers.parseUnits("50", 6)])
+          hooks.setMainCallHookCallFromSA(borrowVaultAddress, 'borrow', [amount, await eulerProxy.getAddress()])
+      
+          const callData = new ethers.AbiCoder().encode([hooks.tupleString(), hooks.bridgeString()], [hooks.build(), [[borrowAssetAddress]]])
+
+
+          const unlockInfo : TokenUnlockInfo = {
+            evmAddress: vaultAddress,
+            amount: ethers.parseUnits("50", 6)
+          }
+        
+
+        await testSdk.sendMessage(
+            shardsKey,
+            target,
+            methodName,
+            callData,
+            tvmWalletCaller,
+            [],
+            [unlockInfo],
+            0n,
+            extraData,
+            operationId,
+            timestamp
+        );
+    });
+
+
+    it("Euler repay test", async function () {
+      const shardsKey = 1n;
+      const operationId = ethers.encodeBytes32String("repay");
+      const extraData = "0x";
+      const timestamp = BigInt(Math.floor(Date.now() / 1000));
+      const tvmWalletCaller = "EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk";
+
+      const target = await eulerProxy.getAddress();
+      const methodName = "call(bytes,bytes)";
+      const hooks = new SaHooksBuilder()
+      const amount = ethers.parseUnits("0.0001", 18);
+      hooks.addContractInterface(vaultAddress, [
+          'function withdraw(uint256,address,address) external',
+          'function approve(address,uint256) external',
+          'function transfer(address,uint256) external',
+          "function borrow(uint256 amount, address receiver) external returns (uint256)",
+          "function repay(uint256 amount, address receiver) external returns (uint256)"
+        ])
+
+        hooks.addContractInterface(borrowAssetAddress, [
+          'function approve(address,uint256) external',
+          'function transfer(address,uint256) external',
+        ])
+
+      hooks.addContractInterface(borrowVaultAddress, [
+          "function borrow(uint256 amount, address receiver) external returns (uint256)",
+          "function repay(uint256 amount, address receiver) external returns (uint256)"
+        ])
+      hooks.addContractInterface(ETH_VAULT_CONNECTOR, [
+          "function disableCollateral(address account, address vault) external payable",
+          "function disableController(address account) external payable",
+          "function enableCollateral(address account, address vault) external payable",
+          "function enableController(address account, address vault) external payable",
+        ])
+      
+
+      const userAddress = await tacSAFactory.predictSmartAccountAddress(tvmWalletCaller, await eulerProxy.getAddress())
+        console.log(userAddress)
+        hooks.addPreHookCallFromSelf(borrowAssetAddress, 'transfer', [userAddress, amount])
+        hooks.addPreHookCallFromSA(borrowAssetAddress, 'approve', [borrowVaultAddress, amount])
+
+        hooks.setMainCallHookCallFromSA(borrowVaultAddress, 'repay', [ethers.MaxUint256, await eulerProxy.getAddress()])
+
+        hooks.addPostHookCallFromSA(ETH_VAULT_CONNECTOR, 'disableController', [userAddress])
+        // hooks.addPostHookCallFromSA(ETH_VAULT_CONNECTOR, 'disableCollateral', [userAddress, vaultAddress])
+
+    
+        const callData = new ethers.AbiCoder().encode([hooks.tupleString(), hooks.bridgeString()], [hooks.build(), [[borrowAssetAddress]]])
+
+
+        const unlockInfo : TokenUnlockInfo = {
+          evmAddress: borrowAssetAddress,
+          amount: amount
+        }
+      
+
+      await testSdk.sendMessage(
+          shardsKey,
+          target,
+          methodName,
+          callData,
+          tvmWalletCaller,
+          [],
+          [unlockInfo],
+          0n,
+          extraData,
+          operationId,
+          timestamp
+      );
+  });
 
 
     it("Euler withdraw test", async function () {
@@ -110,7 +296,7 @@ describe("EulerProxy", function () {
           hooks.addPreHookCallFromSelf(vaultAddress, 'transfer', [userAddress, amount])
           hooks.setMainCallHookCallFromSelf(vaultAddress, 'withdraw', [amount, await eulerProxy.getAddress(), userAddress])
       
-          const callData = new ethers.AbiCoder().encode([hooks.tupleString(), hooks.bridgeString()], [hooks.build(), [[vaultAddress]]])
+          const callData = new ethers.AbiCoder().encode([hooks.tupleString(), hooks.bridgeString()], [hooks.build(), [[assetAddress]]])
 
 
 
@@ -120,7 +306,7 @@ describe("EulerProxy", function () {
           }
         
 
-        await testSdk.sendMessage(
+          const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
             shardsKey,
             target,
             methodName,
@@ -133,6 +319,13 @@ describe("EulerProxy", function () {
             operationId,
             timestamp
         );
+        const outMessage = outMessages[0];
+        
+        expect(outMessage.tokensLocked.length).to.be.equal(1);
+
+        // check lp token locked
+        expect((outMessage.tokensLocked[0].evmAddress).toString().toLowerCase()).to.be.equal((await asset.getAddress()).toLowerCase());
+        expect(outMessage.tokensLocked[0].amount).to.be.equal(amount);
     });
 
     

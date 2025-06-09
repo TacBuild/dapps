@@ -3,6 +3,8 @@ pragma solidity ^0.8.28;
 
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "hardhat/console.sol";
+
 contract TacSmartAccount is Initializable {
     address public owner;
 
@@ -23,6 +25,7 @@ contract TacSmartAccount is Initializable {
 
     function execute(address target, uint256 value, bytes calldata data) external payable onlyOwner returns(bytes memory) {
         (bool success, bytes memory returnData) = target.call{value: value}(data);
+        console.logBytes(returnData);
         require(success, "Execution failed");
         emit Executed(target, value, data);
         return returnData;
