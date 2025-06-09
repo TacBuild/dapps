@@ -5,11 +5,9 @@ import hre from 'hardhat';
 import { tacSAFactoryDeployments } from "./config/testnetConfig";
 
 
-async function main() {
+export async function upgradeTacSmartAccount(newBlueprint: string) {
     const [signer] = await hre.ethers.getSigners();
     const tacSAFactory = await hre.ethers.getContractAt("TacSAFactory", tacSAFactoryDeployments.proxyAddress);
-    await tacSAFactory.updateBlueprint(tacSAFactoryDeployments.blueprintAddress);
-    console.log("TacSmartAccountFactory blueprint set to:", tacSAFactoryDeployments.blueprintAddress);
+    await tacSAFactory.updateBlueprint(newBlueprint);
+    console.log("TacSmartAccountFactory blueprint set to:", newBlueprint);
 }
-
-main();

@@ -1,15 +1,13 @@
 import hre, { ethers } from "hardhat";
-import { AddressLike, BytesLike, Signer } from "ethers";
+import { Signer } from "ethers";
 import { expect } from "chai";
-import { SaHooks, SaHooksBuilder } from "../scripts/TacSmartAccountFactory/SDK/SaHooksSDK";
-import { TacLocalTestSdk, TokenUnlockInfo, TokenAmount, TokenMintInfo} from "@tonappchain/evm-ccl";
-import { sttonTokenInfo, tacTokenInfo } from '../scripts/common/info/tokensInfo';
+import { SaHooksBuilder } from "../scripts/TacSmartAccountFactory/SDK/SaHooksSDK";
+import { TacLocalTestSdk, TokenUnlockInfo} from "@tonappchain/evm-ccl";
 import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types";
 import { deployEulerProxy } from "../scripts/Euler/EulerProxyDeploy";
 import { deployTacSmartAccount } from "../scripts/TacSmartAccountFactory/SABlueprintDeploy";
 import { deployTacSAFactory } from "../scripts/TacSmartAccountFactory/FactoryDeploy";
 import { TacSmartAccount, TacSAFactory, EulerProxy } from "../typechain-types";
-import { JettonInfo } from "@tonappchain/evm-ccl";
 
 
 export const MAXUINT128 = BigInt("340282366920938463463374607431768211455");
@@ -33,7 +31,6 @@ describe("EulerProxy", function () {
 
     before(async function () {
         [admin] = await ethers.getSigners();
-        console.log(await admin.getAddress());
         testSdk = new TacLocalTestSdk();
         const crossChainLayerAddress = await testSdk.create(ethers.provider);
         tacSmartAccount = await deployTacSmartAccount(admin);
@@ -71,7 +68,7 @@ describe("EulerProxy", function () {
           const callData = new ethers.AbiCoder().encode([hooks.tupleString(), hooks.bridgeString()], [hooks.build(), [[vaultAddress]]])
           await asset.connect(admin).transfer(await eulerProxy.getAddress(), amount)        
 
-        await testSdk.sendMessage(
+        const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
             shardsKey,
             target,
             methodName,
@@ -84,6 +81,11 @@ describe("EulerProxy", function () {
             operationId,
             timestamp
         );
+
+        const outMessage = outMessages[0];
+        expect(outMessage.tokensLocked.length).to.be.equal(1);
+        expect((outMessage.tokensLocked[0].evmAddress).toString().toLowerCase()).to.be.equal((vaultAddress).toLowerCase());
+        expect(outMessage.tokensLocked[0].amount).to.be.equal(amount);
     });
 
     it("Euler deposit to borrow vault test", async function () {
@@ -111,7 +113,7 @@ describe("EulerProxy", function () {
           const callData = new ethers.AbiCoder().encode([hooks.tupleString(), hooks.bridgeString()], [hooks.build(), [[borrowVaultAddress]]])
           await borrowAsset.connect(admin).transfer(await eulerProxy.getAddress(), amount)        
 
-        await testSdk.sendMessage(
+        const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
             shardsKey,
             target,
             methodName,
@@ -124,6 +126,11 @@ describe("EulerProxy", function () {
             operationId,
             timestamp
         );
+
+        const outMessage = outMessages[0];
+        expect(outMessage.tokensLocked.length).to.be.equal(1);
+        expect((outMessage.tokensLocked[0].evmAddress).toString().toLowerCase()).to.be.equal((borrowVaultAddress).toLowerCase());
+        expect(outMessage.tokensLocked[0].amount).to.be.equal(amount);
     });
 
     it("Euler borrow test", async function () {
@@ -165,7 +172,7 @@ describe("EulerProxy", function () {
           }
         
 
-        await testSdk.sendMessage(
+        const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
             shardsKey,
             target,
             methodName,
@@ -178,6 +185,11 @@ describe("EulerProxy", function () {
             operationId,
             timestamp
         );
+
+        const outMessage = outMessages[0];
+        expect(outMessage.tokensLocked.length).to.be.equal(1);
+        expect((outMessage.tokensLocked[0].evmAddress).toString().toLowerCase()).to.be.equal((borrowAssetAddress).toLowerCase());
+        expect(outMessage.tokensLocked[0].amount).to.be.equal(amount);
     });
 
 
@@ -191,7 +203,7 @@ describe("EulerProxy", function () {
       const target = await eulerProxy.getAddress();
       const methodName = "call(bytes,bytes)";
       const hooks = new SaHooksBuilder()
-      const amount = ethers.parseUnits("0.0001", 18);
+      const amount = ethers.parseUnits("0.001", 18);
 
         hooks.addContractInterface(borrowAssetAddress, [
           'function approve(address,uint256) external',
@@ -217,7 +229,7 @@ describe("EulerProxy", function () {
         // hooks.addPostHookCallFromSA(ETH_VAULT_CONNECTOR, 'disableCollateral', [userAddress, vaultAddress])
 
     
-        const callData = new ethers.AbiCoder().encode([hooks.tupleString(), hooks.bridgeString()], [hooks.build(), [[borrowAssetAddress]]])
+        const callData = new ethers.AbiCoder().encode([hooks.tupleString(), hooks.bridgeString()], [hooks.build(), [[vaultAddress]]])
 
 
         const unlockInfo : TokenUnlockInfo = {
@@ -226,7 +238,7 @@ describe("EulerProxy", function () {
         }
       
 
-      await testSdk.sendMessage(
+      const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
           shardsKey,
           target,
           methodName,
@@ -239,6 +251,11 @@ describe("EulerProxy", function () {
           operationId,
           timestamp
       );
+
+      // const outMessage = outMessages[0];
+      // expect(outMessage.tokensLocked.length).to.be.equal(1);
+      // expect((outMessage.tokensLocked[0].evmAddress).toString().toLowerCase()).to.be.equal((vaultAddress).toLowerCase());
+      // expect(outMessage.tokensLocked[0].amount).to.be.equal(ethers.parseUnits("50", 6));
   });
 
 
