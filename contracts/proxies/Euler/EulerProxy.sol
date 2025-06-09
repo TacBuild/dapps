@@ -14,7 +14,6 @@ import {TacSAFactory} from "../../TacSmartAccounts/TacSAFactory.sol";
 import {TacSmartAccount} from "../../TacSmartAccounts/TacSmartAccount.sol";
 import {IEthereumVaultConnector} from "./Interface/IEthereumVaultConnector.sol";
 import {OutMessageV1, TokenAmount, TacHeaderV1, NFTAmount} from "@tonappchain/evm-ccl/contracts/core/Structs.sol";
-import "hardhat/console.sol";
 
 contract EulerProxy is
     TacProxyV1Upgradeable,
@@ -65,15 +64,10 @@ contract EulerProxy is
         if (isNewUser) {
             _setAuthorization(user, address(this), true);
         }
-        console.log("user", user);
         SaHelper.executePreHooks(user, hooks);
-        console.log("prehook");
         bytes memory result = eulerVaultConnector.call(hooks.mainCallHook.contractAddress, user, hooks.mainCallHook.value, hooks.mainCallHook.data);
-        console.log("maincall");
         SaHelper.executePostHooks(user, hooks);
-        console.log("posthook");
         if (bridgeBackData.tokensToBridge.length > 0 && bridgeBackData.tokensToBridge[0] != address(0)) {
-            console.log(IERC20(bridgeBackData.tokensToBridge[0]).balanceOf(address(this)));
             TokenAmount[] memory tokenAmounts = new TokenAmount[](bridgeBackData.tokensToBridge.length);
             for (uint256 i = 0; i < bridgeBackData.tokensToBridge.length; i++) {
                 tokenAmounts[i] = TokenAmount(
