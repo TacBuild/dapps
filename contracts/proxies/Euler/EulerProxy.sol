@@ -69,12 +69,17 @@ contract EulerProxy is
         (IHooks.SaHooks memory hooks, BridgeBackData memory bridgeBackData, CallArguments memory callArguments) = abi.decode(arguments, (IHooks.SaHooks, BridgeBackData, CallArguments));
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user, bool isNewUser) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
-        if (isNewUser) {
-            _setAuthorization(user, address(this));
-        }
+        console.log("user", user);
+        // if (isNewUser) {
+        //     _setAuthorization(user, user);
+        // }
+        console.log("user", user);
         SaHelper.executePreHooks(user, hooks);
         console.log("prehooks done");
-        bytes memory result = eulerVaultConnector.call(callArguments.targetContract, callArguments.onBehalfOfAccount, callArguments.value, callArguments.data);
+        (bool success, bytes memory result) = TacSmartAccount(payable(user)).executeUnsafe(address(eulerVaultConnector), msg.value, abi.encodeWithSelector(IEthereumVaultConnector.call.selector, callArguments.targetContract, callArguments.onBehalfOfAccount, callArguments.value, callArguments.data));
+        console.logBytes(result);
+        require(success, "Call failed");
+        // bytes memory result = eulerVaultConnector.call(callArguments.targetContract, callArguments.onBehalfOfAccount, callArguments.value, callArguments.data);
         console.log("posthooks done");
         SaHelper.executePostHooks(user, hooks);
         console.log("posthooks done");
@@ -88,7 +93,7 @@ contract EulerProxy is
             }
             _bridgeTokens(tacHeader, tokenAmounts, "");
         }
-        emit Call(result);
+        // emit Call(result);
     }
 
     function batch(
@@ -99,12 +104,17 @@ contract EulerProxy is
 
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user, bool isNewUser) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
-        if (isNewUser) {
-            _setAuthorization(user, user);
-        }
+        // if (isNewUser) {
+        //     _setAuthorization(user, user);
+        // }
         SaHelper.executePreHooks(user, hooks);
         console.log("prehooks done");
-        eulerVaultConnector.batch(items);
+        (bool success, bytes memory result) = TacSmartAccount(payable(user)).executeUnsafe(address(eulerVaultConnector), msg.value, abi.encodeWithSelector(IEthereumVaultConnector.batch.selector, items));
+                console.logBytes(result);
+
+        require(success, "Batch failed");
+        emit Call(result);
+        // eulerVaultConnector.batch(items);
         console.log("batch done");
         SaHelper.executePostHooks(user, hooks);
         console.log("posthooks done");
