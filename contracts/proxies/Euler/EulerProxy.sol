@@ -109,6 +109,7 @@ contract EulerProxy is
         // }
         SaHelper.executePreHooks(user, hooks);
         console.log("prehooks done");
+        
         (bool success, bytes memory result) = TacSmartAccount(payable(user)).executeUnsafe(address(eulerVaultConnector), msg.value, abi.encodeWithSelector(IEthereumVaultConnector.batch.selector, items));
                 console.logBytes(result);
 

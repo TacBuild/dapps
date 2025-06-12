@@ -279,7 +279,7 @@ describe("EulerProxy", function () {
         hooks.addPostHookCallFromSA(ETH_VAULT_CONNECTOR, 'disableController', [subAccount1])
 
     
-        const callData = new ethers.AbiCoder().encode([hooks.tupleString(), hooks.bridgeString(), callString], [hooks.build(), [[vaultAddress]], [borrowVaultAddress, subAccount1, 0n, dataForCall]])
+        const callData = new ethers.AbiCoder().encode([hooks.tupleString(), hooks.bridgeString(), callString], [hooks.build(), [[vaultAddress]], [borrowVaultAddress, userAddress, 0n, dataForCall]])
 
 
         const unlockInfo : TokenUnlockInfo = {
