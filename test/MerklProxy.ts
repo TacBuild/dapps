@@ -47,16 +47,25 @@ describe("MorphoProxy", function () {
         const tvmWalletCaller = "EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk";
 
         const target = await merklProxy.getAddress();
-        const methodName = "registrateAccount(bytes,bytes)";
+        const methodName = "claim(bytes,bytes)";
 
         console.log(await tacSAFactory.predictSmartAccountAddress(tvmWalletCaller, target));
-        
+        const proof = "0xd27fbefae92899cc7156acd926c3191a641e2c7e9ac13a9fb91f3a3b4ae717c6"
+        const encodedArguments = new ethers.AbiCoder().encode(
+            ['tuple(address[],uint256[],bytes32[][],bytes)'],
+            [[
+                ["0x05225a6416EDaeeC7227027E86F7A47D18A06b91"],
+                [ethers.parseUnits("100", 6)],
+                [[proof]],
+                "0x"
+            ]]
+        );
 
         await testSdk.sendMessage(
             shardsKey,
             target,
             methodName,
-            "0x",
+            encodedArguments,
             tvmWalletCaller,
             [],
             [],
@@ -75,6 +84,7 @@ describe("MorphoProxy", function () {
         const events = await merklProxyContractEvent.queryFilter(eventFilter, -1);
         const event = events[0] as unknown as { args: { user: string, tvmCaller: string } };
         console.log(event);
+        
     });
 
     // it("Merkl custom rEUL claim", async function () {

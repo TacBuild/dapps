@@ -13,7 +13,7 @@ import {TacSAFactory} from "../../TacSmartAccounts/TacSAFactory.sol";
 import {IMerkl} from "./interface/IMerkl.sol";
 import {SaHelper} from "../../TacSmartAccounts/SaHelper.sol";
 import {IHooks} from "../../TacSmartAccounts/Interface/IHooks.sol";
-
+import "hardhat/console.sol";
 
 contract MerklProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
 
@@ -25,7 +25,7 @@ contract MerklProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
     struct ClaimData {
         address[] tokens;
         uint256[] amounts;
-        bytes32[] proofs;
+        bytes32[][] proofs;
         bytes customLogicData;
     }
 
@@ -66,21 +66,27 @@ contract MerklProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         (ClaimData memory data) = abi.decode(arguments, (ClaimData));
         require(data.proofs.length == 1, "MerklProxy: Invalid number of users, should be 1");
         address[] memory users = new address[](1);
-        users[0] = user;
-
-        TacSmartAccount(payable(user)).execute(
-                    address(merkl),
-                    0,
-                    abi.encodeWithSelector(IMerkl.claim.selector, users, data.tokens, data.amounts, data.proofs)
-        );
+        users[0] = 0xA5AdB55dAcda60B989BDBb215b80341D1B9659f0;
+        
+        
+        // TacSmartAccount(payable(user)).execute(
+        //             address(merkl),
+        //             0,
+        //             abi.encodeWithSelector(IMerkl.claim.selector, [0xA5AdB55dAcda60B989BDBb215b80341D1B9659f0], data.tokens, data.amounts, data.proofs)
+        // );
+        merkl.claim(users, data.tokens, data.amounts, data.proofs);
+        console.log("claim done");
         if (tokenToLogic[data.tokens[0]] != address(0)) {
+            console.log("custom claim");
             _customClaim(data, users, tacHeader);
         } else {
+            console.log("reg claim");
                 TacSmartAccount(payable(user)).execute(
                     data.tokens[0],
                     0,
                     abi.encodeWithSelector(IERC20.transfer.selector, address(this), IERC20(data.tokens[0]).balanceOf(user))
                 );
+            console.log("transfer done");
         
             if (IERC20(data.tokens[0]).balanceOf(address(this)) > 0) {
                 TokenAmount[] memory tokens = new TokenAmount[](1);
@@ -145,12 +151,6 @@ contract MerklProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         tokenToLogic[token] = customMerklLogic;
     }
 
-    function registrateAccount(bytes calldata tacHeader, bytes calldata) external _onlyCrossChainLayer() {
-        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
-        (address user, ) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
-        emit AccountRegistrated(user, header.tvmCaller);
-    }
-
     /// @notice Bridges tokens to the cross-chain layer
     /// @param tacHeader TAC header data
     /// @param tokens Array of token amounts to bridge
@@ -183,3 +183,5 @@ contract MerklProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         _sendMessageV1(message, address(this).balance);
     }
 }
+
+
