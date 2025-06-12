@@ -258,13 +258,13 @@ contract MorphoProxy is
             args.vault,
             args.assets
         );
-        uint256 shares = IMorphoVault(args.vault).deposit(
+        IMorphoVault(args.vault).deposit(
             args.assets,
             address(this)
         );
         emit Deposit(args.vault, args.assets);
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
-        tokensToBridge[0] = TokenAmount(args.vault, shares);
+        tokensToBridge[0] = TokenAmount(args.vault, IERC20(args.vault).balanceOf(address(this)));
         _bridgeTokens(tacHeader, tokensToBridge, "");
     }
 
@@ -283,12 +283,12 @@ contract MorphoProxy is
             args.vault,
             assets
         );
-        uint256 shares = IMorphoVault(args.vault).mint(args.shares, address(this));
+        IMorphoVault(args.vault).mint(args.shares, address(this));
         emit Mint(args.vault, args.shares);
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(
             args.vault,
-            shares
+            IERC20(args.vault).balanceOf(address(this))
         );
         _bridgeTokens(tacHeader, tokensToBridge, "");
     }

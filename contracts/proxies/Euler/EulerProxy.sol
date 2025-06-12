@@ -14,6 +14,7 @@ import {TacSAFactory} from "../../TacSmartAccounts/TacSAFactory.sol";
 import {TacSmartAccount} from "../../TacSmartAccounts/TacSmartAccount.sol";
 import {IEthereumVaultConnector} from "./Interface/IEthereumVaultConnector.sol";
 import {OutMessageV1, TokenAmount, TacHeaderV1, NFTAmount} from "@tonappchain/evm-ccl/contracts/core/Structs.sol";
+import "hardhat/console.sol";
 
 contract EulerProxy is
     TacProxyV1Upgradeable,
@@ -25,6 +26,13 @@ contract EulerProxy is
 
     struct BridgeBackData {
         address[] tokensToBridge;
+    }
+
+    struct CallArguments {
+        address targetContract;
+        address onBehalfOfAccount;
+        uint256 value;
+        bytes data;
     }
 
     event Call(bytes indexed result);
@@ -58,15 +66,18 @@ contract EulerProxy is
         bytes calldata tacHeader,
         bytes calldata arguments
     ) external payable _onlyCrossChainLayer {
-        (IHooks.SaHooks memory hooks, BridgeBackData memory bridgeBackData) = abi.decode(arguments, (IHooks.SaHooks, BridgeBackData));
+        (IHooks.SaHooks memory hooks, BridgeBackData memory bridgeBackData, CallArguments memory callArguments) = abi.decode(arguments, (IHooks.SaHooks, BridgeBackData, CallArguments));
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user, bool isNewUser) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
         if (isNewUser) {
-            _setAuthorization(user, address(this), true);
+            _setAuthorization(user, address(this));
         }
         SaHelper.executePreHooks(user, hooks);
-        bytes memory result = eulerVaultConnector.call(hooks.mainCallHook.contractAddress, user, hooks.mainCallHook.value, hooks.mainCallHook.data);
+        console.log("prehooks done");
+        bytes memory result = eulerVaultConnector.call(callArguments.targetContract, callArguments.onBehalfOfAccount, callArguments.value, callArguments.data);
+        console.log("posthooks done");
         SaHelper.executePostHooks(user, hooks);
+        console.log("posthooks done");
         if (bridgeBackData.tokensToBridge.length > 0 && bridgeBackData.tokensToBridge[0] != address(0)) {
             TokenAmount[] memory tokenAmounts = new TokenAmount[](bridgeBackData.tokensToBridge.length);
             for (uint256 i = 0; i < bridgeBackData.tokensToBridge.length; i++) {
@@ -84,18 +95,22 @@ contract EulerProxy is
         bytes calldata tacHeader,
         bytes calldata arguments
     ) external payable _onlyCrossChainLayer {
-        (IHooks.SaHooks memory hooks, BridgeBackData memory bridgeBackData) = abi.decode(arguments, (IHooks.SaHooks, BridgeBackData));
+        (IHooks.SaHooks memory hooks, BridgeBackData memory bridgeBackData, IEthereumVaultConnector.BatchItem[] memory items) = abi.decode(arguments, (IHooks.SaHooks, BridgeBackData, IEthereumVaultConnector.BatchItem[]));
 
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user, bool isNewUser) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
         if (isNewUser) {
-            _setAuthorization(user, address(this), true);
+            _setAuthorization(user, user);
         }
         SaHelper.executePreHooks(user, hooks);
-        IEthereumVaultConnector.BatchItem[] memory items = abi.decode(hooks.mainCallHook.data, (IEthereumVaultConnector.BatchItem[]));
+        console.log("prehooks done");
         eulerVaultConnector.batch(items);
+        console.log("batch done");
         SaHelper.executePostHooks(user, hooks);
-        
+        console.log("posthooks done");
+        console.log("bridgeBackData.tokensToBridge.length", bridgeBackData.tokensToBridge.length);
+        console.log("bridgeBackData.tokensToBridge[0]", bridgeBackData.tokensToBridge[0]);
+        console.log(IERC20(bridgeBackData.tokensToBridge[0]).balanceOf(address(this)));
         if (bridgeBackData.tokensToBridge.length > 0) {
             TokenAmount[] memory tokenAmounts = new TokenAmount[](bridgeBackData.tokensToBridge.length);
             for (uint256 i = 0; i < bridgeBackData.tokensToBridge.length; i++) {
@@ -104,6 +119,7 @@ contract EulerProxy is
                     IERC20(bridgeBackData.tokensToBridge[i]).balanceOf(address(this))
                 );
             }
+            _bridgeTokens(tacHeader, tokenAmounts, "");
         }
         emit Batch(items);
     }
@@ -139,9 +155,10 @@ contract EulerProxy is
         emit SetAccountOperator(account, operator, authorized);
     }
 
-    function _setAuthorization(address user, address operator, bool authorized) internal {
-        TacSmartAccount(payable(user)).execute(address(eulerVaultConnector), 0, abi.encodeWithSelector(IEthereumVaultConnector.setAccountOperator.selector, user, operator, authorized));
-        emit SetAccountOperator(user, operator, authorized);
+    function _setAuthorization(address user, address operator) internal {
+        bytes19 addressPrefix = bytes19(bytes20(user));
+        TacSmartAccount(payable(user)).execute(address(eulerVaultConnector), 0, abi.encodeWithSelector(IEthereumVaultConnector.setOperator.selector, addressPrefix, operator, type(uint256).max));
+        emit SetOperator(addressPrefix, operator, type(uint256).max);
     }
 
     /// @notice Bridges tokens to the cross-chain layer

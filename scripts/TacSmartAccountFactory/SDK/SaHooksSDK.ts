@@ -199,6 +199,10 @@ export class SaHooksBuilder {
         return this.addPostHookFromSelf(contractAddress, value, data);
     }
 
+    getDataForCall(contractAddress: string, functionName: string, params: any[]): string {
+        return this.encodeFunctionCall(contractAddress, functionName, params);
+    }
+
     // Main call hook methods
     private setMainCallHook(hook: MainCallHook): SaHooksBuilder {
         this.hooks.mainCallHook = hook;
