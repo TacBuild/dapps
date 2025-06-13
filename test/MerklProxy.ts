@@ -49,14 +49,15 @@ describe("MorphoProxy", function () {
         const target = await merklProxy.getAddress();
         const methodName = "claim(bytes,bytes)";
 
-        console.log(await tacSAFactory.predictSmartAccountAddress(tvmWalletCaller, target));
-        const proof = "0xd27fbefae92899cc7156acd926c3191a641e2c7e9ac13a9fb91f3a3b4ae717c6"
+        const token  = "0x05225a6416EDaeeC7227027E86F7A47D18A06b91"
+        const amount = ethers.parseUnits("1000", 9)
+        const proof = [ "0x8940a89e90106036b2210385cfc7a8cdfb53f371b93842a68728b37412293f1c", "0xd812e953a0210862ba23e6776e4939fec6ef2f8c3c3ee9962a3e4d801df60eaf" ]
         const encodedArguments = new ethers.AbiCoder().encode(
             ['tuple(address[],uint256[],bytes32[][],bytes)'],
             [[
-                ["0x05225a6416EDaeeC7227027E86F7A47D18A06b91"],
-                [ethers.parseUnits("100", 6)],
-                [[proof]],
+                [token],
+                [amount],
+                [proof],
                 "0x"
             ]]
         );
@@ -74,16 +75,6 @@ describe("MorphoProxy", function () {
             operationId,
             timestamp
         );
-
-        let abi = [
-            "event AccountRegistrated(address indexed user, string indexed tvmCaller)"
-        ];
-
-        const merklProxyContractEvent = new ethers.Contract(await merklProxy.getAddress(), abi, admin);
-        const eventFilter = merklProxyContractEvent.filters.AccountRegistrated
-        const events = await merklProxyContractEvent.queryFilter(eventFilter, -1);
-        const event = events[0] as unknown as { args: { user: string, tvmCaller: string } };
-        console.log(event);
         
     });
 
