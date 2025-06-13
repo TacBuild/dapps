@@ -3,5 +3,5 @@ export interface ZerolendPoolConfig {
 }
 
 export const zerolendPoolConfig: ZerolendPoolConfig = {
-    appAddress: "0x0524d5F83C99052607a8838f6868438BB4089136"
+    appAddress: "0x34632888dB1c4aCe7b50b98EBD5433711C866E9B"
 }
