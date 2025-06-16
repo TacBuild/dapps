@@ -5,7 +5,6 @@ import {IHooks} from "./Interface/IHooks.sol";
 import {ITacSmartAccount} from "./Interface/ITacSmartAccount.sol";
 import {TokenAmount, NFTAmount} from "@tonappchain/evm-ccl/contracts/core/Structs.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "hardhat/console.sol";
 
 library SaHelper {
     
@@ -13,7 +12,6 @@ library SaHelper {
         IHooks.PreHook[] memory preHooks = hooks.preHooks;
         bytes[] memory results = new bytes[](preHooks.length);
         for (uint256 i = 0; i < preHooks.length; i++) {
-            console.log("prehook", i);
             if (preHooks[i].isFromSAPerspective) {
                 results[i] = ITacSmartAccount(sa).execute(preHooks[i].contractAddress, preHooks[i].value, preHooks[i].data);
             } else {
