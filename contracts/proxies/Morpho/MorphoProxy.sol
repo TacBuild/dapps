@@ -121,6 +121,18 @@ contract MorphoProxy is
         bytes data;
     }
 
+    /// @notice Arguments for withdrawing supplied assets
+    /// @param marketParams Market parameters
+    /// @param assets Amount of assets to withdraw
+    /// @param shares Amount of shares to withdraw
+    struct WithdrawSuppliedAssetsArguments {
+        IMorpho.MarketParams marketParams;
+        uint256 assets;
+        uint256 shares;
+        address onBehalf;
+        address receiver;
+    }
+
     /// @notice Arguments for repaying a loan
     /// @param marketParams Market parameters
     /// @param assets Amount of assets to repay
@@ -132,6 +144,7 @@ contract MorphoProxy is
         uint256 shares;
         bytes data;
     }
+
 
     /// @notice Arguments for claiming rewards
     /// @param account Address of the account claiming rewards
@@ -198,6 +211,11 @@ contract MorphoProxy is
     /// @notice Emitted when a new market is created
     /// @param marketParamsId ID of the created market
     event CreateMarket(Id indexed marketParamsId);
+    /// @notice Emitted when assets are withdrawn from a market
+    /// @param marketParamsId ID of the market
+    /// @param assets Amount of assets withdrawn
+    /// @param shares Amount of shares withdrawn
+    event WithdrawSuppliedAssets(Id indexed marketParamsId, uint256 assets, uint256 shares);
     
     /// @notice Address of the Morpho protocol contract
     IMorpho public morpho;
@@ -505,6 +523,31 @@ contract MorphoProxy is
         emit Supply(args.marketParams.id(), args.assets, args.shares);
     }
 
+
+    /// @notice Withdraws supplied assets from a market
+    /// @param tacHeader TAC header data
+    /// @param arguments Encoded withdraw supplied assets arguments
+    function withdrawSuppliedAssets(
+        bytes calldata tacHeader,
+        bytes calldata arguments
+    ) external payable _onlyCrossChainLayer {
+        WithdrawSuppliedAssetsArguments memory args = abi.decode(arguments, (WithdrawSuppliedAssetsArguments));
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
+        (address user, bool isNewAccount) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
+        if (isNewAccount) {
+            _setAutorization(user);
+        }
+        morpho.withdraw(args.marketParams, args.assets, args.shares, user, args.receiver);
+        if (IERC20(args.marketParams.loanToken).balanceOf(address(this)) > 0) {
+            TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
+            tokensToBridge[0] = TokenAmount(
+                args.marketParams.loanToken,
+                IERC20(args.marketParams.loanToken).balanceOf(address(this))
+            );
+            _bridgeTokens(tacHeader, tokensToBridge, "");
+        }
+        emit WithdrawSuppliedAssets(args.marketParams.id(), args.assets, args.shares);
+    }
 
     ///////////////////////////////
     /////// BUNDLED OPERATIONS ////
