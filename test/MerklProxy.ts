@@ -51,6 +51,7 @@ describe("MorphoProxy", function () {
 
         const token  = "0x05225a6416EDaeeC7227027E86F7A47D18A06b91"
         const amount = ethers.parseUnits("1000", 9)
+        console.log(await tacSAFactory.predictSmartAccountAddress(tvmWalletCaller, await merklProxy.getAddress()));
         const proof = [ "0x8940a89e90106036b2210385cfc7a8cdfb53f371b93842a68728b37412293f1c", "0xd812e953a0210862ba23e6776e4939fec6ef2f8c3c3ee9962a3e4d801df60eaf" ]
         const encodedArguments = new ethers.AbiCoder().encode(
             ['tuple(address[],uint256[],bytes32[][],bytes)'],
