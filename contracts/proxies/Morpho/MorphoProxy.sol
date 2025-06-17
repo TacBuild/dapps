@@ -217,6 +217,9 @@ contract MorphoProxy is
     /// @param shares Amount of shares withdrawn
     event WithdrawSuppliedAssets(Id indexed marketParamsId, uint256 assets, uint256 shares);
     
+    /// @notice Error emitted when a zero address is provided
+    error ZeroAddress();
+    
     /// @notice Address of the Morpho protocol contract
     IMorpho public morpho;
     /// @notice Address of the URD contract
@@ -243,6 +246,9 @@ contract MorphoProxy is
         address _metaMorphoV1_1,
         address _tacSAFactory
     ) external initializer {
+        if(_crossChainLayer == address(0) || _morpho == address(0) || _urd == address(0) || _metaMorphoV1_1 == address(0) || _tacSAFactory == address(0)) {
+            revert ZeroAddress();
+        }
         __TacProxyV1Upgradeable_init(_crossChainLayer);
         __Ownable_init(msg.sender);
         __UUPSUpgradeable_init();
