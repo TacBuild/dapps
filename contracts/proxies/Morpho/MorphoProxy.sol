@@ -226,6 +226,10 @@ contract MorphoProxy is
     /// @notice Address of the MetaMorpho V1.1 contract
     IMetaMorpho public metaMorphoV1_1;
 
+    constructor() {
+        _disableInitializers();
+    }
+
     /// @notice Initializes the proxy contract
     /// @param _crossChainLayer Address of the cross-chain layer contract
     /// @param _morpho Address of the Morpho protocol contract
