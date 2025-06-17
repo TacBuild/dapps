@@ -322,7 +322,16 @@ contract MorphoProxy is
             args.vault,
             shares
         );
+        if (IERC20(IMorphoVault(args.vault).asset()).balanceOf(address(this)) > 0) {
+            TransferHelper.safeApprove(
+                IMorphoVault(args.vault).asset(),
+                args.vault,
+                0
+            );
+            tokensToBridge = _addTokenToBridge(IMorphoVault(args.vault).asset(), tokensToBridge);
+        }
         _bridgeTokens(tacHeader, tokensToBridge, "");
+        
     }
 
     /// @notice Withdraws assets from a vault
@@ -348,6 +357,9 @@ contract MorphoProxy is
             IMorphoVault(args.vault).asset(),
             IERC20(IMorphoVault(args.vault).asset()).balanceOf(address(this))
         );
+        if (IERC20(args.vault).balanceOf(address(this)) > 0) {
+            tokensToBridge = _addTokenToBridge(args.vault, tokensToBridge);
+        }
         _bridgeTokens(tacHeader, tokensToBridge, "");
     }
 
@@ -371,7 +383,7 @@ contract MorphoProxy is
             IMorphoVault(args.vault).asset(),
             IERC20(IMorphoVault(args.vault).asset()).balanceOf(address(this))
         );
-            _bridgeTokens(tacHeader, tokensToBridge, "");
+        _bridgeTokens(tacHeader, tokensToBridge, "");
     }
 
 
