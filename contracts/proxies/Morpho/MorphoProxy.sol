@@ -639,7 +639,7 @@ contract MorphoProxy is
     function createMarket(
         bytes calldata ,
         bytes calldata arguments
-    ) external payable {
+    ) external payable _onlyCrossChainLayer {
         CreateMarketArguments memory args = abi.decode(arguments, (CreateMarketArguments));
         morpho.createMarket(args.marketParams);
         emit MarketCreated(args.marketParams.id());
@@ -651,7 +651,7 @@ contract MorphoProxy is
     function createVault(
         bytes calldata,
         bytes calldata arguments
-    ) external payable {
+    ) external payable _onlyCrossChainLayer {
         CreateVaultArguments memory args = abi.decode(arguments, (CreateVaultArguments));
         address vault = metaMorphoV1_1.createMetaMorpho(args.initialOwner, args.initialTimeLock, args.asset, args.name, args.symbol, args.salt);
         emit VaultCreated(vault);
