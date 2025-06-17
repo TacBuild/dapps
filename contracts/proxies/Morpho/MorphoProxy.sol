@@ -355,11 +355,27 @@ contract MorphoProxy is
         bytes calldata arguments
     ) external payable _onlyCrossChainLayer {
         ClaimArguments memory args = abi.decode(arguments, (ClaimArguments));
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
+        (address user, bool isNewAccount) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
+        if (isNewAccount) {
+            _setAutorization(user);
+        }
         uint256 amount = urd.claim(args.account, args.reward, args.claimable, args.proof);
+        if (args.account == user) {
+            ITacSmartAccount(user).execute(args.reward, 0, abi.encodeWithSelector(IERC20.transfer.selector, address(this), amount));
+            if (amount > 0) {
+                TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
+                tokensToBridge[0] = TokenAmount(args.reward, amount);
+                _bridgeTokens(tacHeader, tokensToBridge, "");
+            }
+        } else if(args.account == address(this)) {
+            if (amount > 0) {
+                TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
+                tokensToBridge[0] = TokenAmount(args.reward, amount);
+                _bridgeTokens(tacHeader, tokensToBridge, "");
+            }
+        }
         emit Claim(args.account, args.reward, amount);
-        TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
-        tokensToBridge[0] = TokenAmount(args.reward, amount);
-        _bridgeTokens(tacHeader, tokensToBridge, "");
     }
 
 
