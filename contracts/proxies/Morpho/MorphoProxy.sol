@@ -492,7 +492,10 @@ contract MorphoProxy is
     ) external payable _onlyCrossChainLayer {
         SupplyArguments memory args = abi.decode(arguments, (SupplyArguments));
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
-        (address user,) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
+        (address user, bool isNewAccount) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
+        if (isNewAccount) {
+            _setAutorization(user);
+        }
         TransferHelper.safeApprove(
             args.marketParams.loanToken,
             address(morpho),
