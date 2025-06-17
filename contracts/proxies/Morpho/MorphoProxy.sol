@@ -171,11 +171,12 @@ contract MorphoProxy is
     /// @notice Emitted when assets are withdrawn from a vault
     /// @param vault Address of the vault
     /// @param assets Amount of assets withdrawn
-    event Withdraw(address indexed vault, uint256 assets);
+    event Withdraw(address indexed vault, uint256 assets, uint256 sharesBurned);
     /// @notice Emitted when shares are redeemed from a vault
     /// @param vault Address of the vault
     /// @param shares Amount of shares redeemed
-    event Redeem(address indexed vault, uint256 shares);
+    /// @param assetsRedeemed Amount of assets redeemed
+    event Redeem(address indexed vault, uint256 shares, uint256 assetsRedeemed);
     /// @notice Emitted when rewards are claimed
     /// @param account Address of the claiming account
     /// @param reward Address of the reward token
@@ -343,12 +344,12 @@ contract MorphoProxy is
             arguments,
             (WithdrawArguments)
         );
-        IMorphoVault(args.vault).withdraw(
+        uint256 sharesBurned = IMorphoVault(args.vault).withdraw(
             args.assets,
             address(this),
             address(this)
         );
-        emit Withdraw(args.vault, args.assets);
+        emit Withdraw(args.vault, args.assets, sharesBurned);
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(
             IMorphoVault(args.vault).asset(),
@@ -369,12 +370,12 @@ contract MorphoProxy is
         bytes calldata arguments
     ) external _onlyCrossChainLayer {
         RedeemArguments memory args = abi.decode(arguments, (RedeemArguments));
-        IMorphoVault(args.vault).redeem(
+        uint256 assetsRedeemed = IMorphoVault(args.vault).redeem(
             args.shares,
             address(this),
             address(this)
         );
-        emit Redeem(args.vault, args.shares);
+        emit Redeem(args.vault, args.shares, assetsRedeemed);
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(
             IMorphoVault(args.vault).asset(),
