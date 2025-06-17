@@ -3,7 +3,6 @@ pragma solidity ^0.8.28;
 
 import {TransferHelper} from "@uniswap/lib/contracts/libraries/TransferHelper.sol";
 import {OutMessageV1, TokenAmount, TacHeaderV1, NFTAmount} from "@tonappchain/evm-ccl/contracts/core/Structs.sol";
-import {ICrossChainLayer} from "@tonappchain/evm-ccl/contracts/interfaces/ICrossChainLayer.sol";
 import {TacProxyV1Upgradeable} from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -11,11 +10,10 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IMorpho, Id} from "./Interface/IMorpho.sol";
 import {IMorphoVault} from "./Interface/IMorphoVault.sol";
 import {IURD} from "./Interface/IURD.sol";
-import {TacSmartAccount} from "../../TacSmartAccounts/TacSmartAccount.sol";
 import {TacSAFactory} from "../../TacSmartAccounts/TacSAFactory.sol";
 import {MarketParamsLib} from "./lib/MarketParamsLib.sol";
 import {ITacSmartAccount} from "../../TacSmartAccounts/Interface/ITacSmartAccount.sol";
-import {IMetaMorpho} from "./Interface/IMetaMorpho.sol";
+import {IMetaMorphoV1_1Factory} from "./Interface/IMetaMorphoV1_1Factory.sol";
 
 /// @title MorphoProxy
 /// @notice A proxy contract that interfaces with Morpho protocol for lending and borrowing operations
@@ -170,8 +168,9 @@ contract MorphoProxy is
     event Deposit(address indexed vault, uint256 assets);
     /// @notice Emitted when shares are minted in a vault
     /// @param vault Address of the vault
-    /// @param shares Amount of shares minted
-    event Mint(address indexed vault, uint256 shares);
+    /// @param actualShares Amount of shares minted
+    /// @param requestedShares Amount of shares requested
+    event Mint(address indexed vault, uint256 actualShares, uint256 requestedShares);
     /// @notice Emitted when assets are withdrawn from a vault
     /// @param vault Address of the vault
     /// @param assets Amount of assets withdrawn
@@ -195,28 +194,33 @@ contract MorphoProxy is
     event WithdrawCollateral(Id indexed marketParamsId, uint256 assets);
     /// @notice Emitted when assets are borrowed
     /// @param marketParamsId ID of the market
-    /// @param assets Amount of assets borrowed
-    /// @param shares Amount of shares borrowed
-    event Borrow(Id indexed marketParamsId, uint256 assets, uint256 shares);
+    /// @param actualAssets Amount of assets borrowed
+    /// @param actualShares Amount of shares borrowed
+    /// @param requestedAssets Amount of assets requested
+    /// @param requestedShares Amount of shares requested
+    event Borrow(Id indexed marketParamsId, uint256 actualAssets, uint256 actualShares, uint256 requestedAssets, uint256 requestedShares);
     /// @notice Emitted when a loan is repaid
     /// @param marketParamsId ID of the market
-    /// @param assets Amount of assets repaid
-    /// @param shares Amount of shares repaid
-    event Repay(Id indexed marketParamsId, uint256 assets, uint256 shares);
+    /// @param actualAssets Amount of assets repaid
+    /// @param actualShares Amount of shares repaid
+    /// @param requestedAssets Amount of assets requested
+    /// @param requestedShares Amount of shares requested
+    event Repay(Id indexed marketParamsId, uint256 actualAssets, uint256 actualShares, uint256 requestedAssets, uint256 requestedShares);
     /// @notice Emitted when assets are supplied
     /// @param marketParamsId ID of the market
-    /// @param assets Amount of assets supplied
-    /// @param shares Amount of shares supplied
-    event Supply(Id indexed marketParamsId, uint256 assets, uint256 shares);
-    /// @notice Emitted when a new market is created
-    /// @param marketParamsId ID of the created market
-    event CreateMarket(Id indexed marketParamsId);
+    /// @param actualAssets Amount of assets supplied
+    /// @param actualShares Amount of shares supplied
+    /// @param requestedAssets Amount of assets requested
+    /// @param requestedShares Amount of shares requested
+    event Supply(Id indexed marketParamsId, uint256 actualAssets, uint256 actualShares, uint256 requestedAssets, uint256 requestedShares);
     /// @notice Emitted when assets are withdrawn from a market
     /// @param marketParamsId ID of the market
-    /// @param assets Amount of assets withdrawn
-    /// @param shares Amount of shares withdrawn
-    event WithdrawSuppliedAssets(Id indexed marketParamsId, uint256 assets, uint256 shares);
-    
+    /// @param actualAssets Amount of assets withdrawn
+    /// @param actualShares Amount of shares withdrawn
+    /// @param requestedAssets Amount of assets requested
+    /// @param requestedShares Amount of shares requested
+    event WithdrawSuppliedAssets(Id indexed marketParamsId, uint256 actualAssets, uint256 actualShares, uint256 requestedAssets, uint256 requestedShares);
+
     /// @notice Error emitted when a zero address is provided
     error ZeroAddress();
     
@@ -227,7 +231,7 @@ contract MorphoProxy is
     /// @notice Address of the TacSAFactory contract
     TacSAFactory public tacSAFactory;
     /// @notice Address of the MetaMorpho V1.1 contract
-    IMetaMorpho public metaMorphoV1_1;
+    IMetaMorphoV1_1Factory public metaMorphoFactoryV1_1;
 
     constructor() {
         _disableInitializers();
@@ -237,16 +241,16 @@ contract MorphoProxy is
     /// @param _crossChainLayer Address of the cross-chain layer contract
     /// @param _morpho Address of the Morpho protocol contract
     /// @param _urd Address of the URD contract
-    /// @param _metaMorphoV1_1 Address of the MetaMorpho V1.1 contract
+    /// @param _metaMorphoFactoryV1_1 Address of the MetaMorpho V1.1 contract
     /// @param _tacSAFactory Address of the TacSAFactory contract
     function initialize(
         address _crossChainLayer,
         address _morpho,
         address _urd,
-        address _metaMorphoV1_1,
+        address _metaMorphoFactoryV1_1,
         address _tacSAFactory
     ) external initializer {
-        if(_crossChainLayer == address(0) || _morpho == address(0) || _urd == address(0) || _metaMorphoV1_1 == address(0) || _tacSAFactory == address(0)) {
+        if(_crossChainLayer == address(0) || _morpho == address(0) || _urd == address(0) || _metaMorphoFactoryV1_1 == address(0) || _tacSAFactory == address(0)) {
             revert ZeroAddress();
         }
         __TacProxyV1Upgradeable_init(_crossChainLayer);
@@ -255,7 +259,7 @@ contract MorphoProxy is
         morpho = IMorpho(_morpho);
         urd = IURD(_urd);
         tacSAFactory = TacSAFactory(_tacSAFactory);
-        metaMorphoV1_1 = IMetaMorpho(_metaMorphoV1_1);
+        metaMorphoFactoryV1_1 = IMetaMorphoV1_1Factory(_metaMorphoFactoryV1_1);
     }
 
     /// @notice Internal function to authorize upgrades
@@ -276,7 +280,7 @@ contract MorphoProxy is
     function deposit(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable _onlyCrossChainLayer{
+    ) external _onlyCrossChainLayer{
         DepositArguments memory args = abi.decode(
             arguments,
             (DepositArguments)
@@ -303,7 +307,7 @@ contract MorphoProxy is
     function mint(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable _onlyCrossChainLayer {
+    ) external _onlyCrossChainLayer {
         MintArguments memory args = abi.decode(arguments, (MintArguments));
         uint256 assets = IMorphoVault(args.vault).previewMint(args.shares);
         TransferHelper.safeApprove(
@@ -312,7 +316,7 @@ contract MorphoProxy is
             assets
         );
         uint256 shares = IMorphoVault(args.vault).mint(args.shares, address(this));
-        emit Mint(args.vault, args.shares);
+        emit Mint(args.vault, shares, args.shares);
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(
             args.vault,
@@ -328,7 +332,7 @@ contract MorphoProxy is
     function withdraw(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable _onlyCrossChainLayer {
+    ) external _onlyCrossChainLayer {
         WithdrawArguments memory args = abi.decode(
             arguments,
             (WithdrawArguments)
@@ -354,7 +358,7 @@ contract MorphoProxy is
     function redeem(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable _onlyCrossChainLayer {
+    ) external _onlyCrossChainLayer {
         RedeemArguments memory args = abi.decode(arguments, (RedeemArguments));
         IMorphoVault(args.vault).redeem(
             args.shares,
@@ -381,7 +385,7 @@ contract MorphoProxy is
     function claim(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable _onlyCrossChainLayer {
+    ) external _onlyCrossChainLayer {
         ClaimArguments memory args = abi.decode(arguments, (ClaimArguments));
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user, bool isNewAccount) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
@@ -417,7 +421,7 @@ contract MorphoProxy is
     function supplyCollateral(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable _onlyCrossChainLayer {
+    ) external _onlyCrossChainLayer {
         SupplyCollateralArguments memory args = abi.decode(arguments, (SupplyCollateralArguments));
         TransferHelper.safeApprove(
             args.marketParams.collateralToken,
@@ -439,7 +443,7 @@ contract MorphoProxy is
     function withdrawCollateral(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable _onlyCrossChainLayer {
+    ) external _onlyCrossChainLayer {
         WithdrawCollateralArguments memory args = abi.decode(arguments, (WithdrawCollateralArguments));
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user, bool isNewAccount) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
@@ -462,15 +466,15 @@ contract MorphoProxy is
     function borrow(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable _onlyCrossChainLayer {
+    ) external _onlyCrossChainLayer {
         BorrowArguments memory args = abi.decode(arguments, (BorrowArguments));
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user, bool isNewAccount) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
         if (isNewAccount) {
             _setAutorization(user);
         }
-        morpho.borrow(args.marketParams, args.assets, args.shares, user, address(this));
-        emit Borrow(args.marketParams.id(), args.assets, args.shares);
+        (uint256 actualAssets, uint256 actualShares) = morpho.borrow(args.marketParams, args.assets, args.shares, user, address(this));
+        emit Borrow(args.marketParams.id(), actualAssets, actualShares, args.assets, args.shares);
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(
             args.marketParams.loanToken,
@@ -497,8 +501,8 @@ contract MorphoProxy is
             address(morpho),
             IERC20(args.marketParams.loanToken).balanceOf(address(this))
         );
-        morpho.repay(args.marketParams, args.assets, args.shares, user, args.data);
-        emit Repay(args.marketParams.id(), args.assets, args.shares);
+        (uint256 actualAssets, uint256 actualShares) = morpho.repay(args.marketParams, args.assets, args.shares, user, args.data);
+        emit Repay(args.marketParams.id(), actualAssets, actualShares, args.assets, args.shares);
         if (IERC20(args.marketParams.loanToken).balanceOf(address(this)) > 0) {
             TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
             tokensToBridge[0] = TokenAmount(
@@ -529,8 +533,8 @@ contract MorphoProxy is
             address(morpho),
             IERC20(args.marketParams.loanToken).balanceOf(address(this))
         );
-        morpho.supply(args.marketParams, args.assets, args.shares, user, args.data);
-        emit Supply(args.marketParams.id(), args.assets, args.shares);
+        (uint256 actualAssets, uint256 actualShares) = morpho.supply(args.marketParams, args.assets, args.shares, user, args.data);
+        emit Supply(args.marketParams.id(), actualAssets, actualShares, args.assets, args.shares);
     }
 
 
@@ -540,14 +544,14 @@ contract MorphoProxy is
     function withdrawSuppliedAssets(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable _onlyCrossChainLayer {
+    ) external _onlyCrossChainLayer {
         WithdrawSuppliedAssetsArguments memory args = abi.decode(arguments, (WithdrawSuppliedAssetsArguments));
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user, bool isNewAccount) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
         if (isNewAccount) {
             _setAutorization(user);
         }
-        morpho.withdraw(args.marketParams, args.assets, args.shares, user, args.receiver);
+        (uint256 actualAssets, uint256 actualShares) = morpho.withdraw(args.marketParams, args.assets, args.shares, user, args.receiver);
         if (IERC20(args.marketParams.loanToken).balanceOf(address(this)) > 0) {
             TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
             tokensToBridge[0] = TokenAmount(
@@ -556,7 +560,7 @@ contract MorphoProxy is
             );
             _bridgeTokens(tacHeader, tokensToBridge, "");
         }
-        emit WithdrawSuppliedAssets(args.marketParams.id(), args.assets, args.shares);
+        emit WithdrawSuppliedAssets(args.marketParams.id(), actualAssets, actualShares, args.assets, args.shares);
     }
 
     ///////////////////////////////
@@ -586,8 +590,8 @@ contract MorphoProxy is
         emit SupplyCollateral(supplyArgs.marketParams.id(), supplyArgs.assets);
 
         // Borrow
-        morpho.borrow(borrowArgs.marketParams, borrowArgs.assets, borrowArgs.shares, user, address(this));
-        emit Borrow(borrowArgs.marketParams.id(), borrowArgs.assets, borrowArgs.shares);
+        (uint256 actualAssets, uint256 actualShares) = morpho.borrow(borrowArgs.marketParams, borrowArgs.assets, borrowArgs.shares, user, address(this));
+        emit Borrow(borrowArgs.marketParams.id(), actualAssets, actualShares, borrowArgs.assets, borrowArgs.shares);
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(
             borrowArgs.marketParams.loanToken,
@@ -615,27 +619,25 @@ contract MorphoProxy is
             address(morpho),
             IERC20(repayArgs.marketParams.loanToken).balanceOf(address(this))
         );
-        morpho.repay(repayArgs.marketParams, repayArgs.assets, repayArgs.shares, user, repayArgs.data);
-        emit Repay(repayArgs.marketParams.id(), repayArgs.assets, repayArgs.shares);
+        (uint256 actualAssets, uint256 actualShares) = morpho.repay(repayArgs.marketParams, repayArgs.assets, repayArgs.shares, user, repayArgs.data);
+        emit Repay(repayArgs.marketParams.id(), actualAssets, actualShares, repayArgs.assets, repayArgs.shares);
 
-
-        if (IERC20(repayArgs.marketParams.loanToken).balanceOf(address(this)) > 0) {
-            TokenAmount[] memory loanTokensToBridge = new TokenAmount[](1);
-            loanTokensToBridge[0] = TokenAmount(
-                repayArgs.marketParams.loanToken,
-                IERC20(repayArgs.marketParams.loanToken).balanceOf(address(this))
-            );
-            _bridgeTokens(tacHeader, loanTokensToBridge, "");
-        }
         // Withdraw collateral
         morpho.withdrawCollateral(withdrawArgs.marketParams, withdrawArgs.assets, user, address(this));
         emit WithdrawCollateral(withdrawArgs.marketParams.id(), withdrawArgs.assets);
-        TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
-        tokensToBridge[0] = TokenAmount(
-            withdrawArgs.marketParams.collateralToken,
-            IERC20(withdrawArgs.marketParams.collateralToken).balanceOf(address(this))
-        );
-        _bridgeTokens(tacHeader, tokensToBridge, "");
+
+
+        TokenAmount[] memory tokensToBridge = new TokenAmount[](0);
+        if (IERC20(repayArgs.marketParams.loanToken).balanceOf(address(this)) > 0) {
+            tokensToBridge = _addTokenToBridge(repayArgs.marketParams.loanToken, tokensToBridge);
+        }
+        if (IERC20(withdrawArgs.marketParams.collateralToken).balanceOf(address(this)) > 0) {
+            tokensToBridge = _addTokenToBridge(withdrawArgs.marketParams.collateralToken, tokensToBridge);
+        }
+        if (tokensToBridge.length > 0) {
+            _bridgeTokens(tacHeader, tokensToBridge, "");
+        }
+        
     }
 
     
@@ -649,7 +651,7 @@ contract MorphoProxy is
     function createMarket(
         bytes calldata ,
         bytes calldata arguments
-    ) external payable _onlyCrossChainLayer {
+    ) external _onlyCrossChainLayer {
         CreateMarketArguments memory args = abi.decode(arguments, (CreateMarketArguments));
         morpho.createMarket(args.marketParams);
         emit MarketCreated(args.marketParams.id());
@@ -661,9 +663,9 @@ contract MorphoProxy is
     function createVault(
         bytes calldata,
         bytes calldata arguments
-    ) external payable _onlyCrossChainLayer {
+    ) external _onlyCrossChainLayer {
         CreateVaultArguments memory args = abi.decode(arguments, (CreateVaultArguments));
-        address vault = metaMorphoV1_1.createMetaMorpho(args.initialOwner, args.initialTimeLock, args.asset, args.name, args.symbol, args.salt);
+        address vault = metaMorphoFactoryV1_1.createMetaMorpho(args.initialOwner, args.initialTimeLock, args.asset, args.name, args.symbol, args.salt);
         emit VaultCreated(vault);
     } 
 
@@ -709,6 +711,16 @@ contract MorphoProxy is
         });
 
         _sendMessageV1(message, address(this).balance);
+    }
+
+    function _addTokenToBridge(address tokenToAdd, TokenAmount[] memory oldInfo) internal view returns (TokenAmount[] memory tokensToBridge) {
+        uint256 oldLength = oldInfo.length;
+        tokensToBridge = new TokenAmount[](oldLength + 1);
+        for (uint256 i = 0; i < oldLength; i++) {
+            tokensToBridge[i] = oldInfo[i];
+        }
+        tokensToBridge[oldLength] = TokenAmount(tokenToAdd, IERC20(tokenToAdd).balanceOf(address(this)));
+        return tokensToBridge;
     }
 
     /// @notice Receives ETH
