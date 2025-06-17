@@ -86,7 +86,6 @@ contract MorphoProxy is
     struct SupplyCollateralArguments {
         IMorpho.MarketParams marketParams;
         uint256 assets;
-        bytes data;
     }
 
     /// @notice Arguments for withdrawing collateral
@@ -116,7 +115,6 @@ contract MorphoProxy is
         IMorpho.MarketParams marketParams;
         uint256 assets;
         uint256 shares;
-        bytes data;
     }
 
     /// @notice Arguments for withdrawing supplied assets
@@ -140,7 +138,6 @@ contract MorphoProxy is
         IMorpho.MarketParams marketParams;
         uint256 assets;
         uint256 shares;
-        bytes data;
     }
 
 
@@ -445,7 +442,7 @@ contract MorphoProxy is
         if (isNewAccount) {
             _setAutorization(user);
         }
-        morpho.supplyCollateral(args.marketParams, args.assets, user, args.data);
+        morpho.supplyCollateral(args.marketParams, args.assets, user, "");
         emit SupplyCollateral(args.marketParams.id(), args.assets);
     }
 
@@ -513,7 +510,7 @@ contract MorphoProxy is
             address(morpho),
             IERC20(args.marketParams.loanToken).balanceOf(address(this))
         );
-        (uint256 actualAssets, uint256 actualShares) = morpho.repay(args.marketParams, args.assets, args.shares, user, args.data);
+        (uint256 actualAssets, uint256 actualShares) = morpho.repay(args.marketParams, args.assets, args.shares, user, "");
         emit Repay(args.marketParams.id(), actualAssets, actualShares, args.assets, args.shares);
         if (IERC20(args.marketParams.loanToken).balanceOf(address(this)) > 0) {
             TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
@@ -545,7 +542,7 @@ contract MorphoProxy is
             address(morpho),
             IERC20(args.marketParams.loanToken).balanceOf(address(this))
         );
-        (uint256 actualAssets, uint256 actualShares) = morpho.supply(args.marketParams, args.assets, args.shares, user, args.data);
+        (uint256 actualAssets, uint256 actualShares) = morpho.supply(args.marketParams, args.assets, args.shares, user, "");
         emit Supply(args.marketParams.id(), actualAssets, actualShares, args.assets, args.shares);
     }
 
@@ -598,7 +595,7 @@ contract MorphoProxy is
         if (isNewAccount) {
             _setAutorization(user);
         }
-        morpho.supplyCollateral(supplyArgs.marketParams, supplyArgs.assets, user, supplyArgs.data);
+        morpho.supplyCollateral(supplyArgs.marketParams, supplyArgs.assets, user, "");
         emit SupplyCollateral(supplyArgs.marketParams.id(), supplyArgs.assets);
 
         // Borrow
@@ -631,7 +628,7 @@ contract MorphoProxy is
             address(morpho),
             IERC20(repayArgs.marketParams.loanToken).balanceOf(address(this))
         );
-        (uint256 actualAssets, uint256 actualShares) = morpho.repay(repayArgs.marketParams, repayArgs.assets, repayArgs.shares, user, repayArgs.data);
+        (uint256 actualAssets, uint256 actualShares) = morpho.repay(repayArgs.marketParams, repayArgs.assets, repayArgs.shares, user, "");
         emit Repay(repayArgs.marketParams.id(), actualAssets, actualShares, repayArgs.assets, repayArgs.shares);
 
         // Withdraw collateral
