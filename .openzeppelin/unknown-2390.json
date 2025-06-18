@@ -1335,7 +1335,7 @@
             "label": "beacon",
             "offset": 0,
             "slot": "0",
-            "type": "t_contract(UpgradeableBeacon)1355",
+            "type": "t_contract(UpgradeableBeacon)1492",
             "contract": "TacSAFactory",
             "src": "contracts/TacSmartAccounts/TacSAFactory.sol:11"
           },
@@ -1395,7 +1395,7 @@
             "label": "bytes32",
             "numberOfBytes": "32"
           },
-          "t_contract(UpgradeableBeacon)1355": {
+          "t_contract(UpgradeableBeacon)1492": {
             "label": "contract UpgradeableBeacon",
             "numberOfBytes": "20"
           },

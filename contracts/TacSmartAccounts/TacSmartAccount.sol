@@ -33,6 +33,12 @@ contract TacSmartAccount is Initializable {
         emit Executed(target, value, data);
     }
 
+    function delegatecall(address target, bytes calldata data) external onlyOwner returns(bool success, bytes memory returnData) {
+        (success, returnData) = target.delegatecall(data);
+        require(success, "Delegatecall failed");
+        emit Executed(target, 0, data);
+    }
+
     function approve(address token, address to, uint256 amount) external onlyOwner{
         IERC20(token).approve(to, amount);
     }
