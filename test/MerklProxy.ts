@@ -30,7 +30,7 @@ describe("MorphoProxy", function () {
         tacSmartAccount = await deployTacSmartAccount(admin);
         tacSAFactory = await deployTacSAFactory(admin, await tacSmartAccount.getAddress());
         merklProxy = await deployMerklProxy(admin, crossChainLayerAddress, await tacSAFactory.getAddress());
-        customMerklProxyEuler = await deployCustomMerklProxyEuler(admin);
+        // customMerklProxyEuler = await deployCustomMerklProxyEuler(admin, await merklProxy.getAddress());
 
         const sttonEVMAddress = testSdk.getEVMJettonAddress(sttonTokenInfo.tvmAddress);
         const tacEVMAddress = testSdk.getEVMJettonAddress(tacTokenInfo.tvmAddress);

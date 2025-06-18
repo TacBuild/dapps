@@ -14,6 +14,11 @@ import {IHooks} from "../../TacSmartAccounts/Interface/IHooks.sol";
 import {IREUL} from "./interface/IREUL.sol";
 contract CustomMerklProxyEuler is ICustomMerkl, OwnableUpgradeable, UUPSUpgradeable {
 
+
+    address public EUL;
+    address public rEUL;
+    address public mainMerklProxy;
+
     struct ClaimData {
         address tokenWrapper;
     }
@@ -38,10 +43,25 @@ contract CustomMerklProxyEuler is ICustomMerkl, OwnableUpgradeable, UUPSUpgradea
         uint256[] lockTimestamps;
     }
 
+    modifier onlyMainMerklProxy() {
+        require(msg.sender == mainMerklProxy, "Only main merkl proxy can call this function");
+        _;
+    }
+
+    constructor() {
+        _disableInitializers();
+    }
+
     function initialize(
+        address _EUL,
+        address _rEUL,
+        address _mainMerklProxy
     ) external initializer {
         __Ownable_init(msg.sender);
         __UUPSUpgradeable_init();
+        EUL = _EUL;
+        rEUL = _rEUL;
+        mainMerklProxy = _mainMerklProxy;
     }
 
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
@@ -50,14 +70,8 @@ contract CustomMerklProxyEuler is ICustomMerkl, OwnableUpgradeable, UUPSUpgradea
         address user,
         address token,
         bytes calldata data
-    ) external returns (address tokenToBridge) {
+    ) external onlyMainMerklProxy returns (address tokenToBridge) {
         ClaimData memory claimData = abi.decode(data, (ClaimData));
-        //!TODO Ensure that depositFor is not automaticly done
-        TacSmartAccount(payable(user)).execute(
-            address(token),
-            0,
-            abi.encodeWithSelector(IREUL.depositFor.selector, user, IERC20(token).balanceOf(user))
-        );
 
         TacSmartAccount(payable(user)).execute(
             claimData.tokenWrapper,
@@ -68,21 +82,14 @@ contract CustomMerklProxyEuler is ICustomMerkl, OwnableUpgradeable, UUPSUpgradea
         return claimData.tokenWrapper;
     }
 
-    function withdrawTo(bytes calldata data) external{
-        WithdrawToData memory withdrawToData = abi.decode(data, (WithdrawToData));
-        bool success = IREUL(withdrawToData.target).withdrawTo(address(this), withdrawToData.amount);
-        require(success, "Withdrawal failed");
-        address underlying = IREUL(withdrawToData.target).underlying();
-        TransferHelper.safeTransfer(underlying, withdrawToData.proxy, IERC20(underlying).balanceOf(address(this)));
-    }
-    function withdrawToByLockTimestamp(bytes calldata data) external{
+    function withdrawToByLockTimestamp(bytes calldata data) external onlyMainMerklProxy{
         WithdrawToByLockTimestampData memory withdrawToByLockTimestampData = abi.decode(data, (WithdrawToByLockTimestampData));
         bool success = IREUL(withdrawToByLockTimestampData.target).withdrawToByLockTimestamp(address(this), withdrawToByLockTimestampData.amount, withdrawToByLockTimestampData.lockTimestamp);
         require(success, "Withdrawal failed");
         address underlying = IREUL(withdrawToByLockTimestampData.target).underlying();
         TransferHelper.safeTransfer(underlying, withdrawToByLockTimestampData.proxy, IERC20(underlying).balanceOf(address(this)));
     }
-    function withdrawToByLockTimestamps(bytes calldata data) external{
+    function withdrawToByLockTimestamps(bytes calldata data) external onlyMainMerklProxy{
         WithdrawToByLockTimestampsData memory withdrawToByLockTimestampsData = abi.decode(data, (WithdrawToByLockTimestampsData));
         bool success = IREUL(withdrawToByLockTimestampsData.target).withdrawToByLockTimestamps(address(this), withdrawToByLockTimestampsData.lockTimestamps, withdrawToByLockTimestampsData.amount);
         require(success, "Withdrawal failed");

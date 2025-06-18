@@ -3,13 +3,13 @@ import { MerklProxy, CustomMerklProxyEuler } from "../../typechain-types";
 import { deployUpgradable } from '@tonappchain/evm-ccl'
 import { DeployProxyOptions } from "@openzeppelin/hardhat-upgrades/dist/utils";
 import hre from 'hardhat';
-import { merklTestnetConfig } from "./config/TestnetConfigTurinV3";
+import { merklTestnetConfig, rEULTestnetConfig } from "./config/TestnetConfigTurinV3";
 import { deployTacSmartAccount } from "../TacSmartAccountFactory/SABlueprintDeploy";
 import { deployTacSAFactory } from "../TacSmartAccountFactory/FactoryDeploy";
 
 const proxyOptsUUPS: DeployProxyOptions = {
     kind: "uups",
-    unsafeAllow: ["delegatecall"]
+    unsafeAllow: ["delegatecall", "constructor"]
 };
 
 export async function deployMerklProxy(
@@ -34,11 +34,12 @@ export async function deployMerklProxy(
 
 export async function deployCustomMerklProxyEuler(
     deployer: Signer,
+    mainMerklProxyAddress: string,
 ): Promise<CustomMerklProxyEuler> {
     const customMerklProxyEuler = await deployUpgradable<CustomMerklProxyEuler>(
         deployer,
         hre.artifacts.readArtifactSync('CustomMerklProxyEuler'),
-        [],
+        [rEULTestnetConfig.EULAddress, rEULTestnetConfig.rEULAddress, mainMerklProxyAddress],
         proxyOptsUUPS,
         undefined,
         true
@@ -55,4 +56,4 @@ async function main() {
     await deployMerklProxy(deployer, "0x20B33b63fADd3cf09943b493ef79FC8C0845d577", await saFactory.getAddress())
 }
 
-main()
+// main()
