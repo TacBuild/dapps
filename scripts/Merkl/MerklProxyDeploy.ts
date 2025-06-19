@@ -9,7 +9,7 @@ import { deployTacSAFactory } from "../TacSmartAccountFactory/FactoryDeploy";
 
 const proxyOptsUUPS: DeployProxyOptions = {
     kind: "uups",
-    unsafeAllow: ["delegatecall", "constructor"]
+    unsafeAllow: ["constructor"]
 };
 
 export async function deployMerklProxy(
@@ -51,9 +51,9 @@ export async function deployCustomMerklProxyEuler(
 
 async function main() {
     const [deployer] = await hre.ethers.getSigners();
-    const account = await deployTacSmartAccount(deployer);
-    const saFactory = await deployTacSAFactory(deployer, await account.getAddress());
-    await deployMerklProxy(deployer, "0x20B33b63fADd3cf09943b493ef79FC8C0845d577", await saFactory.getAddress())
+    // const account = await deployTacSmartAccount(deployer);
+    // const saFactory = await deployTacSAFactory(deployer, await account.getAddress());
+    await deployMerklProxy(deployer, merklTestnetConfig.crossChainLayerAddress, merklTestnetConfig.tacSAFactoryAddress)
 }
 
-// main()
+main()

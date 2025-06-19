@@ -1,5 +1,6 @@
 import hre, { ethers } from "hardhat";
 import { AddressLike, BytesLike, Signer } from "ethers";
+import {time} from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { expect } from "chai";
 
 import { deployTacSAFactory } from "../scripts/TacSmartAccountFactory/FactoryDeploy";
@@ -11,8 +12,10 @@ import { TacSAFactory, TacSmartAccount, MerklProxy, CustomMerklProxyEuler } from
 import { deployMerklProxy, deployCustomMerklProxyEuler } from "../scripts/Merkl/MerklProxyDeploy";
 
 export const MAXUINT128 = BigInt("340282366920938463463374607431768211455");
+const rEULAddress = "0xFd140871bABAe1176bA0E38f5813d56B6B53837F";
+const EULAddress = "0x00bD3eFf25E6fB0A164026BD5f2916801bdf434E";
 
-describe("MorphoProxy", function () {
+describe("MerklProxy", function () {
     let admin: Signer;
     let testSdk: TacLocalTestSdk;
     let merklProxy: MerklProxy;
@@ -30,12 +33,14 @@ describe("MorphoProxy", function () {
         tacSmartAccount = await deployTacSmartAccount(admin);
         tacSAFactory = await deployTacSAFactory(admin, await tacSmartAccount.getAddress());
         merklProxy = await deployMerklProxy(admin, crossChainLayerAddress, await tacSAFactory.getAddress());
-        // customMerklProxyEuler = await deployCustomMerklProxyEuler(admin, await merklProxy.getAddress());
-
+        customMerklProxyEuler = await deployCustomMerklProxyEuler(admin, await merklProxy.getAddress());
+        
         const sttonEVMAddress = testSdk.getEVMJettonAddress(sttonTokenInfo.tvmAddress);
         const tacEVMAddress = testSdk.getEVMJettonAddress(tacTokenInfo.tvmAddress);
         stton = new ethers.Contract(sttonEVMAddress, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;
         tac = new ethers.Contract(tacEVMAddress, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;
+
+        await merklProxy.setCustomMerklLogic(rEULAddress, await customMerklProxyEuler.getAddress());
         
     });
 
@@ -48,15 +53,12 @@ describe("MorphoProxy", function () {
 
         const target = await merklProxy.getAddress();
         const methodName = "claim(bytes,bytes)";
-
-        const token  = "0x05225a6416EDaeeC7227027E86F7A47D18A06b91"
-        const amount = ethers.parseUnits("1000", 9)
-        console.log(await tacSAFactory.predictSmartAccountAddress(tvmWalletCaller, await merklProxy.getAddress()));
-        const proof = [ "0x8940a89e90106036b2210385cfc7a8cdfb53f371b93842a68728b37412293f1c", "0xd812e953a0210862ba23e6776e4939fec6ef2f8c3c3ee9962a3e4d801df60eaf" ]
+        const amount = ethers.parseEther("50")
+        const proof = [ "0xe41ad7320b930742c351ebb868c87d1a7510eeb8ec01a822d6dde18b7b9ba9b5", "0x94a904f3e8977024e662a40eb21199bc58243c759e6d5360e05840947bf1fd07" ]
         const encodedArguments = new ethers.AbiCoder().encode(
             ['tuple(address[],uint256[],bytes32[][],bytes)'],
             [[
-                [token],
+                [rEULAddress],
                 [amount],
                 [proof],
                 "0x"
@@ -76,146 +78,64 @@ describe("MorphoProxy", function () {
             operationId,
             timestamp
         );
+
+        const rEUL = await ethers.getContractAt(hre.artifacts.readArtifactSync('IREUL').abi, rEULAddress);
+        const balance = await rEUL.balanceOf(await tacSAFactory.predictSmartAccountAddress(tvmWalletCaller, await merklProxy.getAddress()));
+        expect(balance).to.equal(amount);
         
     });
 
-    // it("Merkl custom rEUL claim", async function () {
-    //     const shardsKey = 1n;
-    //     const operationId = ethers.encodeBytes32String("Claim");
-    //     const extraData = "0x";
-    //     const timestamp = BigInt(Math.floor(Date.now() / 1000));
-    //     const tvmWalletCaller = "EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk";
 
-    //     const target = await merklProxy.getAddress();
-    //     const methodName = "claim(bytes,bytes)";
+    it("Merkl withdrawToByLockTimestamp rEUL case", async function () {
+        const shardsKey = 1n;
+        const operationId = ethers.encodeBytes32String("customFunctionCall");
+        const extraData = "0x";
+        const timestamp = BigInt(Math.floor(Date.now() / 1000));
+        const tvmWalletCaller = "EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk";
 
-    //     const encodedArguments = new ethers.AbiCoder().encode(
-    //         ['tuple(address[],address[],uint256[],bytes32[])'],
-    //         [[
-    //             ["user evm"],
-    //             ["token address"],
-    //             ["amount"],
-    //             ["proof"]
-    //         ]]
-    //     );
+        const target = await merklProxy.getAddress();
+        const methodName = "customFunctionCall(bytes,bytes)";
+        const rEUL = await ethers.getContractAt(hre.artifacts.readArtifactSync('IREUL').abi, rEULAddress);
+        const EUL = await ethers.getContractAt(hre.artifacts.readArtifactSync('contracts/faucet/interfaces/IERC20.sol:IERC20').abi, EULAddress);
+        const saAddress = await tacSAFactory.predictSmartAccountAddress(tvmWalletCaller, await merklProxy.getAddress());
+        
+        const account = await tacSAFactory.predictSmartAccountAddress(tvmWalletCaller, await merklProxy.getAddress());
+        const lockTimestamp = (await rEUL.getLockedAmounts(account))[0][0];
+        const withdrawToByLockTimestampData = new ethers.AbiCoder().encode(
+            ['tuple(address,uint256,bool)'],
+            [[account, lockTimestamp, true]]
+        )
 
-    //     await testSdk.sendMessage(
-    //         shardsKey,
-    //         target,
-    //         methodName,
-    //         encodedArguments,
-    //         tvmWalletCaller,
-    //         [],
-    //         [],
-    //         0n,
-    //         extraData,
-    //         operationId,
-    //         timestamp
-    //     );
-    // });
+        const encodedArguments = new ethers.AbiCoder().encode(
+            ['tuple(address,string[],bytes[],address[])'],
+            [[
+                rEULAddress,
+                ["withdrawToByLockTimestamp(address,bytes)"],
+                [withdrawToByLockTimestampData],
+                [EULAddress]
+            ]]
+        );
 
-    // it("Merkl withdrawTo rEUL case", async function () {
-    //     const shardsKey = 1n;
-    //     const operationId = ethers.encodeBytes32String("Claim");
-    //     const extraData = "0x";
-    //     const timestamp = BigInt(Math.floor(Date.now() / 1000));
-    //     const tvmWalletCaller = "EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk";
+        const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
+            shardsKey,
+            target,
+            methodName,
+            encodedArguments,
+            tvmWalletCaller,
+            [],
+            [],
+            0n,
+            extraData,
+            operationId,
+            timestamp
+        );
 
-    //     const target = await merklProxy.getAddress();
-    //     const methodName = "claim(bytes,bytes)";
+        const outMessage = outMessages[0];
+        expect(outMessage.tokensLocked.length).to.be.equal(1);
 
-    //     const encodedArguments = new ethers.AbiCoder().encode(
-    //         ['tuple(address[],address[],uint256[],bytes32[])'],
-    //         [[
-    //             ["user evm"],
-    //             ["token address"],
-    //             ["amount"],
-    //             ["proof"]
-    //         ]]
-    //     );
+        // check lp token locked
+        expect(outMessage.tokensLocked[0].evmAddress).to.be.equal(EULAddress);
+        expect(outMessage.tokensLocked[0].amount).to.be.gt(0);
 
-    //     await testSdk.sendMessage(
-    //         shardsKey,
-    //         target,
-    //         methodName,
-    //         encodedArguments,
-    //         tvmWalletCaller,
-    //         [],
-    //         [],
-    //         0n,
-    //         extraData,
-    //         operationId,
-    //         timestamp
-    //     );
-    // });
-
-    // it("Merkl withdrawToByLockTimestamp rEUL case", async function () {
-    //     const shardsKey = 1n;
-    //     const operationId = ethers.encodeBytes32String("Claim");
-    //     const extraData = "0x";
-    //     const timestamp = BigInt(Math.floor(Date.now() / 1000));
-    //     const tvmWalletCaller = "EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk";
-
-    //     const target = await merklProxy.getAddress();
-    //     const methodName = "claim(bytes,bytes)";
-
-    //     const encodedArguments = new ethers.AbiCoder().encode(
-    //         ['tuple(address[],address[],uint256[],bytes32[])'],
-    //         [[
-    //             ["user evm"],
-    //             ["token address"],
-    //             ["amount"],
-    //             ["proof"]
-    //         ]]
-    //     );
-
-    //     await testSdk.sendMessage(
-    //         shardsKey,
-    //         target,
-    //         methodName,
-    //         encodedArguments,
-    //         tvmWalletCaller,
-    //         [],
-    //         [],
-    //         0n,
-    //         extraData,
-    //         operationId,
-    //         timestamp
-    //     );
-    // });
-
-    // it("Merkl withdrawToByLockTimestamps rEUL case", async function () {
-    //     const shardsKey = 1n;
-    //     const operationId = ethers.encodeBytes32String("Claim");
-    //     const extraData = "0x";
-    //     const timestamp = BigInt(Math.floor(Date.now() / 1000));
-    //     const tvmWalletCaller = "EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk";
-
-    //     const target = await merklProxy.getAddress();
-    //     const methodName = "claim(bytes,bytes)";
-
-    //     const encodedArguments = new ethers.AbiCoder().encode(
-    //         ['tuple(address[],address[],uint256[],bytes32[])'],
-    //         [[
-    //             ["user evm"],
-    //             ["token address"],
-    //             ["amount"],
-    //             ["proof"]
-    //         ]]
-    //     );
-
-    //     await testSdk.sendMessage(
-    //         shardsKey,
-    //         target,
-    //         methodName,
-    //         encodedArguments,
-    //         tvmWalletCaller,
-    //         [],
-    //         [],
-    //         0n,
-    //         extraData,
-    //         operationId,
-    //         timestamp
-    //     );
-    // });
+    });
 });

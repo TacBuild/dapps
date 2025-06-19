@@ -11,7 +11,7 @@ contract TacSAFactory is OwnableUpgradeable, UUPSUpgradeable {
     UpgradeableBeacon public beacon;
     mapping(address application => mapping(bytes32 id => address smartAccount)) public smartAccounts;
 
-    event SmartAccountCreated(address indexed accountAddress);
+    event SmartAccountCreated(address indexed smartAccountAddress, address indexed application, string indexed tvmWallet);
 
     function initialize(
         address _initBlueprint
@@ -87,7 +87,7 @@ contract TacSAFactory is OwnableUpgradeable, UUPSUpgradeable {
                 application
             )
         );
-        emit SmartAccountCreated(address(proxy));
+        emit SmartAccountCreated(address(proxy), application, tvmWallet);
         return address(proxy);
     }
 

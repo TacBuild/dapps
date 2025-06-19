@@ -11,8 +11,6 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {TacSmartAccount} from "../../TacSmartAccounts/TacSmartAccount.sol";
 import {TacSAFactory} from "../../TacSmartAccounts/TacSAFactory.sol";
 import {IMerkl} from "./interface/IMerkl.sol";
-import {SaHelper} from "../../TacSmartAccounts/SaHelper.sol";
-import {IHooks} from "../../TacSmartAccounts/Interface/IHooks.sol";
 
 contract MerklProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
 
@@ -32,10 +30,14 @@ contract MerklProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         address token;
         string[] functionNames;
         bytes[] functionData;
-        address tokenToBridge;
+        address[] tokenToBridge;
     }
 
     event AccountRegistrated(address indexed user, string indexed tvmCaller);
+
+    constructor() {
+        _disableInitializers();
+    }
 
     function initialize(
         address _crossChainLayer,
@@ -95,7 +97,7 @@ contract MerklProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
     function _customClaim(
         ClaimData memory data, address[] memory users, bytes calldata tacHeader
     ) internal {
-        (bool success, bytes memory returnData) = tokenToLogic[data.tokens[0]].delegatecall(abi.encodeWithSignature("claim(address,address,bytes)", users[0], data.tokens[0], data.customLogicData));
+        (bool success, bytes memory returnData) = tokenToLogic[data.tokens[0]].call(abi.encodeWithSignature("claim(address,address,bytes)", users[0], data.tokens[0], data.customLogicData));
         require(success, "Delegatecall failed");
         address tokenToBridge = abi.decode(returnData, (address));
         if (tokenToBridge != address(0)) {
@@ -117,20 +119,21 @@ contract MerklProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         (CsutomFunctionCallData memory data) = abi.decode(arguments, (CsutomFunctionCallData));
         address logic = tokenToLogic[data.token];
         require(logic != address(0), "MerklProxy: Custom logic not found");
-
+        
         for (uint256 i = 0; i < data.functionNames.length; i++) {
-            TacSmartAccount(payable(user)).delegatecall(
-                address(logic),
-                abi.encodeWithSignature(data.functionNames[i], data.functionData[i])
-            );
+            TacSmartAccount(payable(user)).createOneTimeTicket(logic);
+            (bool success,) = logic.call(abi.encodeWithSignature(data.functionNames[i], user, data.functionData[i]));
+            require(success, "custom function call failed");
         }
 
-        if (data.tokenToBridge != address(0)) {
-            TokenAmount[] memory tokens = new TokenAmount[](1);
-            tokens[0] = TokenAmount({
-                evmAddress: data.tokenToBridge,
-                amount: IERC20(data.tokenToBridge).balanceOf(address(this))
-            });
+        if (data.tokenToBridge.length > 0) {
+            TokenAmount[] memory tokens = new TokenAmount[](data.tokenToBridge.length);
+            for (uint256 i = 0; i < data.tokenToBridge.length; i++) {
+                tokens[i] = TokenAmount({
+                    evmAddress: data.tokenToBridge[i],
+                    amount: IERC20(data.tokenToBridge[i]).balanceOf(address(this))
+                });
+            }
             _bridgeTokens(tacHeader, tokens, "");
         }
     }
