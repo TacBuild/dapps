@@ -28,7 +28,6 @@ describe("MerklProxy", function () {
         [admin] = await ethers.getSigners();
         testSdk = new TacLocalTestSdk();
         const crossChainLayerAddress = await testSdk.create(ethers.provider);
-        console.log("crossChainLayerAddress", crossChainLayerAddress);
         
         tacSmartAccount = await deployTacSmartAccount(admin);
         tacSAFactory = await deployTacSAFactory(admin, await tacSmartAccount.getAddress());
@@ -54,7 +53,7 @@ describe("MerklProxy", function () {
         const target = await merklProxy.getAddress();
         const methodName = "claim(bytes,bytes)";
         const amount = ethers.parseEther("50")
-        const proof = [ "0xe41ad7320b930742c351ebb868c87d1a7510eeb8ec01a822d6dde18b7b9ba9b5", "0x94a904f3e8977024e662a40eb21199bc58243c759e6d5360e05840947bf1fd07" ]
+        const proof = [process.env.MERKL_PROOF_FOR_TEST_1, process.env.MERKL_PROOF_FOR_TEST_2];
         const encodedArguments = new ethers.AbiCoder().encode(
             ['tuple(address[],uint256[],bytes32[][],bytes)'],
             [[
@@ -133,7 +132,6 @@ describe("MerklProxy", function () {
         const outMessage = outMessages[0];
         expect(outMessage.tokensLocked.length).to.be.equal(1);
 
-        // check lp token locked
         expect(outMessage.tokensLocked[0].evmAddress).to.be.equal(EULAddress);
         expect(outMessage.tokensLocked[0].amount).to.be.gt(0);
 
