@@ -125,6 +125,7 @@ contract MerklProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
     }
 
     function setCustomMerklLogic(address token, address customMerklLogic) external onlyOwner {
+        require(tokenToLogic[token] == address(0), "MerklProxy: Custom logic already set");
         tokenToLogic[token] = customMerklLogic;
     }
 
