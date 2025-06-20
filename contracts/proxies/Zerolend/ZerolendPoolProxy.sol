@@ -136,18 +136,6 @@ contract ZerolendPoolProxy is
 
         (address user, bool isNewAccount) = TacSAFactory(_tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
 
-
-        //Approve the Pool to pull the ATokens from smart account
-        ITacSmartAccount(user).execute(
-            args.asset,
-            0,
-            abi.encodeWithSelector(
-                IERC20(args.asset).approve.selector,
-                _appAddress,
-                args.amount
-            )
-        );
-
         ITacSmartAccount(user).execute(
             _appAddress,
             0,
@@ -155,16 +143,25 @@ contract ZerolendPoolProxy is
                 IPool.withdraw.selector,
                 args.asset,
                 args.amount,
-                address(this)
+                user
                 )
         );
 
-        uint256 withdrawnAmount = IERC20(args.asset).balanceOf(address(this));
+        ITacSmartAccount(user).execute(
+            args.asset,
+            0,
+            abi.encodeWithSelector(
+                IERC20(args.asset).transfer.selector,
+                address(this),
+                args.amount
+            )
+        );
+
 
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(
             args.asset,
-            withdrawnAmount
+            args.amount
         );
 
 
@@ -254,10 +251,10 @@ contract ZerolendPoolProxy is
 
 
         ITacSmartAccount(user).execute(
-            args.asset,
+            _appAddress,
             0,
             abi.encodeWithSelector(
-                IPool(_appAddress).repay.selector,
+                IPool.repay.selector,
                 args.asset,
                 args.amount,
                 args.interestRateMode,
@@ -266,7 +263,34 @@ contract ZerolendPoolProxy is
         );
     }
 
+    /**
+     * @dev External function to handle the setUserUseReserveAsCollateral operation via cross-chain layer.
+     * @param tacHeader The TAC header for cross-chain communication.
+     * @param arguments The encoded setUserUseReserveAsCollateral arguments.
+     */
+    function setUserUseReserveAsCollateral(
+        bytes calldata tacHeader,
+        bytes calldata arguments
+    ) external payable _onlyCrossChainLayer {
+        (address asset, bool useAsCollateral) = abi.decode(
+            arguments,
+            (address, bool)
+        );
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
 
+        (address user, bool isNewAccount) = TacSAFactory(_tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
+
+        //Approve the Pool to pull the ATokens from smart account
+        ITacSmartAccount(user).execute(
+            _appAddress,
+            0,
+            abi.encodeWithSelector(
+                IPool(_appAddress).setUserUseReserveAsCollateral.selector,
+                asset,
+                useAsCollateral
+            )
+        );
+    }
 
     
 
