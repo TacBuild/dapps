@@ -55,12 +55,12 @@ describe("MerklProxy", function () {
         const amount = ethers.parseEther("50")
         const proof = [process.env.MERKL_PROOF_FOR_TEST_1, process.env.MERKL_PROOF_FOR_TEST_2];
         const encodedArguments = new ethers.AbiCoder().encode(
-            ['tuple(address[],uint256[],bytes32[][],bytes)'],
+            ['tuple(address[],uint256[],bytes32[][],bool)'],
             [[
                 [rEULAddress],
                 [amount],
                 [proof],
-                "0x"
+                false
             ]]
         );
 

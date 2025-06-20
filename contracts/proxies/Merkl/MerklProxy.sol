@@ -23,10 +23,10 @@ contract MerklProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         address[] tokens;
         uint256[] amounts;
         bytes32[][] proofs;
-        bytes customLogicData;
+        bool transferAndBridge;
     }
 
-    struct CsutomFunctionCallData {
+    struct CsutomFunctionCalldata {
         address token;
         string[] functionNames;
         bytes[] functionData;
@@ -73,10 +73,8 @@ contract MerklProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
                     0,
                     abi.encodeWithSelector(IMerkl.claim.selector, users, data.tokens, data.amounts, data.proofs)
         );
-        if (tokenToLogic[data.tokens[0]] != address(0)) {
-            _customClaim(data, users, tacHeader);
-        } else {
-                TacSmartAccount(payable(user)).execute(
+        if (data.transferAndBridge) {
+            TacSmartAccount(payable(user)).execute(
                     data.tokens[0],
                     0,
                     abi.encodeWithSelector(IERC20.transfer.selector, address(this), IERC20(data.tokens[0]).balanceOf(user))
@@ -94,29 +92,13 @@ contract MerklProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         }
     }
 
-    function _customClaim(
-        ClaimData memory data, address[] memory users, bytes calldata tacHeader
-    ) internal {
-        (bool success, bytes memory returnData) = tokenToLogic[data.tokens[0]].call(abi.encodeWithSignature("claim(address,address,bytes)", users[0], data.tokens[0], data.customLogicData));
-        require(success, "Delegatecall failed");
-        address tokenToBridge = abi.decode(returnData, (address));
-        if (tokenToBridge != address(0)) {
-            TokenAmount[] memory tokens = new TokenAmount[](1);
-            tokens[0] = TokenAmount({
-                evmAddress: tokenToBridge,
-                amount: IERC20(tokenToBridge).balanceOf(address(this))
-            });
-            _bridgeTokens(tacHeader, tokens, "");
-        }
-    }
-
     function customFunctionCall(
         bytes calldata tacHeader,
         bytes calldata arguments
     ) external _onlyCrossChainLayer() {
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user, ) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
-        (CsutomFunctionCallData memory data) = abi.decode(arguments, (CsutomFunctionCallData));
+        (CsutomFunctionCalldata memory data) = abi.decode(arguments, (CsutomFunctionCalldata));
         address logic = tokenToLogic[data.token];
         require(logic != address(0), "MerklProxy: Custom logic not found");
         
