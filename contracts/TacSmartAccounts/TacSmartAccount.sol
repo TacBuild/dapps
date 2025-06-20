@@ -51,7 +51,6 @@ contract TacSmartAccount is Initializable {
         emit Executed(target, 0, data);
     }
 
-    function approve(address token, address to, uint256 amount) external onlyOwner{
     function createOneTimeTicket(address caller) external onlyOwner {
         oneTimeTickets[caller] = true;
     }

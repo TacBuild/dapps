@@ -53,7 +53,9 @@ async function main() {
     const [deployer] = await hre.ethers.getSigners();
     // const account = await deployTacSmartAccount(deployer);
     // const saFactory = await deployTacSAFactory(deployer, await account.getAddress());
-    await deployMerklProxy(deployer, merklTestnetConfig.crossChainLayerAddress, merklTestnetConfig.tacSAFactoryAddress)
+    const merklProxy = await deployMerklProxy(deployer, merklTestnetConfig.crossChainLayerAddress, merklTestnetConfig.tacSAFactoryAddress)
+    const customMerklProxyEuler = await deployCustomMerklProxyEuler(deployer, await merklProxy.getAddress())
+    await merklProxy.setCustomMerklLogic(rEULTestnetConfig.rEULAddress, await customMerklProxyEuler.getAddress())
 }
 
 main()
