@@ -30,6 +30,13 @@ struct Position {
         address onBehalf,
         bytes calldata data
     ) external returns (uint256, uint256);
+    function withdraw(
+        MarketParams memory marketParams,
+        uint256 assets,
+        uint256 shares,
+        address onBehalf,
+        address receiver
+    ) external returns (uint256, uint256);
     function setAuthorization(address authorized, bool newIsAuthorized) external;
     function position(Id id, address onBehalf) external view returns (Position memory);
     function idToMarketParams(Id id)

@@ -106,7 +106,7 @@ describe("MorphoProxy", function () {
         const methodName = "supplyCollateral(bytes,bytes)";
 
         const encodedArguments = new ethers.AbiCoder().encode(
-            ['tuple(tuple(address,address,address,address,uint256),uint256,bytes)'],
+            ['tuple(tuple(address,address,address,address,uint256),uint256)'],
             [[[
                 await stton.getAddress(),
                 await tac.getAddress(),
@@ -114,8 +114,7 @@ describe("MorphoProxy", function () {
                 morphoTestnetConfig.lrmAddress,
                 ethers.parseEther("0.945")
             ],
-            ethers.parseEther("1"),
-            "0x"
+            ethers.parseEther("1")
             ]]
         );
 
@@ -164,7 +163,7 @@ describe("MorphoProxy", function () {
         const methodName = "supply(bytes,bytes)";
 
         const encodedArguments = new ethers.AbiCoder().encode(
-            ['tuple(tuple(address,address,address,address,uint256),uint256,uint256,bytes)'],
+            ['tuple(tuple(address,address,address,address,uint256),uint256,uint256,uint256)'],
             [[[
                 await stton.getAddress(),
                 await tac.getAddress(),
@@ -174,7 +173,7 @@ describe("MorphoProxy", function () {
             ],
             ethers.parseUnits("1", sttonTokenInfo.decimals),
             0,
-            "0x"
+            ethers.MaxUint256
             ]]
         );
 
@@ -225,7 +224,7 @@ describe("MorphoProxy", function () {
         const methodName = "borrow(bytes,bytes)";
 
         const encodedArguments = new ethers.AbiCoder().encode(
-            ['tuple(tuple(address,address,address,address,uint256),uint256,uint256)'],
+            ['tuple(tuple(address,address,address,address,uint256),uint256,uint256,uint256)'],
             [[[
                 await stton.getAddress(),
                 await tac.getAddress(),
@@ -235,6 +234,7 @@ describe("MorphoProxy", function () {
             ],
             ethers.parseUnits("0.1", sttonTokenInfo.decimals),
             0,
+            0
             ]]
         );
 
@@ -278,7 +278,7 @@ describe("MorphoProxy", function () {
         const methodName = "repay(bytes,bytes)";
 
         const encodedArguments = new ethers.AbiCoder().encode(
-            ['tuple(tuple(address,address,address,address,uint256),uint256,uint256,bytes)'],
+            ['tuple(tuple(address,address,address,address,uint256),uint256,uint256,uint256)'],
             [[[
                 await stton.getAddress(),
                 await tac.getAddress(),
@@ -288,7 +288,7 @@ describe("MorphoProxy", function () {
             ],
             ethers.parseUnits("0.1", sttonTokenInfo.decimals),
             0,
-            "0x"
+            ethers.MaxUint256
             ]]
         );
 
@@ -480,10 +480,11 @@ describe("MorphoProxy", function () {
         const methodName = "deposit(bytes,bytes)";
 
         const encodedArguments = new ethers.AbiCoder().encode(
-            ['tuple(address,uint256)'],
+            ['tuple(address,uint256,uint256)'],
             [[
                 morphoVaultAddress,
-                ethers.parseUnits("1", sttonTokenInfo.decimals)
+                ethers.parseUnits("1", sttonTokenInfo.decimals),
+                ethers.MaxUint256
             ]]
         );
 
@@ -519,10 +520,11 @@ describe("MorphoProxy", function () {
         const methodName = "mint(bytes,bytes)";
 
         const encodedArguments = new ethers.AbiCoder().encode(
-            ['tuple(address,uint256)'],
+            ['tuple(address,uint256,uint256)'],
             [[
                 morphoVaultAddress,
-                ethers.parseUnits("1", sttonTokenInfo.decimals)
+                ethers.parseUnits("1", sttonTokenInfo.decimals),
+                ethers.MaxUint256
             ]]
         );
 
@@ -558,10 +560,11 @@ describe("MorphoProxy", function () {
         const methodName = "withdraw(bytes,bytes)";
 
         const encodedArguments = new ethers.AbiCoder().encode(
-            ['tuple(address,uint256)'],
+            ['tuple(address,uint256,uint256)'],
             [[
                 morphoVaultAddress,
-                1n
+                1n,
+                0
             ]]
         );
         
@@ -598,10 +601,11 @@ describe("MorphoProxy", function () {
         const methodName = "redeem(bytes,bytes)";
 
         const encodedArguments = new ethers.AbiCoder().encode(
-            ['tuple(address,uint256)'],
+            ['tuple(address,uint256,uint256)'],
             [[
                 morphoVaultAddress,
-                1n
+                1n,
+                0
             ]]
         );
 
