@@ -14,6 +14,7 @@ import {TacSAFactory} from "../../TacSmartAccounts/TacSAFactory.sol";
 import {MarketParamsLib} from "./lib/MarketParamsLib.sol";
 import {ITacSmartAccount} from "../../TacSmartAccounts/Interface/ITacSmartAccount.sol";
 import {IMetaMorphoV1_1Factory} from "./Interface/IMetaMorphoV1_1Factory.sol";
+import {MathRayLib} from "./lib/MathRayLib.sol";
 
 /// @title MorphoProxy
 /// @notice A proxy contract that interfaces with Morpho protocol for lending and borrowing operations
@@ -24,6 +25,7 @@ contract MorphoProxy is
     OwnableUpgradeable
 {
     using MarketParamsLib for IMorpho.MarketParams;
+    using MathRayLib for uint256;
 
     /// @notice Arguments for deposit operation
     /// @param vault Address of the vault to deposit into
@@ -31,6 +33,7 @@ contract MorphoProxy is
     struct DepositArguments {
         address vault;
         uint256 assets;
+        uint256 maxSharePriceE27;
     }
 
     /// @notice Arguments for withdraw operation
@@ -39,6 +42,7 @@ contract MorphoProxy is
     struct WithdrawArguments {
         address vault;
         uint256 assets;
+        uint256 maxSharePriceE27;
     }
 
     /// @notice Arguments for mint operation
@@ -47,6 +51,7 @@ contract MorphoProxy is
     struct MintArguments {
         address vault;
         uint256 shares;
+        uint256 maxSharePriceE27;
     }
 
     /// @notice Arguments for redeem operation
@@ -55,6 +60,7 @@ contract MorphoProxy is
     struct RedeemArguments {
         address vault;
         uint256 shares;
+        uint256 maxSharePriceE27;
     }
 
     /// @notice Arguments for creating a new market
@@ -104,6 +110,7 @@ contract MorphoProxy is
         IMorpho.MarketParams marketParams;
         uint256 assets;
         uint256 shares;
+        uint256 minSharePriceE27;
     }
 
     /// @notice Arguments for supplying assets
@@ -115,6 +122,7 @@ contract MorphoProxy is
         IMorpho.MarketParams marketParams;
         uint256 assets;
         uint256 shares;
+        uint256 maxSharePriceE27;
     }
 
     /// @notice Arguments for withdrawing supplied assets
@@ -127,6 +135,7 @@ contract MorphoProxy is
         uint256 shares;
         address onBehalf;
         address receiver;
+        uint256 minSharePriceE27;
     }
 
     /// @notice Arguments for repaying a loan
@@ -138,6 +147,7 @@ contract MorphoProxy is
         IMorpho.MarketParams marketParams;
         uint256 assets;
         uint256 shares;
+        uint256 maxSharePriceE27;
     }
 
 
@@ -292,6 +302,7 @@ contract MorphoProxy is
             args.assets,
             address(this)
         );
+        require(args.assets.rDivUp(shares) <= args.maxSharePriceE27, "Slippage");
         emit Deposit(args.vault, args.assets);
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(args.vault, shares);
@@ -314,6 +325,7 @@ contract MorphoProxy is
             assets
         );
         uint256 shares = IMorphoVault(args.vault).mint(args.shares, address(this));
+        require(assets.rDivUp(shares) <= args.maxSharePriceE27, "Slippage");
         emit Mint(args.vault, shares, args.shares);
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(
@@ -349,6 +361,7 @@ contract MorphoProxy is
             address(this),
             address(this)
         );
+        require(args.assets.rDivDown(sharesBurned) >= args.maxSharePriceE27, "Slippage");
         emit Withdraw(args.vault, args.assets, sharesBurned);
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(
@@ -375,6 +388,7 @@ contract MorphoProxy is
             address(this),
             address(this)
         );
+        require(assetsRedeemed.rDivDown(args.shares) >= args.maxSharePriceE27, "Slippage");
         emit Redeem(args.vault, args.shares, assetsRedeemed);
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(
@@ -484,6 +498,7 @@ contract MorphoProxy is
             _setAutorization(user);
         }
         (uint256 actualAssets, uint256 actualShares) = morpho.borrow(args.marketParams, args.assets, args.shares, user, address(this));
+        require(actualAssets.rDivDown(actualShares) >= args.minSharePriceE27, "Slippage");
         emit Borrow(args.marketParams.id(), actualAssets, actualShares, args.assets, args.shares);
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(
@@ -512,6 +527,7 @@ contract MorphoProxy is
             IERC20(args.marketParams.loanToken).balanceOf(address(this))
         );
         (uint256 actualAssets, uint256 actualShares) = morpho.repay(args.marketParams, args.assets, args.shares, user, "");
+        require(actualAssets.rDivUp(actualShares) <= args.maxSharePriceE27, "Slippage");
         emit Repay(args.marketParams.id(), actualAssets, actualShares, args.assets, args.shares);
         if (IERC20(args.marketParams.loanToken).balanceOf(address(this)) > 0) {
             TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
@@ -544,6 +560,7 @@ contract MorphoProxy is
             IERC20(args.marketParams.loanToken).balanceOf(address(this))
         );
         (uint256 actualAssets, uint256 actualShares) = morpho.supply(args.marketParams, args.assets, args.shares, user, "");
+        require(actualAssets.rDivUp(actualShares) <= args.maxSharePriceE27, "Slippage");
         emit Supply(args.marketParams.id(), actualAssets, actualShares, args.assets, args.shares);
     }
 
@@ -562,6 +579,7 @@ contract MorphoProxy is
             _setAutorization(user);
         }
         (uint256 actualAssets, uint256 actualShares) = morpho.withdraw(args.marketParams, args.assets, args.shares, user, args.receiver);
+        require(actualAssets.rDivDown(actualShares) >= args.minSharePriceE27, "Slippage");
         if (IERC20(args.marketParams.loanToken).balanceOf(address(this)) > 0) {
             TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
             tokensToBridge[0] = TokenAmount(
@@ -601,6 +619,7 @@ contract MorphoProxy is
 
         // Borrow
         (uint256 actualAssets, uint256 actualShares) = morpho.borrow(borrowArgs.marketParams, borrowArgs.assets, borrowArgs.shares, user, address(this));
+        require(actualAssets.rDivDown(actualShares) >= borrowArgs.minSharePriceE27, "Slippage");
         emit Borrow(borrowArgs.marketParams.id(), actualAssets, actualShares, borrowArgs.assets, borrowArgs.shares);
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(
@@ -630,6 +649,7 @@ contract MorphoProxy is
             IERC20(repayArgs.marketParams.loanToken).balanceOf(address(this))
         );
         (uint256 actualAssets, uint256 actualShares) = morpho.repay(repayArgs.marketParams, repayArgs.assets, repayArgs.shares, user, "");
+        require(actualAssets.rDivUp(actualShares) <= repayArgs.maxSharePriceE27, "Slippage");
         emit Repay(repayArgs.marketParams.id(), actualAssets, actualShares, repayArgs.assets, repayArgs.shares);
 
         // Withdraw collateral
