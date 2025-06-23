@@ -36,3 +36,11 @@ export async function deployIzumiProxy(
     await izumiProxy.waitForDeployment();
     return izumiProxy;
 } 
+
+async function main() {
+    const [deployer] = await ethers.getSigners();
+    const izumiProxy = await deployIzumiProxy(deployer, "0x20B33b63fADd3cf09943b493ef79FC8C0845d577");
+    console.log(await izumiProxy.getAddress());
+}
+
+main().catch(console.error);
