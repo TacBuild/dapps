@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
-// TON USER --> connecting with our DAPP --> send tx using the tac-sdk to the CCL --> the Zerolend Proxy on TAC_TURIN --> Zerolend on TAC_TURIN
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-// Standard Proxy Imports
-
 import {TransferHelper} from "@uniswap/lib/contracts/libraries/TransferHelper.sol";
 import {OutMessageV1, TokenAmount, TacHeaderV1, NFTAmount} from "@tonappchain/evm-ccl/contracts/core/Structs.sol";
 import {ICrossChainLayer} from "@tonappchain/evm-ccl/contracts/interfaces/ICrossChainLayer.sol";
@@ -16,7 +13,6 @@ import {TacSmartAccount} from "../../TacSmartAccounts/TacSmartAccount.sol";
 import {TacSAFactory} from "../../TacSmartAccounts/TacSAFactory.sol";
 import {ITacSmartAccount} from "../../TacSmartAccounts/Interface/ITacSmartAccount.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-// Pool Imports
 import {IPool, DataTypes} from "./interfaces/IPool.sol";
 
 
@@ -86,11 +82,10 @@ contract ZerolendPoolProxy is
     function supply(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable _onlyCrossChainLayer {
+    ) external _onlyCrossChainLayer {
         SupplyArguments memory args = abi.decode(arguments, (SupplyArguments));
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
 
-        // Get or create the Smart Account
         (address user, bool isNewAccount) = TacSAFactory(_tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
 
         TransferHelper.safeTransfer(args.asset, user, args.amount);
@@ -104,7 +99,6 @@ contract ZerolendPoolProxy is
                 args.amount
             )
         );
-
 
         ITacSmartAccount(user).execute(
             _appAddress,
@@ -127,7 +121,7 @@ contract ZerolendPoolProxy is
     function withdraw(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable _onlyCrossChainLayer {
+    ) external _onlyCrossChainLayer {
         WithdrawArguments memory args = abi.decode(
             arguments,
             (WithdrawArguments)
@@ -157,17 +151,13 @@ contract ZerolendPoolProxy is
             )
         );
 
-
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(
             args.asset,
             args.amount
         );
 
-
-        NFTAmount[] memory nftsToBridge = new NFTAmount[](0);
-
-        _bridgeTokens(tacHeader, tokensToBridge, nftsToBridge, "");
+        _bridgeTokens(tacHeader, tokensToBridge, new NFTAmount[](0), "");
     }
 
     /**
@@ -178,13 +168,11 @@ contract ZerolendPoolProxy is
     function borrow(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable _onlyCrossChainLayer {
+    ) external _onlyCrossChainLayer {
         BorrowArguments memory args = abi.decode(arguments, (BorrowArguments));
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
 
-        // Get or create the Smart Account
         (address user, bool isNewAccount) = TacSAFactory(_tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
-
 
         ITacSmartAccount(user).execute(
             _appAddress,
@@ -199,7 +187,6 @@ contract ZerolendPoolProxy is
                 )
         );
 
-
         ITacSmartAccount(user).execute(
             args.asset,
             0,
@@ -210,16 +197,13 @@ contract ZerolendPoolProxy is
             )
         );
 
-
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(
             args.asset,
             args.amount
         );
 
-        NFTAmount[] memory nftsToBridge = new NFTAmount[](0);
-
-        _bridgeTokens(tacHeader, tokensToBridge, nftsToBridge, "");
+        _bridgeTokens(tacHeader, tokensToBridge, new NFTAmount[](0), "");
     }
 
     /**
@@ -230,10 +214,9 @@ contract ZerolendPoolProxy is
     function repay(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable _onlyCrossChainLayer {
+    ) external _onlyCrossChainLayer {
         RepayArguments memory args = abi.decode(arguments, (RepayArguments));
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
-        // Get or create the Smart Account
 
         (address user, bool isNewAccount) = TacSAFactory(_tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
 
@@ -249,7 +232,6 @@ contract ZerolendPoolProxy is
             )
         );
 
-
         ITacSmartAccount(user).execute(
             _appAddress,
             0,
@@ -264,14 +246,14 @@ contract ZerolendPoolProxy is
     }
 
     /**
-     * @dev External function to handle the setUserUseReserveAsCollateral operation via cross-chain layer.
+     * @dev External function to handle the setUserUseReserveAsCollateral operation.
      * @param tacHeader The TAC header for cross-chain communication.
      * @param arguments The encoded setUserUseReserveAsCollateral arguments.
      */
     function setUserUseReserveAsCollateral(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable _onlyCrossChainLayer {
+    ) external _onlyCrossChainLayer {
         (address asset, bool useAsCollateral) = abi.decode(
             arguments,
             (address, bool)
@@ -280,7 +262,6 @@ contract ZerolendPoolProxy is
 
         (address user, bool isNewAccount) = TacSAFactory(_tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
 
-        //Approve the Pool to pull the ATokens from smart account
         ITacSmartAccount(user).execute(
             _appAddress,
             0,
@@ -292,7 +273,6 @@ contract ZerolendPoolProxy is
         );
     }
 
-    
 
     /// @notice Bridges tokens and NFTs to the cross-chain layer
     /// @param tacHeader TAC header data
