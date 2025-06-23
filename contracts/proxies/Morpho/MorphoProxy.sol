@@ -293,15 +293,27 @@ contract MorphoProxy is
             arguments,
             (DepositArguments)
         );
-        TransferHelper.safeApprove(
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
+        (address user, bool isNewAccount) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
+        if (isNewAccount) {
+            _setAutorization(user);
+        }
+        ITacSmartAccount(user).approve(
             IMorphoVault(args.vault).asset(),
             args.vault,
             args.assets
         );
-        uint256 shares = IMorphoVault(args.vault).deposit(
-            args.assets,
-            address(this)
+        TransferHelper.safeTransfer(
+            IMorphoVault(args.vault).asset(),
+            user,
+            IERC20(IMorphoVault(args.vault).asset()).balanceOf(address(this))
         );
+        bytes memory returnData = ITacSmartAccount(user).execute(
+            args.vault,
+            0,
+            abi.encodeWithSelector(IMorphoVault.deposit.selector, args.assets, address(this))
+        );
+        uint256 shares = abi.decode(returnData, (uint256));
         require(args.assets.rDivUp(shares) <= args.maxSharePriceE27, "Slippage");
         emit Deposit(args.vault, args.assets);
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
@@ -319,12 +331,27 @@ contract MorphoProxy is
     ) external _onlyCrossChainLayer {
         MintArguments memory args = abi.decode(arguments, (MintArguments));
         uint256 assets = IMorphoVault(args.vault).previewMint(args.shares);
-        TransferHelper.safeApprove(
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
+        (address user, bool isNewAccount) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
+        if (isNewAccount) {
+            _setAutorization(user);
+        }
+        ITacSmartAccount(user).approve(
             IMorphoVault(args.vault).asset(),
             args.vault,
             assets
         );
-        uint256 shares = IMorphoVault(args.vault).mint(args.shares, address(this));
+        TransferHelper.safeTransfer(
+            IMorphoVault(args.vault).asset(),
+            user,
+            IERC20(IMorphoVault(args.vault).asset()).balanceOf(address(this))
+        );
+        bytes memory returnData = ITacSmartAccount(user).execute(
+            address(IMorphoVault(args.vault)),
+            0,
+            abi.encodeWithSelector(IMorphoVault.mint.selector, args.shares, address(this))
+        );
+        uint256 shares = abi.decode(returnData, (uint256));
         require(assets.rDivUp(shares) <= args.maxSharePriceE27, "Slippage");
         emit Mint(args.vault, shares, args.shares);
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
@@ -356,11 +383,22 @@ contract MorphoProxy is
             arguments,
             (WithdrawArguments)
         );
-        uint256 sharesBurned = IMorphoVault(args.vault).withdraw(
-            args.assets,
-            address(this),
-            address(this)
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
+        (address user, bool isNewAccount) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
+        if (isNewAccount) {
+            _setAutorization(user);
+        }
+        TransferHelper.safeTransfer(
+            args.vault,
+            address(user),
+            IERC20(args.vault).balanceOf(address(this))
         );
+        bytes memory returnData = ITacSmartAccount(user).execute(
+            address(IMorphoVault(args.vault)),
+            0,
+            abi.encodeWithSelector(IMorphoVault.withdraw.selector, args.assets, address(this), address(user))
+        );
+        uint256 sharesBurned = abi.decode(returnData, (uint256));
         require(args.assets.rDivDown(sharesBurned) >= args.maxSharePriceE27, "Slippage");
         emit Withdraw(args.vault, args.assets, sharesBurned);
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
@@ -383,11 +421,22 @@ contract MorphoProxy is
         bytes calldata arguments
     ) external _onlyCrossChainLayer {
         RedeemArguments memory args = abi.decode(arguments, (RedeemArguments));
-        uint256 assetsRedeemed = IMorphoVault(args.vault).redeem(
-            args.shares,
-            address(this),
-            address(this)
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
+        (address user, bool isNewAccount) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
+        if (isNewAccount) {
+            _setAutorization(user);
+        }
+        TransferHelper.safeTransfer(
+            args.vault,
+            address(user),
+            IERC20(args.vault).balanceOf(address(this))
         );
+        bytes memory returnData = ITacSmartAccount(user).execute(
+            args.vault,
+            0,
+            abi.encodeWithSelector(IMorphoVault.redeem.selector, args.shares, address(this), address(user))
+        );
+        uint256 assetsRedeemed = abi.decode(returnData, (uint256));
         require(assetsRedeemed.rDivDown(args.shares) >= args.maxSharePriceE27, "Slippage");
         emit Redeem(args.vault, args.shares, assetsRedeemed);
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
