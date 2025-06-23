@@ -273,6 +273,34 @@ contract ZerolendPoolProxy is
         );
     }
 
+    function claimSA(
+    bytes calldata tacHeader,
+    bytes calldata arguments
+    ) public _onlyCrossChainLayer {
+        (address asset) = abi.decode(arguments, (address));
+
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
+
+        (address user, bool isNewAccount) = TacSAFactory(_tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
+
+        ITacSmartAccount(user).execute(
+        asset,
+        0,
+        abi.encodeWithSelector(
+            IERC20(asset).transfer.selector,
+            address(this),
+            IERC20(asset).balanceOf(user)
+        )
+        );
+
+        TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
+        tokensToBridge[0] = TokenAmount(
+            asset,
+            IERC20(asset).balanceOf(address(this))
+        );
+
+        _bridgeTokens(tacHeader, tokensToBridge, new NFTAmount[](0), "");
+    }
 
     /// @notice Bridges tokens and NFTs to the cross-chain layer
     /// @param tacHeader TAC header data
