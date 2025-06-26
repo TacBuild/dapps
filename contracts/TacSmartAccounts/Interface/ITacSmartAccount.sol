@@ -5,4 +5,5 @@ import {TokenAmount, NFTAmount} from "@tonappchain/evm-ccl/contracts/core/Struct
 interface ITacSmartAccount {
     function execute(address target, uint256 value, bytes calldata data) external payable returns(bytes memory);
     function bridgeTokens(bytes calldata tacHeader, TokenAmount[] memory tokens, NFTAmount[] memory nfts, string memory payload, address crossChainLayer) external;
+    function approve(address token, address to, uint256 amount) external;
 }

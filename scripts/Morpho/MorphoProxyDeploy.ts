@@ -6,7 +6,8 @@ import hre from 'hardhat';
 import { morphoProxyDeployments, morphoTestnetConfig } from "./config/testnetConfig";
 
 const proxyOptsUUPS: DeployProxyOptions = {
-    kind: "uups"
+    kind: "uups",
+    unsafeAllow: ["constructor"],
 };
 
 export async function deployMorphoProxy(
@@ -33,5 +34,3 @@ async function main() {
     const [deployer] = await hre.ethers.getSigners();
     deployMorphoProxy(deployer, morphoProxyDeployments.crossChainLayerAddress, morphoProxyDeployments.smartAccountFactoryAddress);
 }
-
-main()
