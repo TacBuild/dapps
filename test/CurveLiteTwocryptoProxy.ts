@@ -92,6 +92,9 @@ describe("CurveLiteTwocryptoswapProxy", function () {
 
     it("CurveLiteTwocryptoswap pool deploy pool", async function () {
         const poolCountBefore = await factoryContract.pool_count()
+        const tokenValue1 = Number(1n)
+        const tokenValue2 = Number(60000n)
+        const initial_price = BigInt(Math.round( tokenValue1/tokenValue2  * 10**18));
         const tx = await factoryContract.deploy_pool(
             "stTON-TAC",
             "stTON-TAC",
@@ -105,7 +108,7 @@ describe("CurveLiteTwocryptoswapProxy", function () {
             poolPresetParams.allowed_extra_profit,
             poolPresetParams.adjustment_step,
             poolPresetParams.ma_exp_time,
-            poolPresetParams.initial_price,
+            initial_price,
             {
                 gasLimit: 10000000
             }
@@ -133,8 +136,8 @@ describe("CurveLiteTwocryptoswapProxy", function () {
         const target = await curveLiteTwocryptoswapProxy.getAddress();
         const methodName = "addLiquidity(bytes,bytes)";
 
-        const amountA = 10n*10n**(await sttonEVM.decimals());
-        const amountB = 10n*10n**(await tacEVM.decimals());
+        const amountA = 1n*10n**(await sttonEVM.decimals());
+        const amountB = 60000n *10n**(await tacEVM.decimals());
 
 
         const sttonTokenMintInfo: TokenMintInfo = {
@@ -255,7 +258,66 @@ describe("CurveLiteTwocryptoswapProxy", function () {
         expect(outMessage.tokensLocked.length).to.be.equal(0);
     });
 
-    it ("CurveLiteTwocryptoswap test remove liquidity", async function () {
+    it ("CurveLiteTwocryptoswap test remove liquidity one coin", async function () {
+        const shardsKey = 1n;
+        const operationId = ethers.encodeBytes32String("remove liquidity one coin");
+        const extraData = "0x";
+        const timestamp = BigInt(Math.floor(Date.now() / 1000));
+        const tvmWalletCaller = "EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk";
+
+        const target = await curveLiteTwocryptoswapProxy.getAddress();
+        const methodName = "removeLiquidityOneCoin(bytes,bytes)";
+
+        const amount = 1n*10n**(await pool.decimals());
+
+
+        const liquidityTokenUnlockInfo: TokenUnlockInfo = {
+            evmAddress: await pool.getAddress(),
+            amount: amount,
+        }
+
+        const encodedParameters = new ethers.AbiCoder().encode(
+            ['tuple(address, uint256, uint256, uint256)'],
+            [
+                [
+                    await pool.getAddress(),
+                    amount,
+                    0,
+                    0
+                ]
+            ],
+        );
+
+        const balanceBeforeA = await pool.balances(0);
+        const balanceBeforeB = await pool.balances(1);
+        const liquidityBefore = await pool.balanceOf(testSdk.getCrossChainLayerAddress());
+        // send message
+        const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
+            shardsKey, // shardsKey
+            target, // proxy address
+            methodName, // method name
+            encodedParameters, // encoded arguments
+            tvmWalletCaller, // tvm caller
+            [], // mint tokens
+            [liquidityTokenUnlockInfo], // unlock tokens
+            0n, // native tac amount to unlock
+            extraData,
+            operationId,
+            timestamp
+        );
+        expect(balanceBeforeA).to.be.gt(await pool.balances(0));
+        expect(liquidityBefore-amount).to.be.equal(await pool.balanceOf(testSdk.getCrossChainLayerAddress()));
+        expect(outMessages.length).to.be.equal(1);
+        const outMessage = outMessages[0];
+        expect(outMessage.operationId).to.be.equal(operationId);
+        expect(outMessage.shardsKey).to.be.equal(shardsKey);
+        expect(outMessage.callerAddress).to.be.equal(await curveLiteTwocryptoswapProxy.getAddress());
+        expect(outMessage.targetAddress).to.be.equal(tvmWalletCaller);
+        expect(outMessage.payload).to.be.equal("");
+        expect(outMessage.tokensLocked.length).to.be.equal(0);
+    });
+
+     it ("CurveLiteTwocryptoswap test remove liquidity", async function () {
         const shardsKey = 1n;
         const operationId = ethers.encodeBytes32String("exchange");
         const extraData = "0x";
