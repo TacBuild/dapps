@@ -359,7 +359,12 @@ contract MorphoProxy is
             args.vault,
             shares
         );
-        if (IERC20(IMorphoVault(args.vault).asset()).balanceOf(address(this)) > 0) {
+        if (IERC20(IMorphoVault(args.vault).asset()).balanceOf(user) > 0) {
+            ITacSmartAccount(user).execute(
+                IMorphoVault(args.vault).asset(),
+                0,
+                abi.encodeWithSelector(IERC20.transfer.selector, address(this), IERC20(IMorphoVault(args.vault).asset()).balanceOf(user))
+            );
             TransferHelper.safeApprove(
                 IMorphoVault(args.vault).asset(),
                 args.vault,
@@ -406,7 +411,12 @@ contract MorphoProxy is
             IMorphoVault(args.vault).asset(),
             IERC20(IMorphoVault(args.vault).asset()).balanceOf(address(this))
         );
-        if (IERC20(args.vault).balanceOf(address(this)) > 0) {
+        if (IERC20(args.vault).balanceOf(user) > 0) {
+            ITacSmartAccount(user).execute(
+                args.vault,
+                0,
+                abi.encodeWithSelector(IERC20.transfer.selector, address(this), IERC20(args.vault).balanceOf(user))
+            );
             tokensToBridge = _addTokenToBridge(args.vault, tokensToBridge);
         }
         _bridgeTokens(tacHeader, tokensToBridge, "");
@@ -507,6 +517,14 @@ contract MorphoProxy is
             _setAutorization(user);
         }
         morpho.supplyCollateral(args.marketParams, args.assets, user, "");
+        if (IERC20(args.marketParams.collateralToken).balanceOf(address(this)) > 0) {
+            TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
+            tokensToBridge[0] = TokenAmount(
+                args.marketParams.collateralToken,
+                IERC20(args.marketParams.collateralToken).balanceOf(address(this))
+            );
+            _bridgeTokens(tacHeader, tokensToBridge, "");
+        }
         emit SupplyCollateral(args.marketParams.id(), args.assets);
     }
 
@@ -675,6 +693,9 @@ contract MorphoProxy is
             borrowArgs.marketParams.loanToken,
             IERC20(borrowArgs.marketParams.loanToken).balanceOf(address(this))
         );
+        if(IERC20(supplyArgs.marketParams.collateralToken).balanceOf(address(this)) > 0) {
+            tokensToBridge = _addTokenToBridge(supplyArgs.marketParams.collateralToken, tokensToBridge);
+        }
         _bridgeTokens(tacHeader, tokensToBridge, "");
     }
 
