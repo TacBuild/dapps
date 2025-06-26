@@ -365,7 +365,8 @@ contract MorphoProxy is
                 0,
                 abi.encodeWithSelector(IERC20.transfer.selector, address(this), IERC20(IMorphoVault(args.vault).asset()).balanceOf(user))
             );
-            TransferHelper.safeApprove(
+
+            ITacSmartAccount(user).approve(
                 IMorphoVault(args.vault).asset(),
                 args.vault,
                 0
@@ -596,6 +597,11 @@ contract MorphoProxy is
         (uint256 actualAssets, uint256 actualShares) = morpho.repay(args.marketParams, args.assets, args.shares, user, "");
         require(actualAssets.rDivUp(actualShares) <= args.maxSharePriceE27, "Slippage");
         emit Repay(args.marketParams.id(), actualAssets, actualShares, args.assets, args.shares);
+        TransferHelper.safeApprove(
+            args.marketParams.loanToken,
+            address(morpho),
+            0
+        );
         if (IERC20(args.marketParams.loanToken).balanceOf(address(this)) > 0) {
             TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
             tokensToBridge[0] = TokenAmount(
@@ -628,6 +634,11 @@ contract MorphoProxy is
         );
         (uint256 actualAssets, uint256 actualShares) = morpho.supply(args.marketParams, args.assets, args.shares, user, "");
         require(actualAssets.rDivUp(actualShares) <= args.maxSharePriceE27, "Slippage");
+        TransferHelper.safeApprove(
+            args.marketParams.loanToken,
+            address(morpho),
+            0
+        );
         emit Supply(args.marketParams.id(), actualAssets, actualShares, args.assets, args.shares);
     }
 
@@ -694,6 +705,11 @@ contract MorphoProxy is
             IERC20(borrowArgs.marketParams.loanToken).balanceOf(address(this))
         );
         if(IERC20(supplyArgs.marketParams.collateralToken).balanceOf(address(this)) > 0) {
+            TransferHelper.safeApprove(
+                supplyArgs.marketParams.collateralToken,
+                address(morpho),
+                0
+            );
             tokensToBridge = _addTokenToBridge(supplyArgs.marketParams.collateralToken, tokensToBridge);
         }
         _bridgeTokens(tacHeader, tokensToBridge, "");
@@ -729,6 +745,11 @@ contract MorphoProxy is
 
         TokenAmount[] memory tokensToBridge = new TokenAmount[](0);
         if (IERC20(repayArgs.marketParams.loanToken).balanceOf(address(this)) > 0) {
+            TransferHelper.safeApprove(
+                repayArgs.marketParams.loanToken,
+                address(morpho),
+                0
+            );
             tokensToBridge = _addTokenToBridge(repayArgs.marketParams.loanToken, tokensToBridge);
         }
         if (IERC20(withdrawArgs.marketParams.collateralToken).balanceOf(address(this)) > 0) {
