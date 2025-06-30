@@ -50,6 +50,11 @@
       "address": "0x6e71A766176d4Ab1c4ff724b5fbB1De07E8C0B29",
       "txHash": "0xd3e7c9235ad41e1cf171630214d4fa2a0fb40231f29592022923e52c78803c75",
       "kind": "uups"
+    },
+    {
+      "address": "0x21b5562FEee5013379F8F79C5093EC294d535BEC",
+      "txHash": "0x26e38aa083d0e82d692a3034c2e884ab5fe54cf1bb66a400ec8b6f4143c17119",
+      "kind": "uups"
     }
   ],
   "impls": {
@@ -1043,7 +1048,7 @@
             "label": "morpho",
             "offset": 0,
             "slot": "0",
-            "type": "t_contract(IMorpho)3505",
+            "type": "t_contract(IMorpho)12262",
             "contract": "MorphoProxy",
             "src": "contracts/proxies/Morpho/MorphoProxy.sol:203"
           },
@@ -1051,7 +1056,7 @@
             "label": "urd",
             "offset": 0,
             "slot": "1",
-            "type": "t_contract(IURD)3638",
+            "type": "t_contract(IURD)12395",
             "contract": "MorphoProxy",
             "src": "contracts/proxies/Morpho/MorphoProxy.sol:205"
           },
@@ -1059,7 +1064,7 @@
             "label": "tacSAFactory",
             "offset": 0,
             "slot": "2",
-            "type": "t_contract(TacSAFactory)3101",
+            "type": "t_contract(TacSAFactory)10683",
             "contract": "MorphoProxy",
             "src": "contracts/proxies/Morpho/MorphoProxy.sol:207"
           },
@@ -1067,7 +1072,7 @@
             "label": "metaMorphoV1_1",
             "offset": 0,
             "slot": "3",
-            "type": "t_contract(IMetaMorpho)3364",
+            "type": "t_contract(IMetaMorpho)12121",
             "contract": "MorphoProxy",
             "src": "contracts/proxies/Morpho/MorphoProxy.sol:209"
           }
@@ -1111,7 +1116,7 @@
             ],
             "numberOfBytes": "32"
           },
-          "t_struct(TacProxyV1UpgradeableStorage)1084_storage": {
+          "t_struct(TacProxyV1UpgradeableStorage)3297_storage": {
             "label": "struct TacProxyV1Upgradeable.TacProxyV1UpgradeableStorage",
             "members": [
               {
@@ -1127,19 +1132,19 @@
             "label": "uint64",
             "numberOfBytes": "8"
           },
-          "t_contract(IMetaMorpho)3364": {
+          "t_contract(IMetaMorpho)12121": {
             "label": "contract IMetaMorpho",
             "numberOfBytes": "20"
           },
-          "t_contract(IMorpho)3505": {
+          "t_contract(IMorpho)12262": {
             "label": "contract IMorpho",
             "numberOfBytes": "20"
           },
-          "t_contract(IURD)3638": {
+          "t_contract(IURD)12395": {
             "label": "contract IURD",
             "numberOfBytes": "20"
           },
-          "t_contract(TacSAFactory)3101": {
+          "t_contract(TacSAFactory)10683": {
             "label": "contract TacSAFactory",
             "numberOfBytes": "20"
           }
@@ -2304,6 +2309,159 @@
               "label": "_owner",
               "type": "t_address",
               "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:24",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Initializable": [
+            {
+              "contract": "Initializable",
+              "label": "_initialized",
+              "type": "t_uint64",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+              "offset": 0,
+              "slot": "0"
+            },
+            {
+              "contract": "Initializable",
+              "label": "_initializing",
+              "type": "t_bool",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+              "offset": 8,
+              "slot": "0"
+            }
+          ]
+        }
+      }
+    },
+    "5cc595e7b6d2c09f12f92ffd826fd5d87d3f00e51e3e4cb0b965ea83cda8ffa3": {
+      "address": "0xDF1938aa15605314796faeeAEBFB16De0E560685",
+      "txHash": "0xeafa884d77939f8c3ddd516159a5f6cc98a98ea17f2e5a85d5e4d724b1ea2cf8",
+      "layout": {
+        "solcVersion": "0.8.28",
+        "storage": [
+          {
+            "label": "morpho",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_contract(IMorpho)13907",
+            "contract": "MorphoProxy",
+            "src": "contracts/proxies/Morpho/MorphoProxy.sol:236"
+          },
+          {
+            "label": "urd",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_contract(IURD)14040",
+            "contract": "MorphoProxy",
+            "src": "contracts/proxies/Morpho/MorphoProxy.sol:238"
+          },
+          {
+            "label": "tacSAFactory",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_contract(TacSAFactory)10752",
+            "contract": "MorphoProxy",
+            "src": "contracts/proxies/Morpho/MorphoProxy.sol:240"
+          },
+          {
+            "label": "metaMorphoFactoryV1_1",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_contract(IMetaMorphoV1_1Factory)13748",
+            "contract": "MorphoProxy",
+            "src": "contracts/proxies/Morpho/MorphoProxy.sol:242"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_struct(InitializableStorage)73_storage": {
+            "label": "struct Initializable.InitializableStorage",
+            "members": [
+              {
+                "label": "_initialized",
+                "type": "t_uint64",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_initializing",
+                "type": "t_bool",
+                "offset": 8,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(OwnableStorage)13_storage": {
+            "label": "struct OwnableUpgradeable.OwnableStorage",
+            "members": [
+              {
+                "label": "_owner",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(TacProxyV1UpgradeableStorage)3297_storage": {
+            "label": "struct TacProxyV1Upgradeable.TacProxyV1UpgradeableStorage",
+            "members": [
+              {
+                "label": "_crossChainLayer",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_uint64": {
+            "label": "uint64",
+            "numberOfBytes": "8"
+          },
+          "t_contract(IMetaMorphoV1_1Factory)13748": {
+            "label": "contract IMetaMorphoV1_1Factory",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IMorpho)13907": {
+            "label": "contract IMorpho",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IURD)14040": {
+            "label": "contract IURD",
+            "numberOfBytes": "20"
+          },
+          "t_contract(TacSAFactory)10752": {
+            "label": "contract TacSAFactory",
+            "numberOfBytes": "20"
+          }
+        },
+        "namespaces": {
+          "erc7201:openzeppelin.storage.Ownable": [
+            {
+              "contract": "OwnableUpgradeable",
+              "label": "_owner",
+              "type": "t_address",
+              "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:24",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:tac.storage.TacProxyV1Upgradeable": [
+            {
+              "contract": "TacProxyV1Upgradeable",
+              "label": "_crossChainLayer",
+              "type": "t_address",
+              "src": "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol:30",
               "offset": 0,
               "slot": "0"
             }
