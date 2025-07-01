@@ -1,7 +1,6 @@
 import hre, { ethers } from 'hardhat';
 import factoryAbi from "./factoryAbi.json"
 import {CurveLiteTwocryptoswapTestnetConfig} from "./config/testnetConfig"
-import { ReentrancyGuardUpgradeable__factory } from '@tonappchain/evm-ccl/dist/typechain-types';
 
 const poolPresetParams = {
     implementation_id: 0,
