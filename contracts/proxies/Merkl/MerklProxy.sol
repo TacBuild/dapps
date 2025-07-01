@@ -115,18 +115,42 @@ contract MerklProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
             
             TokenAmount[] memory tokens = new TokenAmount[](data.tokenToBridge.length);
             for (uint256 i = 0; i < data.tokenToBridge.length; i++) {
+                uint256 amount = IERC20(data.tokenToBridge[i]).balanceOf(user);
                 TacSmartAccount(payable(user)).execute(
                     data.tokenToBridge[i],
                     0,
-                    abi.encodeWithSelector(IERC20.transfer.selector, address(this), IERC20(data.tokenToBridge[i]).balanceOf(user))
+                    abi.encodeWithSelector(IERC20.transfer.selector, address(this), amount)
                 );
                 tokens[i] = TokenAmount({
                     evmAddress: data.tokenToBridge[i],
-                    amount: IERC20(data.tokenToBridge[i]).balanceOf(address(this))
+                    amount: amount
                 });
             }
             _bridgeTokens(tacHeader, tokens, "");
         }
+    }
+
+    function bridgeTokensFromSmartAccount(
+        bytes calldata tacHeader,
+        bytes calldata arguments
+    ) external _onlyCrossChainLayer() {
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
+        (address user, ) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
+        (address[] memory tokens) = abi.decode(arguments, (address[]));
+        TokenAmount[] memory tokenAmounts = new TokenAmount[](tokens.length);
+        for (uint256 i = 0; i < tokens.length; i++) {
+            uint256 amount = IERC20(tokens[i]).balanceOf(user);
+            TacSmartAccount(payable(user)).execute(
+                tokens[i],
+                0,
+                abi.encodeWithSelector(IERC20.transfer.selector, address(this), amount)
+            );
+            tokenAmounts[i] = TokenAmount({
+                evmAddress: tokens[i],
+                amount: amount
+            });
+        }
+        _bridgeTokens(tacHeader, tokenAmounts, "");
     }
 
     function getUserAddressForTvmCaller(string calldata tvmCaller) public view returns (address) {
