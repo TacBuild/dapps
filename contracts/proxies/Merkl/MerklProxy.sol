@@ -3,7 +3,6 @@ pragma solidity ^0.8.28;
 
 import {TransferHelper} from "@uniswap/lib/contracts/libraries/TransferHelper.sol";
 import {OutMessageV1, TokenAmount, TacHeaderV1, NFTAmount} from "@tonappchain/evm-ccl/contracts/core/Structs.sol";
-import {ICrossChainLayer} from "@tonappchain/evm-ccl/contracts/interfaces/ICrossChainLayer.sol";
 import {TacProxyV1Upgradeable} from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -32,8 +31,6 @@ contract MerklProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         bytes[] functionData;
         address[] tokenToBridge;
     }
-
-    event AccountRegistrated(address indexed user, string indexed tvmCaller);
 
     constructor() {
         _disableInitializers();

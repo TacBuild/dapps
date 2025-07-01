@@ -16,13 +16,11 @@ contract CustomMerklProxyEuler is OwnableUpgradeable, UUPSUpgradeable {
     address public mainMerklProxy;
 
     struct WithdrawToByLockTimestampData {
-        address account;
         uint256 lockTimestamp;
         bool allowReminderLoss;
     }
 
     struct WithdrawToByLockTimestampsData {
-        address account;
         uint256[] lockTimestamps;
         bool allowReminderLoss;
     }

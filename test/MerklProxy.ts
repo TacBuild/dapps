@@ -102,8 +102,8 @@ describe("MerklProxy", function () {
         const lockTimestamp = (await rEUL.getLockedAmounts(account))[0][0];
         const functionSelector = customMerklProxyEuler.withdrawToByLockTimestamp.fragment.selector;
         const withdrawToByLockTimestampData = new ethers.AbiCoder().encode(
-            ['tuple(address,uint256,bool)'],
-            [[account, lockTimestamp, true]]
+            ['tuple(uint256,bool)'],
+            [[lockTimestamp, true]]
         )
 
         const encodedArguments = new ethers.AbiCoder().encode(
