@@ -49,6 +49,10 @@ contract TacSmartAccount is Initializable {
         oneTimeTickets[caller] = true;
     }
 
+    function revokeOneTimeTicket(address caller) external onlyOwner {
+        oneTimeTickets[caller] = false;
+    }
+
     function approve(address token, address to, uint256 amount) external onlyOwnerOrTicket{
         IERC20(token).approve(to, amount);
     }

@@ -108,6 +108,7 @@ contract MerklProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
             TacSmartAccount(payable(user)).createOneTimeTicket(logic);
             (bool success,) = logic.call(abi.encodeWithSignature(data.functionNames[i], user, data.functionData[i]));
             require(success, "custom function call failed");
+            TacSmartAccount(payable(user)).revokeOneTimeTicket(logic);
         }
 
         if (data.tokenToBridge.length > 0) {
