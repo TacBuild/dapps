@@ -32,6 +32,8 @@ contract MerklProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgra
         address[] tokenToBridge;
     }
 
+    event CustomMerklLogicSet(address indexed token, address indexed customMerklLogic);
+
     constructor() {
         _disableInitializers();
     }
@@ -157,6 +159,7 @@ contract MerklProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgra
 
     function setCustomMerklLogic(address token, address customMerklLogic) external onlyOwner {
         tokenToLogic[token] = customMerklLogic;
+        emit CustomMerklLogicSet(token, customMerklLogic);
     }
 
     /// @notice Bridges tokens to the cross-chain layer
