@@ -3,12 +3,12 @@ pragma solidity ^0.8.28;
 
 import {TransferHelper} from "@uniswap/lib/contracts/libraries/TransferHelper.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {TacSmartAccount} from "../../TacSmartAccounts/TacSmartAccount.sol";
 import {IREUL} from "./interface/IREUL.sol";
 
-contract CustomMerklProxyEuler is OwnableUpgradeable, UUPSUpgradeable {
+contract CustomMerklProxyEuler is Ownable2StepUpgradeable, UUPSUpgradeable {
 
 
     address public EUL;
@@ -40,6 +40,7 @@ contract CustomMerklProxyEuler is OwnableUpgradeable, UUPSUpgradeable {
         address _mainMerklProxy
     ) external initializer {
         __Ownable_init(msg.sender);
+        __Ownable2Step_init();
         __UUPSUpgradeable_init();
         EUL = _EUL;
         rEUL = _rEUL;

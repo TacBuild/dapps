@@ -5,13 +5,13 @@ import {TransferHelper} from "@uniswap/lib/contracts/libraries/TransferHelper.so
 import {OutMessageV1, TokenAmount, TacHeaderV1, NFTAmount} from "@tonappchain/evm-ccl/contracts/core/Structs.sol";
 import {TacProxyV1Upgradeable} from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {TacSmartAccount} from "../../TacSmartAccounts/TacSmartAccount.sol";
 import {TacSAFactory} from "../../TacSmartAccounts/TacSAFactory.sol";
 import {IMerkl} from "./interface/IMerkl.sol";
 
-contract MerklProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
+contract MerklProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgradeable {
 
     TacSAFactory public tacSAFactory;
     IMerkl public merkl;
@@ -43,6 +43,7 @@ contract MerklProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
     ) external initializer {
         __TacProxyV1Upgradeable_init(_crossChainLayer);
         __Ownable_init(msg.sender);
+        __Ownable2Step_init();
         __UUPSUpgradeable_init();
         tacSAFactory = TacSAFactory(_tacSAFactory);
         merkl = IMerkl(_merkl);
