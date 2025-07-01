@@ -44,13 +44,16 @@ contract TacSAFactory is OwnableUpgradeable, UUPSUpgradeable {
         address application
     ) external view returns (address) {
         bytes32 id = keccak256(abi.encodePacked(tvmWallet));
+        if (smartAccounts[application][id] == address(0)) {
+            return predictSmartAccountAddress(tvmWallet, application);
+        }
         return smartAccounts[application][id];
     }
 
     function predictSmartAccountAddress(
         string memory tvmWallet,
         address application
-    ) external view returns (address) {
+    ) public view returns (address) {
         bytes32 id = keccak256(abi.encodePacked(tvmWallet));
         if (smartAccounts[application][id] != address(0)) {
             return smartAccounts[application][id];
