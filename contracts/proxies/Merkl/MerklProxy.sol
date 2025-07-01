@@ -92,6 +92,8 @@ contract MerklProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         }
     }
 
+    ///@dev Tokens from any function should always be sent to SmartAccount first by custom 
+    ///logic proxy and then if needed to bridge, transfer to this contract and then bridge
     function customFunctionCall(
         bytes calldata tacHeader,
         bytes calldata arguments
@@ -109,8 +111,14 @@ contract MerklProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         }
 
         if (data.tokenToBridge.length > 0) {
+            
             TokenAmount[] memory tokens = new TokenAmount[](data.tokenToBridge.length);
             for (uint256 i = 0; i < data.tokenToBridge.length; i++) {
+                TacSmartAccount(payable(user)).execute(
+                    data.tokenToBridge[i],
+                    0,
+                    abi.encodeWithSelector(IERC20.transfer.selector, address(this), IERC20(data.tokenToBridge[i]).balanceOf(user))
+                );
                 tokens[i] = TokenAmount({
                     evmAddress: data.tokenToBridge[i],
                     amount: IERC20(data.tokenToBridge[i]).balanceOf(address(this))

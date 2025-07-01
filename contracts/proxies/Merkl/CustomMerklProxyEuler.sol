@@ -55,7 +55,7 @@ contract CustomMerklProxyEuler is OwnableUpgradeable, UUPSUpgradeable {
         bytes memory result = TacSmartAccount(payable(user)).execute(
             rEUL,
             0,
-            abi.encodeWithSelector(IREUL.withdrawToByLockTimestamp.selector, mainMerklProxy, withdrawToByLockTimestampData.lockTimestamp, withdrawToByLockTimestampData.allowReminderLoss)
+            abi.encodeWithSelector(IREUL.withdrawToByLockTimestamp.selector, user, withdrawToByLockTimestampData.lockTimestamp, withdrawToByLockTimestampData.allowReminderLoss)
         );
         bool success = abi.decode(result, (bool));
         require(success, "Withdrawal failed");
@@ -66,7 +66,7 @@ contract CustomMerklProxyEuler is OwnableUpgradeable, UUPSUpgradeable {
         bytes memory result = TacSmartAccount(payable(user)).execute(
             rEUL,
             0,
-            abi.encodeWithSelector(IREUL.withdrawToByLockTimestamps.selector, mainMerklProxy, withdrawToByLockTimestampsData.lockTimestamps, withdrawToByLockTimestampsData.allowReminderLoss)
+            abi.encodeWithSelector(IREUL.withdrawToByLockTimestamps.selector, user, withdrawToByLockTimestampsData.lockTimestamps, withdrawToByLockTimestampsData.allowReminderLoss)
         );
         bool success = abi.decode(result, (bool));
         require(success, "Withdrawal failed");
