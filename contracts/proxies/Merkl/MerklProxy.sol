@@ -28,7 +28,7 @@ contract MerklProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
 
     struct CsutomFunctionCalldata {
         address token;
-        string[] functionNames;
+        bytes4[] functionSelectors;
         bytes[] functionData;
         address[] tokenToBridge;
     }
@@ -104,9 +104,9 @@ contract MerklProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         address logic = tokenToLogic[data.token];
         require(logic != address(0), "MerklProxy: Custom logic not found");
         
-        for (uint256 i = 0; i < data.functionNames.length; i++) {
+        for (uint256 i = 0; i < data.functionSelectors.length; i++) {
             TacSmartAccount(payable(user)).createOneTimeTicket(logic);
-            (bool success,) = logic.call(abi.encodeWithSignature(data.functionNames[i], user, data.functionData[i]));
+            (bool success,) = logic.call(abi.encodeWithSelector(data.functionSelectors[i], user, data.functionData[i]));
             require(success, "custom function call failed");
             TacSmartAccount(payable(user)).revokeOneTimeTicket(logic);
         }
