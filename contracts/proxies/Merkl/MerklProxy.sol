@@ -25,7 +25,7 @@ contract MerklProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgra
         bool transferAndBridge;
     }
 
-    struct CsutomFunctionCalldata {
+    struct CustomFunctionCalldata {
         address token;
         bytes4[] functionSelectors;
         bytes[] functionData;
@@ -100,7 +100,7 @@ contract MerklProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgra
     ) external _onlyCrossChainLayer() {
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user, ) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
-        (CsutomFunctionCalldata memory data) = abi.decode(arguments, (CsutomFunctionCalldata));
+        (CustomFunctionCalldata memory data) = abi.decode(arguments, (CustomFunctionCalldata));
         address logic = tokenToLogic[data.token];
         require(logic != address(0), "MerklProxy: Custom logic not found");
         

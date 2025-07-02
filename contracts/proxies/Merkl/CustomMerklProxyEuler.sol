@@ -17,12 +17,12 @@ contract CustomMerklProxyEuler is Ownable2StepUpgradeable, UUPSUpgradeable {
 
     struct WithdrawToByLockTimestampData {
         uint256 lockTimestamp;
-        bool allowReminderLoss;
+        bool allowRemainderLoss;
     }
 
     struct WithdrawToByLockTimestampsData {
         uint256[] lockTimestamps;
-        bool allowReminderLoss;
+        bool allowRemainderLoss;
     }
 
     modifier onlyMainMerklProxy() {
@@ -54,7 +54,7 @@ contract CustomMerklProxyEuler is Ownable2StepUpgradeable, UUPSUpgradeable {
         bytes memory result = TacSmartAccount(payable(user)).execute(
             rEUL,
             0,
-            abi.encodeWithSelector(IREUL.withdrawToByLockTimestamp.selector, user, withdrawToByLockTimestampData.lockTimestamp, withdrawToByLockTimestampData.allowReminderLoss)
+            abi.encodeWithSelector(IREUL.withdrawToByLockTimestamp.selector, user, withdrawToByLockTimestampData.lockTimestamp, withdrawToByLockTimestampData.allowRemainderLoss)
         );
         bool success = abi.decode(result, (bool));
         require(success, "Withdrawal failed");
@@ -65,7 +65,7 @@ contract CustomMerklProxyEuler is Ownable2StepUpgradeable, UUPSUpgradeable {
         bytes memory result = TacSmartAccount(payable(user)).execute(
             rEUL,
             0,
-            abi.encodeWithSelector(IREUL.withdrawToByLockTimestamps.selector, user, withdrawToByLockTimestampsData.lockTimestamps, withdrawToByLockTimestampsData.allowReminderLoss)
+            abi.encodeWithSelector(IREUL.withdrawToByLockTimestamps.selector, user, withdrawToByLockTimestampsData.lockTimestamps, withdrawToByLockTimestampsData.allowRemainderLoss)
         );
         bool success = abi.decode(result, (bool));
         require(success, "Withdrawal failed");
