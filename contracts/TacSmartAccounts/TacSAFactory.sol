@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity >=0.8.2 <0.9.0;
+pragma solidity 0.8.28;
 
 import {BeaconProxy} from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {TacSmartAccount} from "./TacSmartAccount.sol";
 
-contract TacSAFactory is OwnableUpgradeable, UUPSUpgradeable {
+contract TacSAFactory is Ownable2StepUpgradeable, UUPSUpgradeable {
     UpgradeableBeacon public beacon;
     mapping(address application => mapping(bytes32 id => address smartAccount)) public smartAccounts;
 
@@ -16,6 +16,7 @@ contract TacSAFactory is OwnableUpgradeable, UUPSUpgradeable {
     function initialize(
         address _initBlueprint
     ) external initializer {
+        __Ownable2Step_init();
         __Ownable_init(msg.sender);
         __UUPSUpgradeable_init();
         beacon = new UpgradeableBeacon(_initBlueprint, address(this));
@@ -44,13 +45,16 @@ contract TacSAFactory is OwnableUpgradeable, UUPSUpgradeable {
         address application
     ) external view returns (address) {
         bytes32 id = keccak256(abi.encodePacked(tvmWallet));
+        if (smartAccounts[application][id] == address(0)) {
+            return predictSmartAccountAddress(tvmWallet, application);
+        }
         return smartAccounts[application][id];
     }
 
     function predictSmartAccountAddress(
         string memory tvmWallet,
         address application
-    ) external view returns (address) {
+    ) public view returns (address) {
         bytes32 id = keccak256(abi.encodePacked(tvmWallet));
         if (smartAccounts[application][id] != address(0)) {
             return smartAccounts[application][id];
