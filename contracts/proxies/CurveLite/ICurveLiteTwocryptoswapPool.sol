@@ -18,6 +18,20 @@ interface ITwocryptoswapPool {
         uint256 min_mint_amount
     ) external returns (uint256);
     /**
+     * @notice Withdraw liquidity in a single token.
+     *         Involves fees (lower than swap fees).
+     * @dev This operation also involves an admin fee claim.
+     * @param token_amount Amount of LP tokens to burn
+     * @param i Index of the token to withdraw
+     * @param min_amount Minimum amount of token to withdraw.
+     * @return Amount of tokens at index i received by the `receiver`
+    */
+    function remove_liquidity_one_coin(
+        uint256 token_amount,
+        uint256 i,
+        uint256 min_amount
+    ) external returns (uint256);
+    /**
      * @notice Removes liquidity to the pool
      * @param amount Amount of LP tokens to burn 
      * @param min_amounts Minimum amounts of tokens to withdraw
