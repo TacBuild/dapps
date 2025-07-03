@@ -3,11 +3,13 @@ import * as dotenv from "dotenv";
 import "@nomicfoundation/hardhat-chai-matchers";
 import "@nomicfoundation/hardhat-toolbox";
 import "@openzeppelin/hardhat-upgrades";
+import { ethers } from "ethers";
 import { HardhatUserConfig } from "hardhat/config";
 dotenv.config();
 
 const TAC_TESTNET_URL = process.env.TAC_TESTNET_URL || "http://127.0.0.1:8545";
 const TAC_TESTNET_SPB_URL = process.env.TAC_TESTNET_SPB_URL || "http://127.0.0.1:8545";
+const DEPLOYER_PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY || ethers.Wallet.createRandom().privateKey;
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -45,7 +47,7 @@ const config: HardhatUserConfig = {
     tac_testnet: {
       chainId: 2390,
       url: TAC_TESTNET_URL,
-      accounts: [process.env.DEPLOYER_PRIVATE_KEY || ""]
+      accounts: [DEPLOYER_PRIVATE_KEY]
     },
     tac_testnet_spb: {
       chainId: 2391,
