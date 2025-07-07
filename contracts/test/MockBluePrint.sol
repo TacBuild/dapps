@@ -6,7 +6,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {TransferHelper} from "@uniswap/lib/contracts/libraries/TransferHelper.sol";
 
 
-contract TacSmartAccount is Initializable {
+contract MockBluePrint is Initializable {
     address public owner;
 
     event Executed(address indexed target, uint256 value, bytes data);
@@ -76,6 +76,10 @@ contract TacSmartAccount is Initializable {
             results[i] = returnData;
         }
         return results;
+    }
+
+    function upgradedToMockBluePrint() external pure returns(bool) {
+        return true;
     }
 
     receive() external payable {}

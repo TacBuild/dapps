@@ -10,6 +10,7 @@ import {TacSAFactory} from "../TacSmartAccounts/TacSAFactory.sol";
 import {TacHeaderV1, TokenAmount, NFTAmount, OutMessageV1} from "@tonappchain/evm-ccl/contracts/core/Structs.sol";
 import {TransferHelper} from "@uniswap/lib/contracts/libraries/TransferHelper.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IMockTacSmartAccount} from "./interface/IMockTacSmartAccount.sol";
 contract TestSmartAccountProxyUser is UUPSUpgradeable, TacProxyV1Upgradeable {
 
     TacSAFactory public tacSAFactory;
@@ -60,6 +61,10 @@ contract TestSmartAccountProxyUser is UUPSUpgradeable, TacProxyV1Upgradeable {
         mainCallExecuted = true;
         tokenToBridge = _tokenToBrdige;
         user = msg.sender;
+    }
+
+    function checkBlueprint(address _user) public pure returns(bool) {
+        return IMockTacSmartAccount(_user).upgradedToMockBluePrint();
     }
 
     /// @notice Bridges tokens to the cross-chain layer
