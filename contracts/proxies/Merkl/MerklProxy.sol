@@ -1,18 +1,17 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.28;
+pragma solidity 0.8.28;
 
 import {TransferHelper} from "@uniswap/lib/contracts/libraries/TransferHelper.sol";
 import {OutMessageV1, TokenAmount, TacHeaderV1, NFTAmount} from "@tonappchain/evm-ccl/contracts/core/Structs.sol";
-import {ICrossChainLayer} from "@tonappchain/evm-ccl/contracts/interfaces/ICrossChainLayer.sol";
 import {TacProxyV1Upgradeable} from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {TacSmartAccount} from "../../TacSmartAccounts/TacSmartAccount.sol";
 import {TacSAFactory} from "../../TacSmartAccounts/TacSAFactory.sol";
 import {IMerkl} from "./interface/IMerkl.sol";
 
-contract MerklProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
+contract MerklProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgradeable {
 
     TacSAFactory public tacSAFactory;
     IMerkl public merkl;
@@ -26,14 +25,14 @@ contract MerklProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         bool transferAndBridge;
     }
 
-    struct CsutomFunctionCalldata {
+    struct CustomFunctionCalldata {
         address token;
-        string[] functionNames;
+        bytes4[] functionSelectors;
         bytes[] functionData;
         address[] tokenToBridge;
     }
 
-    event AccountRegistrated(address indexed user, string indexed tvmCaller);
+    event CustomMerklLogicSet(address indexed token, address indexed customMerklLogic);
 
     constructor() {
         _disableInitializers();
@@ -46,6 +45,7 @@ contract MerklProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
     ) external initializer {
         __TacProxyV1Upgradeable_init(_crossChainLayer);
         __Ownable_init(msg.sender);
+        __Ownable2Step_init();
         __UUPSUpgradeable_init();
         tacSAFactory = TacSAFactory(_tacSAFactory);
         merkl = IMerkl(_merkl);
@@ -92,32 +92,65 @@ contract MerklProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         }
     }
 
+    ///@dev Tokens from any function should always be sent to SmartAccount first by custom 
+    ///logic proxy and then if needed to bridge, transfer to this contract and then bridge
     function customFunctionCall(
         bytes calldata tacHeader,
         bytes calldata arguments
     ) external _onlyCrossChainLayer() {
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user, ) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
-        (CsutomFunctionCalldata memory data) = abi.decode(arguments, (CsutomFunctionCalldata));
+        (CustomFunctionCalldata memory data) = abi.decode(arguments, (CustomFunctionCalldata));
         address logic = tokenToLogic[data.token];
         require(logic != address(0), "MerklProxy: Custom logic not found");
         
-        for (uint256 i = 0; i < data.functionNames.length; i++) {
+        for (uint256 i = 0; i < data.functionSelectors.length; i++) {
             TacSmartAccount(payable(user)).createOneTimeTicket(logic);
-            (bool success,) = logic.call(abi.encodeWithSignature(data.functionNames[i], user, data.functionData[i]));
+            (bool success,) = logic.call(abi.encodeWithSelector(data.functionSelectors[i], user, data.functionData[i]));
             require(success, "custom function call failed");
+            TacSmartAccount(payable(user)).revokeOneTimeTicket(logic);
         }
 
         if (data.tokenToBridge.length > 0) {
+            
             TokenAmount[] memory tokens = new TokenAmount[](data.tokenToBridge.length);
             for (uint256 i = 0; i < data.tokenToBridge.length; i++) {
+                uint256 amount = IERC20(data.tokenToBridge[i]).balanceOf(user);
+                TacSmartAccount(payable(user)).execute(
+                    data.tokenToBridge[i],
+                    0,
+                    abi.encodeWithSelector(IERC20.transfer.selector, address(this), amount)
+                );
                 tokens[i] = TokenAmount({
                     evmAddress: data.tokenToBridge[i],
-                    amount: IERC20(data.tokenToBridge[i]).balanceOf(address(this))
+                    amount: amount
                 });
             }
             _bridgeTokens(tacHeader, tokens, "");
         }
+    }
+
+    function bridgeTokensFromSmartAccount(
+        bytes calldata tacHeader,
+        bytes calldata arguments
+    ) external _onlyCrossChainLayer() {
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
+        (address user, ) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
+        (address[] memory tokens) = abi.decode(arguments, (address[]));
+        TokenAmount[] memory tokenAmounts = new TokenAmount[](tokens.length);
+        for (uint256 i = 0; i < tokens.length; i++) {
+            uint256 amount = IERC20(tokens[i]).balanceOf(user);
+            TacSmartAccount(payable(user)).execute(
+                tokens[i],
+                0,
+                abi.encodeWithSelector(IERC20.transfer.selector, address(this), amount)
+            );
+            tokenAmounts[i] = TokenAmount({
+                evmAddress: tokens[i],
+                amount: amount
+            });
+        }
+        _bridgeTokens(tacHeader, tokenAmounts, "");
     }
 
     function getUserAddressForTvmCaller(string calldata tvmCaller) public view returns (address) {
@@ -125,8 +158,8 @@ contract MerklProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
     }
 
     function setCustomMerklLogic(address token, address customMerklLogic) external onlyOwner {
-        require(tokenToLogic[token] == address(0), "MerklProxy: Custom logic already set");
         tokenToLogic[token] = customMerklLogic;
+        emit CustomMerklLogicSet(token, customMerklLogic);
     }
 
     /// @notice Bridges tokens to the cross-chain layer

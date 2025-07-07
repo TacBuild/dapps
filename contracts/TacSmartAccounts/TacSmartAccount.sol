@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.28;
+pragma solidity 0.8.28;
 
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {TransferHelper} from "@uniswap/lib/contracts/libraries/TransferHelper.sol";
+
 
 contract TacSmartAccount is Initializable {
     address public owner;
@@ -55,8 +57,12 @@ contract TacSmartAccount is Initializable {
         oneTimeTickets[caller] = true;
     }
 
+    function revokeOneTimeTicket(address caller) external onlyOwner {
+        oneTimeTickets[caller] = false;
+    }
+
     function approve(address token, address to, uint256 amount) external onlyOwnerOrTicket{
-        IERC20(token).approve(to, amount);
+        TransferHelper.safeApprove(token, to, amount);
     }
 
     receive() external payable {}

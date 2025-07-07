@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity >=0.8.2 <0.9.0;
+pragma solidity 0.8.28;
 
 import {BeaconProxy} from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
@@ -45,13 +45,16 @@ contract TacSAFactory is Ownable2StepUpgradeable, UUPSUpgradeable {
         address application
     ) external view returns (address) {
         bytes32 id = keccak256(abi.encodePacked(tvmWallet));
+        if (smartAccounts[application][id] == address(0)) {
+            return predictSmartAccountAddress(tvmWallet, application);
+        }
         return smartAccounts[application][id];
     }
 
     function predictSmartAccountAddress(
         string memory tvmWallet,
         address application
-    ) external view returns (address) {
+    ) public view returns (address) {
         bytes32 id = keccak256(abi.encodePacked(tvmWallet));
         if (smartAccounts[application][id] != address(0)) {
             return smartAccounts[application][id];
