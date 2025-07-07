@@ -7,7 +7,7 @@ import {IHooks} from "../../TacSmartAccounts/Interface/IHooks.sol";
 import {ICrossChainLayer} from "@tonappchain/evm-ccl/contracts/interfaces/ICrossChainLayer.sol";
 import {TacProxyV1Upgradeable} from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {TacSmartAccount} from "../../TacSmartAccounts/TacSmartAccount.sol";
 import {TacSAFactory} from "../../TacSmartAccounts/TacSAFactory.sol";
@@ -18,7 +18,7 @@ import {OutMessageV1, TokenAmount, TacHeaderV1, NFTAmount} from "@tonappchain/ev
 contract EulerProxy is
     TacProxyV1Upgradeable,
     UUPSUpgradeable,
-    OwnableUpgradeable
+    Ownable2StepUpgradeable
 {
     IEthereumVaultConnector public eulerVaultConnector;
     TacSAFactory public tacSAFactory;
@@ -46,10 +46,12 @@ contract EulerProxy is
     function initialize(
         address _crossChainLayer,
         address _eulerVaultConnector,
-        address _tacSAFactory
+        address _tacSAFactory,
+        address _owner
     ) external initializer {
         __TacProxyV1Upgradeable_init(_crossChainLayer);
-        __Ownable_init(msg.sender);
+        __Ownable_init(_owner == address(0) ? msg.sender : _owner);
+        __Ownable2Step_init();
         __UUPSUpgradeable_init();
         eulerVaultConnector = IEthereumVaultConnector(_eulerVaultConnector);
         tacSAFactory = TacSAFactory(_tacSAFactory);
@@ -113,7 +115,7 @@ contract EulerProxy is
     function batchSimulation(
         bytes calldata,
         bytes calldata arguments
-    ) external payable _onlyCrossChainLayer {
+    ) external _onlyCrossChainLayer {
         IEthereumVaultConnector.BatchItem[] memory items = abi.decode(arguments, (IEthereumVaultConnector.BatchItem[]));
         (IEthereumVaultConnector.BatchItemResult[] memory batchItemsResult, IEthereumVaultConnector.StatusCheckResult[] memory accountsStatusCheckResult, IEthereumVaultConnector.StatusCheckResult[] memory vaultsStatusCheckResult) = eulerVaultConnector.batchSimulation(items);
         emit BatchSimulation(batchItemsResult, accountsStatusCheckResult, vaultsStatusCheckResult);
@@ -122,7 +124,7 @@ contract EulerProxy is
     function setOperator(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable _onlyCrossChainLayer {
+    ) external _onlyCrossChainLayer {
         (bytes19 addressPrefix, address operator, uint256 operatorBitField) = abi.decode(arguments, (bytes19, address, uint256));
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);    
         (address user, ) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
@@ -133,7 +135,7 @@ contract EulerProxy is
     function setAccountOperator(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) external payable _onlyCrossChainLayer {
+    ) external _onlyCrossChainLayer {
         (address account, address operator, bool authorized) = abi.decode(arguments, (address, address, bool));
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);    
         (address user, ) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
