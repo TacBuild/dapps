@@ -1,6 +1,7 @@
 import hre, { ethers } from "hardhat";
 import { AddressLike, BytesLike, Signer } from "ethers";
 import { expect } from "chai";
+import {time} from "@nomicfoundation/hardhat-network-helpers"
 
 import { deployMorphoProxy } from "../scripts/Morpho/MorphoProxyDeploy";
 import { deployTacSAFactory } from "../scripts/TacSmartAccountFactory/FactoryDeploy";
@@ -629,6 +630,24 @@ describe("MorphoProxy", function () {
             operationId,
             timestamp
         );
+    });
+
+    it("Morpho mock oracle test", async function () {
+        const price = await mockOracle.price();
+        console.log("price", price);
+        await time.increase(1000);
+        const price2 = await mockOracle.price();
+        console.log("price2", price2);
+        expect(price2).to.not.equal(price);
+
+        await time.increase(1000);
+        const price3 = await mockOracle.price();
+        console.log("price3", price3);
+        expect(price3).to.not.equal(price2);
+
+        await time.increase(1000);
+        const price4 = await mockOracle.price();
+        expect(price4).to.not.equal(price3);
     });
 });
 

@@ -8,41 +8,44 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 library SaHelper {
     
-    function executePreHooks(address sa, IHooks.SaHooks memory hooks) internal {
+    function executePreHooks(address sa, IHooks.SaHooks memory hooks) internal returns(bytes[] memory) {
         IHooks.PreHook[] memory preHooks = hooks.preHooks;
-
+        bytes[] memory results = new bytes[](preHooks.length);
         for (uint256 i = 0; i < preHooks.length; i++) {
             if (preHooks[i].isFromSAPerspective) {
-                ITacSmartAccount(sa).execute(preHooks[i].contractAddress, preHooks[i].value, preHooks[i].data);
+                results[i] = ITacSmartAccount(sa).execute(preHooks[i].contractAddress, preHooks[i].value, preHooks[i].data);
             } else {
-                _selfCall(preHooks[i].contractAddress, preHooks[i].value, preHooks[i].data);
+                results[i] = _selfCall(preHooks[i].contractAddress, preHooks[i].value, preHooks[i].data);
             }
         }
+        return results;
     }
 
-    function executePostHooks(address sa, IHooks.SaHooks memory hooks) internal {
+    function executePostHooks(address sa, IHooks.SaHooks memory hooks) internal returns(bytes[] memory) {
         IHooks.PostHook[] memory postHooks = hooks.postHooks;
-
+        bytes[] memory results = new bytes[](postHooks.length);
         for (uint256 i = 0; i < postHooks.length; i++) {
             if (postHooks[i].isFromSAPerspective) {
-                ITacSmartAccount(sa).execute(postHooks[i].contractAddress, postHooks[i].value, postHooks[i].data);
+                results[i] = ITacSmartAccount(sa).execute(postHooks[i].contractAddress, postHooks[i].value, postHooks[i].data);
             } else {
-                _selfCall(postHooks[i].contractAddress, postHooks[i].value, postHooks[i].data);
+                results[i] = _selfCall(postHooks[i].contractAddress, postHooks[i].value, postHooks[i].data);
             }
         }
+        return results;
     }
 
-    function executeMainCall(address sa, IHooks.SaHooks memory hooks) internal {
+    function executeMainCall(address sa, IHooks.SaHooks memory hooks) internal returns(bytes memory) {
         IHooks.MainCallHook memory mainCallHook = hooks.mainCallHook;
         if (mainCallHook.isFromSAPerspective) {
-            ITacSmartAccount(sa).execute(mainCallHook.contractAddress, mainCallHook.value, mainCallHook.data);
+            return ITacSmartAccount(sa).execute(mainCallHook.contractAddress, mainCallHook.value, mainCallHook.data);
         } else {
-            _selfCall(mainCallHook.contractAddress, mainCallHook.value, mainCallHook.data);
+            return _selfCall(mainCallHook.contractAddress, mainCallHook.value, mainCallHook.data);
         }
     }
 
-    function _selfCall(address to, uint256 value, bytes memory data) internal {
-        (bool success,) = to.call{value: value}(data);
+    function _selfCall(address to, uint256 value, bytes memory data) internal returns(bytes memory) {
+        (bool success, bytes memory returnData) = to.call{value: value}(data);
         require(success, "Self call failed");
+        return returnData;
     }
 }

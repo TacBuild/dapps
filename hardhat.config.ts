@@ -9,6 +9,7 @@ dotenv.config();
 
 const TAC_TESTNET_URL = process.env.TAC_TESTNET_URL || "http://127.0.0.1:8545";
 const TAC_TESTNET_SPB_URL = process.env.TAC_TESTNET_SPB_URL || "http://127.0.0.1:8545";
+const TAC_MAINNET_URL = process.env.TAC_MAINNET_URL || "https://rpc.tac.build";
 const DEPLOYER_PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY || ethers.Wallet.createRandom().privateKey;
 
 const config: HardhatUserConfig = {
@@ -37,7 +38,7 @@ const config: HardhatUserConfig = {
       allowBlocksWithSameTimestamp: true,
       forking: {
         url: TAC_TESTNET_URL,
-        blockNumber: 5882693,
+        blockNumber: 6220302,
       },
     },
     localhost: {
@@ -51,8 +52,14 @@ const config: HardhatUserConfig = {
     },
     tac_testnet_spb: {
       chainId: 2391,
-      url: TAC_TESTNET_SPB_URL
+      url: TAC_TESTNET_SPB_URL,
+      accounts: [process.env.DEPLOYER_PRIVATE_KEY || ""]
     },
+    tac_mainnet: {
+      chainId: 239,
+      url: TAC_MAINNET_URL,
+      accounts: [process.env.DEPLOYER_PRIVATE_KEY || ""]
+    }
   },
   etherscan: {
     apiKey: {
@@ -74,6 +81,14 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: process.env.SPB_API_URL || "",
           browserURL: "https://spb.explorer.tac.build"
+        }
+      },
+      {
+        network: "tac_mainnet",
+        chainId: 239,
+        urls: {
+          apiURL: process.env.MAINNET_API_URL || "",
+          browserURL: "https://explorer.tac.build"
         }
       }
     ]

@@ -199,6 +199,10 @@ export class SaHooksBuilder {
         return this.addPostHookFromSelf(contractAddress, value, data);
     }
 
+    getDataForCall(contractAddress: string, functionName: string, params: any[]): string {
+        return this.encodeFunctionCall(contractAddress, functionName, params);
+    }
+
     // Main call hook methods
     private setMainCallHook(hook: MainCallHook): SaHooksBuilder {
         this.hooks.mainCallHook = hook;
@@ -308,6 +312,18 @@ export class SaHooksBuilder {
             ],
             [this.hooks]
         );
+    }
+
+    tupleString(): string {
+        return "tuple(" +
+        "tuple(bool isFromSAPerspective, address contractAddress, uint256 value, bytes data)[] preHooks," +
+        "tuple(bool isFromSAPerspective, address contractAddress, uint256 value, bytes data)[] postHooks," +
+        "tuple(bool isFromSAPerspective, address contractAddress, uint256 value, bytes data) mainCallHook" +
+    ")"
+    }
+
+    bridgeString(): string {
+        return "tuple(address[])";
     }
 }
 

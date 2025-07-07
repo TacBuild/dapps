@@ -311,13 +311,18 @@ contract MorphoProxy is
         bytes memory returnData = ITacSmartAccount(user).execute(
             args.vault,
             0,
-            abi.encodeWithSelector(IMorphoVault.deposit.selector, args.assets, address(this))
+            abi.encodeWithSelector(IMorphoVault.deposit.selector, args.assets, user)
         );
         uint256 shares = abi.decode(returnData, (uint256));
+        ITacSmartAccount(user).execute(
+            args.vault,
+            0,
+            abi.encodeWithSelector(IERC20.transfer.selector, address(this), IERC20(args.vault).balanceOf(user))
+        );
         require(args.assets.rDivUp(shares) <= args.maxSharePriceE27, "Slippage");
         emit Deposit(args.vault, args.assets);
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
-        tokensToBridge[0] = TokenAmount(args.vault, shares);
+        tokensToBridge[0] = TokenAmount(args.vault, IERC20(args.vault).balanceOf(address(this)));
         _bridgeTokens(tacHeader, tokensToBridge, "");
     }
 
@@ -357,7 +362,7 @@ contract MorphoProxy is
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(
             args.vault,
-            shares
+            IERC20(args.vault).balanceOf(address(this))
         );
         if (IERC20(IMorphoVault(args.vault).asset()).balanceOf(user) > 0) {
             ITacSmartAccount(user).execute(
