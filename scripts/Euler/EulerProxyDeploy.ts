@@ -4,6 +4,7 @@ import { deployUpgradable } from '@tonappchain/evm-ccl'
 import { DeployProxyOptions } from "@openzeppelin/hardhat-upgrades/dist/utils";
 import hre from 'hardhat';
 import { eulerConfig } from "./EulerConfig";
+import { tacSAFactoryDeployments as tacSAFactoryDeploymentsMainnet } from "../TacSmartAccountFactory/config/mainnetConfig";
 import { tacSAFactoryDeployments } from "../TacSmartAccountFactory/config/testnetConfig";
 
 const proxyOptsUUPS: DeployProxyOptions = {
@@ -29,3 +30,19 @@ export async function deployEulerProxy(
     await eulerProxy.waitForDeployment();
     return eulerProxy;
 }
+
+export async function deployEulerProxyMainnet() {
+    const [signer] = await hre.ethers.getSigners();
+    const eulerProxy = await deployUpgradable<EulerProxy>(
+        signer,
+        hre.artifacts.readArtifactSync('EulerProxy'),
+        [eulerConfig.crossChainLayerMainnetAddress, eulerConfig.eulerVaultConnectorMainnetAddress, tacSAFactoryDeploymentsMainnet.proxyAddress, await signer.getAddress()],
+        proxyOptsUUPS,
+        undefined,
+        true
+    );
+    await eulerProxy.waitForDeployment();
+    return eulerProxy;
+}
+
+deployEulerProxyMainnet();

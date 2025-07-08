@@ -23,10 +23,7 @@ export async function upgradeTacSAFactoryMainnetForMultisig() {
     const [signer] = await hre.ethers.getSigners();
     const factory = await hre.ethers.getContractFactory("TacSAFactory", signer);
     const implementatioAddress = await hre.upgrades.prepareUpgrade(tacSAFactoryDeploymentsMainnet.proxyAddress, factory);
-    console.log("Implementation address:", implementatioAddress);
-    const factoryUUpsInstance = await hre.ethers.getContractAt("UUPSUpgradeable", tacSAFactoryDeploymentsMainnet.proxyAddress) as UUPSUpgradeable;
-    factoryUUpsInstance.interface.fragments.
-    
+    console.log("Implementation address:", implementatioAddress)    
 }
 
 upgradeTacSAFactoryMainnetForMultisig();
