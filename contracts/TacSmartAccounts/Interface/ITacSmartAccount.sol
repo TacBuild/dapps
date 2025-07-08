@@ -8,6 +8,6 @@ interface ITacSmartAccount {
     function delegatecall(address target, bytes calldata data) external returns(bool success, bytes memory returnData);
     function createOneTimeTicket(address caller) external;
     function revokeOneTimeTicket(address caller) external;
-    function multicall(address[] calldata targets, uint256[] calldata values, bytes[] calldata data) external returns(bytes[] memory);
+    function multicall(address[] calldata targets, uint256[] calldata values, bytes[] calldata data) external payable returns(bytes[] memory);
     function approve(address token, address to, uint256 amount) external;
 }

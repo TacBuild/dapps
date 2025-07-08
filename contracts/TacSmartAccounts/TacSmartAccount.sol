@@ -68,7 +68,7 @@ contract TacSmartAccount is Initializable {
         TransferHelper.safeApprove(token, to, amount);
     }
 
-    function multicall(address[] calldata targets, uint256[] calldata values, bytes[] calldata data) external onlyOwnerOrTicket returns(bytes[] memory) {
+    function multicall(address[] calldata targets, uint256[] calldata values, bytes[] calldata data) external payable onlyOwnerOrTicket returns(bytes[] memory) {
         bytes[] memory results = new bytes[](targets.length);
         for (uint256 i = 0; i < targets.length; i++) {
             (bool success, bytes memory returnData) = targets[i].call{value: values[i]}(data[i]);
