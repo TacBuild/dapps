@@ -1,17 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import {TransferHelper} from "@uniswap/lib/contracts/libraries/TransferHelper.sol";
-import {SaHelper} from "../../TacSmartAccounts/SaHelper.sol";
-import {IHooks} from "../../TacSmartAccounts/Interface/IHooks.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {SaHelper} from "@tonappchain/evm-ccl/contracts/smart-account/libs/SaHelper.sol";
+import {IHooks} from "@tonappchain/evm-ccl/contracts/smart-account/interfaces/IHooks.sol";
 import {ICrossChainLayer} from "@tonappchain/evm-ccl/contracts/interfaces/ICrossChainLayer.sol";
 import {TacProxyV1Upgradeable} from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {TacSmartAccount} from "../../TacSmartAccounts/TacSmartAccount.sol";
-import {TacSAFactory} from "../../TacSmartAccounts/TacSAFactory.sol";
-import {TacSmartAccount} from "../../TacSmartAccounts/TacSmartAccount.sol";
+import {ISAFactory} from "@tonappchain/evm-ccl/contracts/smart-account/interfaces/ISAFactory.sol";
+import {ITacSmartAccount} from "@tonappchain/evm-ccl/contracts/smart-account/interfaces/ITacSmartAccount.sol";
 import {IEthereumVaultConnector} from "./Interface/IEthereumVaultConnector.sol";
 import {OutMessageV1, TokenAmount, TacHeaderV1, NFTAmount} from "@tonappchain/evm-ccl/contracts/core/Structs.sol";
 
@@ -20,8 +19,9 @@ contract EulerProxy is
     UUPSUpgradeable,
     Ownable2StepUpgradeable
 {
+
     IEthereumVaultConnector public eulerVaultConnector;
-    TacSAFactory public tacSAFactory;
+    ISAFactory public tacSAFactory;
 
     struct BridgeBackData {
         address[] tokensToBridge;
@@ -40,6 +40,10 @@ contract EulerProxy is
     event SetOperator(bytes19 indexed addressPrefix, address indexed operator, uint256 indexed operatorBitField);
     event SetAccountOperator(address indexed account, address indexed operator, bool indexed authorized);
 
+    constructor() {
+        _disableInitializers();
+    }
+
     /// @notice Initializes the proxy contract
     /// @param _crossChainLayer Address of the cross-chain layer contract
     /// @param _eulerVaultConnector Address of the Euler vault connector contract
@@ -54,7 +58,7 @@ contract EulerProxy is
         __Ownable2Step_init();
         __UUPSUpgradeable_init();
         eulerVaultConnector = IEthereumVaultConnector(_eulerVaultConnector);
-        tacSAFactory = TacSAFactory(_tacSAFactory);
+        tacSAFactory = ISAFactory(_tacSAFactory);
     }
 
     /// @notice Internal function to authorize upgrades
@@ -72,7 +76,7 @@ contract EulerProxy is
         (address user,) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
         
         SaHelper.executePreHooks(user, hooks);
-        bytes memory result = TacSmartAccount(payable(user)).execute(address(eulerVaultConnector), msg.value, abi.encodeWithSelector(IEthereumVaultConnector.call.selector, callArguments.targetContract, callArguments.onBehalfOfAccount, callArguments.value, callArguments.data));
+        bytes memory result = ITacSmartAccount(payable(user)).execute(address(eulerVaultConnector), msg.value, abi.encodeWithSelector(IEthereumVaultConnector.call.selector, callArguments.targetContract, callArguments.onBehalfOfAccount, callArguments.value, callArguments.data));
         SaHelper.executePostHooks(user, hooks);
         if (bridgeBackData.tokensToBridge.length > 0 && bridgeBackData.tokensToBridge[0] != address(0)) {
             TokenAmount[] memory tokenAmounts = new TokenAmount[](bridgeBackData.tokensToBridge.length);
@@ -97,7 +101,7 @@ contract EulerProxy is
         (address user, ) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
 
         SaHelper.executePreHooks(user, hooks);
-        bytes memory result = TacSmartAccount(payable(user)).execute(address(eulerVaultConnector), msg.value, abi.encodeWithSelector(IEthereumVaultConnector.batch.selector, items));
+        (bytes memory result) = ITacSmartAccount(payable(user)).execute(address(eulerVaultConnector), msg.value, abi.encodeWithSelector(IEthereumVaultConnector.batch.selector, items));
         SaHelper.executePostHooks(user, hooks);
         if (bridgeBackData.tokensToBridge.length > 0) {
             TokenAmount[] memory tokenAmounts = new TokenAmount[](bridgeBackData.tokensToBridge.length);
@@ -128,7 +132,7 @@ contract EulerProxy is
         (bytes19 addressPrefix, address operator, uint256 operatorBitField) = abi.decode(arguments, (bytes19, address, uint256));
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);    
         (address user, ) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
-        TacSmartAccount(payable(user)).execute(address(eulerVaultConnector), 0, abi.encodeWithSelector(IEthereumVaultConnector.setOperator.selector, addressPrefix, operator, operatorBitField));
+        ITacSmartAccount(payable(user)).execute(address(eulerVaultConnector), 0, abi.encodeWithSelector(IEthereumVaultConnector.setOperator.selector, addressPrefix, operator, operatorBitField));
         emit SetOperator(addressPrefix, operator, operatorBitField);
     }
 
@@ -139,13 +143,13 @@ contract EulerProxy is
         (address account, address operator, bool authorized) = abi.decode(arguments, (address, address, bool));
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);    
         (address user, ) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
-        TacSmartAccount(payable(user)).execute(address(eulerVaultConnector), 0, abi.encodeWithSelector(IEthereumVaultConnector.setAccountOperator.selector, account, operator, authorized));
+        ITacSmartAccount(payable(user)).execute(address(eulerVaultConnector), 0, abi.encodeWithSelector(IEthereumVaultConnector.setAccountOperator.selector, account, operator, authorized));
         emit SetAccountOperator(account, operator, authorized);
     }
 
     function _setAuthorization(address user, address operator) internal {
         bytes19 addressPrefix = bytes19(bytes20(user));
-        TacSmartAccount(payable(user)).execute(address(eulerVaultConnector), 0, abi.encodeWithSelector(IEthereumVaultConnector.setOperator.selector, addressPrefix, operator, type(uint256).max));
+        ITacSmartAccount(payable(user)).execute(address(eulerVaultConnector), 0, abi.encodeWithSelector(IEthereumVaultConnector.setOperator.selector, addressPrefix, operator, type(uint256).max));
         emit SetOperator(addressPrefix, operator, type(uint256).max);
     }
 
@@ -159,8 +163,8 @@ contract EulerProxy is
         string memory payload
     ) private {
         for (uint256 i = 0; i < tokens.length; i++) {
-            TransferHelper.safeApprove(
-                tokens[i].evmAddress,
+            SafeERC20.forceApprove(
+                IERC20(tokens[i].evmAddress),
                 _getCrossChainLayerAddress(),
                 tokens[i].amount
             );

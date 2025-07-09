@@ -5,7 +5,7 @@ import {TransferHelper} from "@uniswap/lib/contracts/libraries/TransferHelper.so
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {TacSmartAccount} from "../../TacSmartAccounts/TacSmartAccount.sol";
+import {ITacSmartAccount} from "@tonappchain/evm-ccl/contracts/smart-account/interfaces/ITacSmartAccount.sol";
 import {IREUL} from "./interface/IREUL.sol";
 
 contract CustomMerklProxyEuler is Ownable2StepUpgradeable, UUPSUpgradeable {
@@ -51,7 +51,7 @@ contract CustomMerklProxyEuler is Ownable2StepUpgradeable, UUPSUpgradeable {
 
     function withdrawToByLockTimestamp(address user, bytes calldata data) external onlyMainMerklProxy{
         WithdrawToByLockTimestampData memory withdrawToByLockTimestampData = abi.decode(data, (WithdrawToByLockTimestampData));
-        bytes memory result = TacSmartAccount(payable(user)).execute(
+        bytes memory result = ITacSmartAccount(payable(user)).execute(
             rEUL,
             0,
             abi.encodeWithSelector(IREUL.withdrawToByLockTimestamp.selector, user, withdrawToByLockTimestampData.lockTimestamp, withdrawToByLockTimestampData.allowRemainderLoss)
@@ -62,7 +62,7 @@ contract CustomMerklProxyEuler is Ownable2StepUpgradeable, UUPSUpgradeable {
 
     function withdrawToByLockTimestamps(address user, bytes calldata data) external onlyMainMerklProxy{
         WithdrawToByLockTimestampsData memory withdrawToByLockTimestampsData = abi.decode(data, (WithdrawToByLockTimestampsData));
-        bytes memory result = TacSmartAccount(payable(user)).execute(
+        bytes memory result = ITacSmartAccount(payable(user)).execute(
             rEUL,
             0,
             abi.encodeWithSelector(IREUL.withdrawToByLockTimestamps.selector, user, withdrawToByLockTimestampsData.lockTimestamps, withdrawToByLockTimestampsData.allowRemainderLoss)

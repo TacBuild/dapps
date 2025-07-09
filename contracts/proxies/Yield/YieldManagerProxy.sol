@@ -9,9 +9,8 @@ import { TransferHelper } from 'contracts/helpers/TransferHelper.sol';
 import {TacProxyV1Upgradeable} from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
 import {OutMessageV1, TokenAmount, TacHeaderV1, NFTAmount} from "@tonappchain/evm-ccl/contracts/core/Structs.sol";
 
-import {TacSmartAccount} from "../../TacSmartAccounts/TacSmartAccount.sol";
-import {TacSAFactory} from "../../TacSmartAccounts/TacSAFactory.sol";
-import {ITacSmartAccount} from "../../TacSmartAccounts/Interface/ITacSmartAccount.sol";
+import {ITacSmartAccount} from "@tonappchain/evm-ccl/contracts/smart-account/interfaces/ITacSmartAccount.sol";
+import {ISAFactory} from "@tonappchain/evm-ccl/contracts/smart-account/interfaces/ISAFactory.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
@@ -78,7 +77,7 @@ contract YieldManagerProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpg
                 abi.decode(arguments, (bytes, bytes));
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         OrderPayload memory payload = Codec.decodeOrderPayload(_data);
-        (address user, bool isNewAccount) = TacSAFactory(_tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
+        (address user, bool isNewAccount) = ISAFactory(_tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
 
         // grant token approvals
         TransferHelper.safeTransfer(payload.token, user, payload.amount);
@@ -137,7 +136,7 @@ contract YieldManagerProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpg
 
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         OrderPayload memory payload = Codec.decodeOrderPayload(_data);
-        (address user, bool isNewAccount) = TacSAFactory(_tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
+        (address user, bool isNewAccount) = ISAFactory(_tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
         
         TransferHelper.safeTransfer(_yUSD, user, payload.amount);
 
@@ -181,7 +180,7 @@ contract YieldManagerProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpg
 
     TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
 
-    (address user, bool isNewAccount) = TacSAFactory(_tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
+    (address user, bool isNewAccount) = ISAFactory(_tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
 
     address asset = IReceipt(_receiptAddress).readAsset(receiptId);
 
@@ -213,7 +212,7 @@ contract YieldManagerProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpg
 
     TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
 
-    (address user, bool isNewAccount) = TacSAFactory(_tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
+    (address user, bool isNewAccount) = ISAFactory(_tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
 
     ITacSmartAccount(user).execute(
         asset,

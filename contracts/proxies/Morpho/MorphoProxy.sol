@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import {TransferHelper} from "@uniswap/lib/contracts/libraries/TransferHelper.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {OutMessageV1, TokenAmount, TacHeaderV1, NFTAmount} from "@tonappchain/evm-ccl/contracts/core/Structs.sol";
 import {TacProxyV1Upgradeable} from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
@@ -10,9 +10,9 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IMorpho, Id} from "./Interface/IMorpho.sol";
 import {IMorphoVault} from "./Interface/IMorphoVault.sol";
 import {IURD} from "./Interface/IURD.sol";
-import {TacSAFactory} from "../../TacSmartAccounts/TacSAFactory.sol";
+import {ISAFactory} from "@tonappchain/evm-ccl/contracts/smart-account/interfaces/ISAFactory.sol";
 import {MarketParamsLib} from "./lib/MarketParamsLib.sol";
-import {ITacSmartAccount} from "../../TacSmartAccounts/Interface/ITacSmartAccount.sol";
+import {ITacSmartAccount} from "@tonappchain/evm-ccl/contracts/smart-account/interfaces/ITacSmartAccount.sol";
 import {IMetaMorphoV1_1Factory} from "./Interface/IMetaMorphoV1_1Factory.sol";
 import {MathRayLib} from "./lib/MathRayLib.sol";
 
@@ -237,7 +237,7 @@ contract MorphoProxy is
     /// @notice Address of the URD contract
     IURD public urd;
     /// @notice Address of the TacSAFactory contract
-    TacSAFactory public tacSAFactory;
+    ISAFactory public tacSAFactory;
     /// @notice Address of the MetaMorpho V1.1 contract
     IMetaMorphoV1_1Factory public metaMorphoFactoryV1_1;
 
@@ -266,7 +266,7 @@ contract MorphoProxy is
         __UUPSUpgradeable_init();
         morpho = IMorpho(_morpho);
         urd = IURD(_urd);
-        tacSAFactory = TacSAFactory(_tacSAFactory);
+        tacSAFactory = ISAFactory(_tacSAFactory);
         metaMorphoFactoryV1_1 = IMetaMorphoV1_1Factory(_metaMorphoFactoryV1_1);
     }
 
@@ -303,8 +303,8 @@ contract MorphoProxy is
             args.vault,
             args.assets
         );
-        TransferHelper.safeTransfer(
-            IMorphoVault(args.vault).asset(),
+        SafeERC20.safeTransfer(
+            IERC20(IMorphoVault(args.vault).asset()),
             user,
             IERC20(IMorphoVault(args.vault).asset()).balanceOf(address(this))
         );
@@ -346,8 +346,8 @@ contract MorphoProxy is
             args.vault,
             assets
         );
-        TransferHelper.safeTransfer(
-            IMorphoVault(args.vault).asset(),
+        SafeERC20.safeTransfer(
+            IERC20(IMorphoVault(args.vault).asset()),
             user,
             IERC20(IMorphoVault(args.vault).asset()).balanceOf(address(this))
         );
@@ -399,8 +399,8 @@ contract MorphoProxy is
         if (isNewAccount) {
             _setAutorization(user);
         }
-        TransferHelper.safeTransfer(
-            args.vault,
+        SafeERC20.safeTransfer(
+            IERC20(args.vault),
             address(user),
             IERC20(args.vault).balanceOf(address(this))
         );
@@ -442,8 +442,8 @@ contract MorphoProxy is
         if (isNewAccount) {
             _setAutorization(user);
         }
-        TransferHelper.safeTransfer(
-            args.vault,
+        SafeERC20.safeTransfer(
+            IERC20(args.vault),
             address(user),
             IERC20(args.vault).balanceOf(address(this))
         );
@@ -512,8 +512,8 @@ contract MorphoProxy is
         bytes calldata arguments
     ) external _onlyCrossChainLayer {
         SupplyCollateralArguments memory args = abi.decode(arguments, (SupplyCollateralArguments));
-        TransferHelper.safeApprove(
-            args.marketParams.collateralToken,
+        SafeERC20.forceApprove(
+            IERC20(args.marketParams.collateralToken),
             address(morpho),
             args.assets
         );
@@ -594,16 +594,16 @@ contract MorphoProxy is
         if (isNewAccount) {
             _setAutorization(user);
         }
-        TransferHelper.safeApprove(
-            args.marketParams.loanToken,
+        SafeERC20.forceApprove(
+            IERC20(args.marketParams.loanToken),
             address(morpho),
             IERC20(args.marketParams.loanToken).balanceOf(address(this))
         );
         (uint256 actualAssets, uint256 actualShares) = morpho.repay(args.marketParams, args.assets, args.shares, user, "");
         require(actualAssets.rDivUp(actualShares) <= args.maxSharePriceE27, "Slippage");
         emit Repay(args.marketParams.id(), actualAssets, actualShares, args.assets, args.shares);
-        TransferHelper.safeApprove(
-            args.marketParams.loanToken,
+        SafeERC20.forceApprove(
+            IERC20(args.marketParams.loanToken),
             address(morpho),
             0
         );
@@ -632,15 +632,15 @@ contract MorphoProxy is
         if (isNewAccount) {
             _setAutorization(user);
         }
-        TransferHelper.safeApprove(
-            args.marketParams.loanToken,
+        SafeERC20.forceApprove(
+            IERC20(args.marketParams.loanToken),
             address(morpho),
             IERC20(args.marketParams.loanToken).balanceOf(address(this))
         );
         (uint256 actualAssets, uint256 actualShares) = morpho.supply(args.marketParams, args.assets, args.shares, user, "");
         require(actualAssets.rDivUp(actualShares) <= args.maxSharePriceE27, "Slippage");
-        TransferHelper.safeApprove(
-            args.marketParams.loanToken,
+        SafeERC20.forceApprove(
+            IERC20(args.marketParams.loanToken),
             address(morpho),
             0
         );
@@ -687,8 +687,8 @@ contract MorphoProxy is
     ) external payable _onlyCrossChainLayer {
         (SupplyCollateralArguments memory supplyArgs, BorrowArguments memory borrowArgs) = abi.decode(arguments, (SupplyCollateralArguments, BorrowArguments));
         // Supply collateral
-        TransferHelper.safeApprove(
-            supplyArgs.marketParams.collateralToken,
+        SafeERC20.forceApprove(
+            IERC20(supplyArgs.marketParams.collateralToken),
             address(morpho),
             supplyArgs.assets
         );
@@ -710,8 +710,8 @@ contract MorphoProxy is
             IERC20(borrowArgs.marketParams.loanToken).balanceOf(address(this))
         );
         if(IERC20(supplyArgs.marketParams.collateralToken).balanceOf(address(this)) > 0) {
-            TransferHelper.safeApprove(
-                supplyArgs.marketParams.collateralToken,
+            SafeERC20.forceApprove(
+                IERC20(supplyArgs.marketParams.collateralToken),
                 address(morpho),
                 0
             );
@@ -734,8 +734,8 @@ contract MorphoProxy is
         if (isNewAccount) {
             _setAutorization(user);
         }
-        TransferHelper.safeApprove(
-            repayArgs.marketParams.loanToken,
+        SafeERC20.forceApprove(
+            IERC20(repayArgs.marketParams.loanToken),
             address(morpho),
             IERC20(repayArgs.marketParams.loanToken).balanceOf(address(this))
         );
@@ -750,8 +750,8 @@ contract MorphoProxy is
 
         TokenAmount[] memory tokensToBridge = new TokenAmount[](0);
         if (IERC20(repayArgs.marketParams.loanToken).balanceOf(address(this)) > 0) {
-            TransferHelper.safeApprove(
-                repayArgs.marketParams.loanToken,
+            SafeERC20.forceApprove(
+                IERC20(repayArgs.marketParams.loanToken),
                 address(morpho),
                 0
             );
@@ -817,8 +817,8 @@ contract MorphoProxy is
         string memory payload
     ) private {
         for (uint256 i = 0; i < tokens.length; i++) {
-            TransferHelper.safeApprove(
-                tokens[i].evmAddress,
+            SafeERC20.forceApprove(
+                IERC20(tokens[i].evmAddress),
                 _getCrossChainLayerAddress(),
                 tokens[i].amount
             );

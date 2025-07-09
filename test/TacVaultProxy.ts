@@ -7,15 +7,14 @@ import { deployTacSmartAccount } from "../scripts/TacSmartAccountFactory/SABluep
 import { TacLocalTestSdk, TokenMintInfo, TokenUnlockInfo} from "@tonappchain/evm-ccl";
 import { sttonTokenInfo, tacTokenInfo, TONTokenInfo } from '../scripts/common/info/tokensInfo';
 import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types";
-import { TacSAFactory, TacSmartAccount, TacBoringVaultProxy, ITellerWithMultiAssetSupport, IBoringOnChainQueue, IBoringVault } from "../typechain-types";
+import { TacBoringVaultProxy, ITellerWithMultiAssetSupport, IBoringOnChainQueue, IBoringVault, ISAFactory } from "../typechain-types";
 import { deployTacVault } from "../scripts/TacVault/TacVaultDeploy";
 import { tacVaultTestnetConfig } from "../scripts/TacVault/config/TacVaultTestnetConfig";
 describe("TacVaultProxy", function () {
     let admin: Signer;
     let testSdk: TacLocalTestSdk;
     let tacVaultProxy: TacBoringVaultProxy;
-    let tacSAFactory: TacSAFactory;
-    let tacSmartAccount: TacSmartAccount;
+    let tacSAFactory: ISAFactory;
     let teller: ITellerWithMultiAssetSupport;
     let boringOnChainQueue: IBoringOnChainQueue;
     let boringVault: IBoringVault;
@@ -24,8 +23,7 @@ describe("TacVaultProxy", function () {
         [admin] = await ethers.getSigners();
         testSdk = new TacLocalTestSdk();
         const crossChainLayerAddress = await testSdk.create(ethers.provider);
-        tacSmartAccount = await deployTacSmartAccount(admin);
-        tacSAFactory = await deployTacSAFactory(admin, await tacSmartAccount.getAddress());
+        tacSAFactory = new ethers.Contract(testSdk.getSmartAccountFactoryAddress(), hre.artifacts.readArtifactSync('ISAFactory').abi, admin) as unknown as ISAFactory;
         tacVaultProxy = await deployTacVault(admin, crossChainLayerAddress, await tacSAFactory.getAddress());
         const tonEVMAddress = testSdk.getEVMJettonAddress(TONTokenInfo.tvmAddress)
         
