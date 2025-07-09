@@ -7,13 +7,13 @@ import {TacProxyV1Upgradeable} from "@tonappchain/evm-ccl/contracts/proxies/TacP
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {TacSmartAccount} from "../../TacSmartAccounts/TacSmartAccount.sol";
-import {TacSAFactory} from "../../TacSmartAccounts/TacSAFactory.sol";
+import {ITacSmartAccount} from "@tonappchain/evm-ccl/contracts/smart-account/interfaces/ITacSmartAccount.sol";
+import {ISAFactory} from "@tonappchain/evm-ccl/contracts/smart-account/interfaces/ISAFactory.sol";
 import {IMerkl} from "./interface/IMerkl.sol";
 
 contract MerklProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgradeable {
 
-    TacSAFactory public tacSAFactory;
+    ISAFactory public tacSAFactory;
     IMerkl public merkl;
 
     mapping(address token => address customMerklLogic) public tokenToLogic;
@@ -47,7 +47,7 @@ contract MerklProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgra
         __Ownable_init(msg.sender);
         __Ownable2Step_init();
         __UUPSUpgradeable_init();
-        tacSAFactory = TacSAFactory(_tacSAFactory);
+        tacSAFactory = ISAFactory(_tacSAFactory);
         merkl = IMerkl(_merkl);
     }
 
@@ -68,13 +68,13 @@ contract MerklProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgra
         require(data.proofs.length == 1, "MerklProxy: Invalid number of users, should be 1");
         address[] memory users = new address[](1);
         users[0] = user;        
-        TacSmartAccount(payable(user)).execute(
+        ITacSmartAccount(payable(user)).execute(
                     address(merkl),
                     0,
                     abi.encodeWithSelector(IMerkl.claim.selector, users, data.tokens, data.amounts, data.proofs)
         );
         if (data.transferAndBridge) {
-            TacSmartAccount(payable(user)).execute(
+            ITacSmartAccount(payable(user)).execute(
                     data.tokens[0],
                     0,
                     abi.encodeWithSelector(IERC20.transfer.selector, address(this), IERC20(data.tokens[0]).balanceOf(user))
@@ -105,10 +105,10 @@ contract MerklProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgra
         require(logic != address(0), "MerklProxy: Custom logic not found");
         
         for (uint256 i = 0; i < data.functionSelectors.length; i++) {
-            TacSmartAccount(payable(user)).createOneTimeTicket(logic);
+            ITacSmartAccount(payable(user)).createOneTimeTicket(logic);
             (bool success,) = logic.call(abi.encodeWithSelector(data.functionSelectors[i], user, data.functionData[i]));
             require(success, "custom function call failed");
-            TacSmartAccount(payable(user)).revokeOneTimeTicket(logic);
+            ITacSmartAccount(payable(user)).revokeOneTimeTicket(logic);
         }
 
         if (data.tokenToBridge.length > 0) {
@@ -116,7 +116,7 @@ contract MerklProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgra
             TokenAmount[] memory tokens = new TokenAmount[](data.tokenToBridge.length);
             for (uint256 i = 0; i < data.tokenToBridge.length; i++) {
                 uint256 amount = IERC20(data.tokenToBridge[i]).balanceOf(user);
-                TacSmartAccount(payable(user)).execute(
+                ITacSmartAccount(payable(user)).execute(
                     data.tokenToBridge[i],
                     0,
                     abi.encodeWithSelector(IERC20.transfer.selector, address(this), amount)
@@ -140,7 +140,7 @@ contract MerklProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgra
         TokenAmount[] memory tokenAmounts = new TokenAmount[](tokens.length);
         for (uint256 i = 0; i < tokens.length; i++) {
             uint256 amount = IERC20(tokens[i]).balanceOf(user);
-            TacSmartAccount(payable(user)).execute(
+            ITacSmartAccount(payable(user)).execute(
                 tokens[i],
                 0,
                 abi.encodeWithSelector(IERC20.transfer.selector, address(this), amount)

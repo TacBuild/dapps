@@ -6,18 +6,15 @@ import { deployMockTestContract } from "../scripts/TacSmartAccountFactory/mock/M
 import { TacLocalTestSdk, TokenMintInfo } from "@tonappchain/evm-ccl";
 import { sttonTokenInfo, tacTokenInfo } from '../scripts/common/info/tokensInfo';
 import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types";
-import { TestSmartAccountProxyUser, TacSAFactory, TacSmartAccount, MockBluePrint } from "../typechain-types";
+import { TestSmartAccountProxyUser, TacSAFactory, TacSmartAccount, MockBluePrint, ISAFactory } from "../typechain-types";
 import { SaHooksBuilder } from "../scripts/TacSmartAccountFactory/SDK/SaHooksSDK";
-import { deployTacSAFactory } from "../scripts/TacSmartAccountFactory/FactoryDeploy";
-import { deployTacSmartAccount } from "../scripts/TacSmartAccountFactory/SABlueprintDeploy";
 import { deployMockBluePrint } from "../scripts/TacSmartAccountFactory/mock/MockBlueprintDeploy";
 
 describe("Sa hooks test", function () {
     let admin: Signer;
     let testSdk: TacLocalTestSdk;
     let testContract: TestSmartAccountProxyUser;
-    let tacSAFactory: TacSAFactory;
-    let tacSmartAccount: TacSmartAccount;
+    let tacSAFactory: ISAFactory;
     let hooksSdk: SaHooksBuilder;
     let mockBluePrint: MockBluePrint;
 
@@ -25,8 +22,7 @@ describe("Sa hooks test", function () {
         [admin] = await ethers.getSigners();
         testSdk = new TacLocalTestSdk();
         const crossChainLayerAddress = await testSdk.create(ethers.provider);
-        tacSmartAccount = await deployTacSmartAccount(admin);
-        tacSAFactory = await deployTacSAFactory(admin, await tacSmartAccount.getAddress());
+        tacSAFactory = new ethers.Contract(testSdk.getSmartAccountFactoryAddress(), hre.artifacts.readArtifactSync('ISAFactory').abi, admin) as unknown as ISAFactory;
         testContract = await deployMockTestContract(admin, await tacSAFactory.getAddress(), crossChainLayerAddress);
         mockBluePrint = await deployMockBluePrint(admin);
 

@@ -8,19 +8,21 @@ import { tacSAFactoryDeployments as tacSAFactoryDeploymentsMainnet } from "../Ta
 import { tacSAFactoryDeployments } from "../TacSmartAccountFactory/config/testnetConfig";
 
 const proxyOptsUUPS: DeployProxyOptions = {
-    kind: "uups"
+    kind: "uups",
+    unsafeAllow: ["constructor"]
 };
 
 export async function deployEulerProxy(
     deployer: Signer,
     crossChainLayerAddress: string,
-    tacSAFactoryAddress?: string
+    tacSAFactoryAddress?: string,
+    owner?: string
 ): Promise<EulerProxy> {
     
     const eulerProxy = await deployUpgradable<EulerProxy>(
         deployer,
         hre.artifacts.readArtifactSync('EulerProxy'),
-        [crossChainLayerAddress, eulerConfig.eulerVaultConnectorAddress, tacSAFactoryAddress || tacSAFactoryDeployments.proxyAddress],
+        [crossChainLayerAddress, eulerConfig.eulerVaultConnectorAddress, tacSAFactoryAddress || tacSAFactoryDeployments.proxyAddress, owner || await deployer.getAddress()],
         proxyOptsUUPS,
         undefined,
         true
@@ -45,4 +47,4 @@ export async function deployEulerProxyMainnet() {
     return eulerProxy;
 }
 
-deployEulerProxyMainnet();
+// deployEulerProxyMainnet();
