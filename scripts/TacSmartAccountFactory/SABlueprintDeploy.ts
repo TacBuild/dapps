@@ -26,7 +26,6 @@ async function main() {
     const [signer] = await hre.ethers.getSigners();
     const tacSmartAccount = await deployTacSmartAccount(signer);
     console.log("TacSmartAccount deployed to:", tacSmartAccount.target);
-    await upgradeTacSmartAccount(await tacSmartAccount.getAddress());
 }
 
 main();

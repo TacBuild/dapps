@@ -6,7 +6,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {TransferHelper} from "@uniswap/lib/contracts/libraries/TransferHelper.sol";
 
 
-contract TacSmartAccount is Initializable {
+contract MockBluePrint is Initializable {
     address public owner;
 
     event Executed(address indexed target, uint256 value, bytes data);
@@ -68,7 +68,7 @@ contract TacSmartAccount is Initializable {
         TransferHelper.safeApprove(token, to, amount);
     }
 
-    function multicall(address[] calldata targets, uint256[] calldata values, bytes[] calldata data) external payable onlyOwnerOrTicket returns(bytes[] memory) {
+    function multicall(address[] calldata targets, uint256[] calldata values, bytes[] calldata data) external onlyOwnerOrTicket returns(bytes[] memory) {
         bytes[] memory results = new bytes[](targets.length);
         for (uint256 i = 0; i < targets.length; i++) {
             (bool success, bytes memory returnData) = targets[i].call{value: values[i]}(data[i]);
@@ -76,6 +76,10 @@ contract TacSmartAccount is Initializable {
             results[i] = returnData;
         }
         return results;
+    }
+
+    function upgradedToMockBluePrint() external pure returns(bool) {
+        return true;
     }
 
     receive() external payable {}

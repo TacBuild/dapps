@@ -6,10 +6,12 @@ import { deployMockTestContract } from "../scripts/TacSmartAccountFactory/mock/M
 import { TacLocalTestSdk, TokenMintInfo } from "@tonappchain/evm-ccl";
 import { sttonTokenInfo, tacTokenInfo } from '../scripts/common/info/tokensInfo';
 import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types";
-import { TestSmartAccountProxyUser, TacSAFactory, TacSmartAccount } from "../typechain-types";
+import { TestSmartAccountProxyUser, TacSAFactory, TacSmartAccount, MockBluePrint } from "../typechain-types";
 import { SaHooksBuilder } from "../scripts/TacSmartAccountFactory/SDK/SaHooksSDK";
 import { deployTacSAFactory } from "../scripts/TacSmartAccountFactory/FactoryDeploy";
 import { deployTacSmartAccount } from "../scripts/TacSmartAccountFactory/SABlueprintDeploy";
+import { deployMockBluePrint } from "../scripts/TacSmartAccountFactory/mock/MockBlueprintDeploy";
+
 describe("Sa hooks test", function () {
     let admin: Signer;
     let testSdk: TacLocalTestSdk;
@@ -17,6 +19,7 @@ describe("Sa hooks test", function () {
     let tacSAFactory: TacSAFactory;
     let tacSmartAccount: TacSmartAccount;
     let hooksSdk: SaHooksBuilder;
+    let mockBluePrint: MockBluePrint;
 
     before(async function () {
         [admin] = await ethers.getSigners();
@@ -25,6 +28,7 @@ describe("Sa hooks test", function () {
         tacSmartAccount = await deployTacSmartAccount(admin);
         tacSAFactory = await deployTacSAFactory(admin, await tacSmartAccount.getAddress());
         testContract = await deployMockTestContract(admin, await tacSAFactory.getAddress(), crossChainLayerAddress);
+        mockBluePrint = await deployMockBluePrint(admin);
 
         hooksSdk = new SaHooksBuilder()
         hooksSdk.addContractInterface(await testContract.getAddress(), [
@@ -117,6 +121,19 @@ describe("Sa hooks test", function () {
         expect(await testContract.user()).to.not.equal(await testContract.getAddress())
         expect(user).to.equal(await testContract.user())
     });
+
+    it("Update blueprint test", async function () {
+        const tvmWalletCaller = "EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk";
+
+        const user = await tacSAFactory.predictSmartAccountAddress(tvmWalletCaller, await testContract.getAddress())
+        try {
+            await testContract.checkBlueprint(user)
+        } catch (error) {
+            expect(error).to.not.be.equal(undefined)
+        }
+        await tacSAFactory.updateBlueprint(await mockBluePrint.getAddress());
+        expect(await testContract.checkBlueprint(user)).to.equal(true)
+    })
 
 });
 
