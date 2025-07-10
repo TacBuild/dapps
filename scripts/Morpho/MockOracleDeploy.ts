@@ -20,3 +20,11 @@ export async function deployMockOracle(
     await mockOracle.waitForDeployment();
     return mockOracle;
 } 
+
+async function main() {
+    const [deployer] = await hre.ethers.getSigners();
+    const mockOracle = await deployMockOracle(deployer);
+    console.log("MockOracle deployed to:", mockOracle.target);
+}
+
+// main();

@@ -1,16 +1,15 @@
 import hre, { ethers } from "hardhat";
-import { AddressLike, BytesLike, Signer } from "ethers";
+import { Signer } from "ethers";
 import { expect } from "chai";
+import {time} from "@nomicfoundation/hardhat-network-helpers"
 
 import { deployMorphoProxy } from "../scripts/Morpho/MorphoProxyDeploy";
-import { deployTacSAFactory } from "../scripts/TacSmartAccountFactory/FactoryDeploy";
-import { deployTacSmartAccount } from "../scripts/TacSmartAccountFactory/SABlueprintDeploy";
 import { morphoTestnetConfig } from "../scripts/Morpho/config/testnetConfig";
 import { deployMockOracle } from "../scripts/Morpho/MockOracleDeploy";
-import { TacLocalTestSdk, TokenMintInfo, NFTInfo, NFTMintInfo, NFTUnlockInfo, TokenUnlockInfo} from "@tonappchain/evm-ccl";
+import { TacLocalTestSdk, TokenMintInfo, TokenUnlockInfo} from "@tonappchain/evm-ccl";
 import { sttonTokenInfo, tacTokenInfo } from '../scripts/common/info/tokensInfo';
 import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types";
-import { MorphoProxy, IMorpho, IURD, TacSAFactory, TacSmartAccount, IMorphoVault, MockOracle } from "../typechain-types";
+import { MorphoProxy, IMorpho, IURD, IMorphoVault, MockOracle, ISAFactory } from "../typechain-types";
 
 export const MAXUINT128 = BigInt("340282366920938463463374607431768211455");
 
@@ -21,8 +20,7 @@ describe("MorphoProxy", function () {
     let urd: IURD;
     let morpho: IMorpho;
     let morphoVaultAddress: string;
-    let tacSAFactory: TacSAFactory;
-    let tacSmartAccount: TacSmartAccount;
+    let tacSAFactory: ISAFactory;
     let mockOracle: MockOracle;
     let stton: ERC20;
     let tac: ERC20;
@@ -32,8 +30,7 @@ describe("MorphoProxy", function () {
         const crossChainLayerAddress = await testSdk.create(ethers.provider);
         console.log("crossChainLayerAddress", crossChainLayerAddress);
         
-        tacSmartAccount = await deployTacSmartAccount(admin);
-        tacSAFactory = await deployTacSAFactory(admin, await tacSmartAccount.getAddress());
+        tacSAFactory = new ethers.Contract(testSdk.getSmartAccountFactoryAddress(), hre.artifacts.readArtifactSync('ISAFactory').abi, admin) as unknown as ISAFactory;
         morphoProxy = await deployMorphoProxy(admin, crossChainLayerAddress, await tacSAFactory.getAddress());
         mockOracle = await deployMockOracle(admin);
         urd = new ethers.Contract(morphoTestnetConfig.urdAddress, hre.artifacts.readArtifactSync('IURD').abi, admin) as unknown as IURD;
@@ -106,7 +103,7 @@ describe("MorphoProxy", function () {
         const methodName = "supplyCollateral(bytes,bytes)";
 
         const encodedArguments = new ethers.AbiCoder().encode(
-            ['tuple(tuple(address,address,address,address,uint256),uint256,bytes)'],
+            ['tuple(tuple(address,address,address,address,uint256),uint256)'],
             [[[
                 await stton.getAddress(),
                 await tac.getAddress(),
@@ -114,8 +111,7 @@ describe("MorphoProxy", function () {
                 morphoTestnetConfig.lrmAddress,
                 ethers.parseEther("0.945")
             ],
-            ethers.parseEther("1"),
-            "0x"
+            ethers.parseEther("1")
             ]]
         );
 
@@ -164,7 +160,7 @@ describe("MorphoProxy", function () {
         const methodName = "supply(bytes,bytes)";
 
         const encodedArguments = new ethers.AbiCoder().encode(
-            ['tuple(tuple(address,address,address,address,uint256),uint256,uint256,bytes)'],
+            ['tuple(tuple(address,address,address,address,uint256),uint256,uint256,uint256)'],
             [[[
                 await stton.getAddress(),
                 await tac.getAddress(),
@@ -174,7 +170,7 @@ describe("MorphoProxy", function () {
             ],
             ethers.parseUnits("1", sttonTokenInfo.decimals),
             0,
-            "0x"
+            ethers.MaxUint256
             ]]
         );
 
@@ -225,7 +221,7 @@ describe("MorphoProxy", function () {
         const methodName = "borrow(bytes,bytes)";
 
         const encodedArguments = new ethers.AbiCoder().encode(
-            ['tuple(tuple(address,address,address,address,uint256),uint256,uint256)'],
+            ['tuple(tuple(address,address,address,address,uint256),uint256,uint256,uint256)'],
             [[[
                 await stton.getAddress(),
                 await tac.getAddress(),
@@ -235,6 +231,7 @@ describe("MorphoProxy", function () {
             ],
             ethers.parseUnits("0.1", sttonTokenInfo.decimals),
             0,
+            0
             ]]
         );
 
@@ -278,7 +275,7 @@ describe("MorphoProxy", function () {
         const methodName = "repay(bytes,bytes)";
 
         const encodedArguments = new ethers.AbiCoder().encode(
-            ['tuple(tuple(address,address,address,address,uint256),uint256,uint256,bytes)'],
+            ['tuple(tuple(address,address,address,address,uint256),uint256,uint256,uint256)'],
             [[[
                 await stton.getAddress(),
                 await tac.getAddress(),
@@ -288,7 +285,7 @@ describe("MorphoProxy", function () {
             ],
             ethers.parseUnits("0.1", sttonTokenInfo.decimals),
             0,
-            "0x"
+            ethers.MaxUint256
             ]]
         );
 
@@ -480,10 +477,11 @@ describe("MorphoProxy", function () {
         const methodName = "deposit(bytes,bytes)";
 
         const encodedArguments = new ethers.AbiCoder().encode(
-            ['tuple(address,uint256)'],
+            ['tuple(address,uint256,uint256)'],
             [[
                 morphoVaultAddress,
-                ethers.parseUnits("1", sttonTokenInfo.decimals)
+                ethers.parseUnits("1", sttonTokenInfo.decimals),
+                ethers.MaxUint256
             ]]
         );
 
@@ -519,10 +517,11 @@ describe("MorphoProxy", function () {
         const methodName = "mint(bytes,bytes)";
 
         const encodedArguments = new ethers.AbiCoder().encode(
-            ['tuple(address,uint256)'],
+            ['tuple(address,uint256,uint256)'],
             [[
                 morphoVaultAddress,
-                ethers.parseUnits("1", sttonTokenInfo.decimals)
+                ethers.parseUnits("1", sttonTokenInfo.decimals),
+                ethers.MaxUint256
             ]]
         );
 
@@ -558,10 +557,11 @@ describe("MorphoProxy", function () {
         const methodName = "withdraw(bytes,bytes)";
 
         const encodedArguments = new ethers.AbiCoder().encode(
-            ['tuple(address,uint256)'],
+            ['tuple(address,uint256,uint256)'],
             [[
                 morphoVaultAddress,
-                1n
+                1n,
+                0
             ]]
         );
         
@@ -598,10 +598,11 @@ describe("MorphoProxy", function () {
         const methodName = "redeem(bytes,bytes)";
 
         const encodedArguments = new ethers.AbiCoder().encode(
-            ['tuple(address,uint256)'],
+            ['tuple(address,uint256,uint256)'],
             [[
                 morphoVaultAddress,
-                1n
+                1n,
+                0
             ]]
         );
 
@@ -625,6 +626,21 @@ describe("MorphoProxy", function () {
             operationId,
             timestamp
         );
+    });
+
+    it("Morpho mock oracle test", async function () {
+        const price = await mockOracle.price();
+        await time.increase(1000);
+        const price2 = await mockOracle.price();
+        expect(price2).to.not.equal(price);
+
+        await time.increase(1000);
+        const price3 = await mockOracle.price();
+        expect(price3).to.not.equal(price2);
+
+        await time.increase(1000);
+        const price4 = await mockOracle.price();
+        expect(price4).to.not.equal(price3);
     });
 });
 
