@@ -22,10 +22,10 @@ export async function deployTacSmartAccount(
     return tacSmartAccount;
 } 
 
-async function main() {
-    const [signer] = await hre.ethers.getSigners();
-    const tacSmartAccount = await deployTacSmartAccount(signer);
-    console.log("TacSmartAccount deployed to:", tacSmartAccount.target);
-}
+// async function main() {
+//     const [signer] = await hre.ethers.getSigners();
+//     const tacSmartAccount = await deployTacSmartAccount(signer);
+//     console.log("TacSmartAccount deployed to:", tacSmartAccount.target);
+// }
 
-main();
+// main();

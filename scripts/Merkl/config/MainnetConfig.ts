@@ -20,4 +20,5 @@ export const merklMainnetConfig: MerklMainnetConfig = {
 
 export const merklDeployments: MerklDeployments = {
     merklProxy: "",
+    // customMerklProxyEuler: ""
 };
