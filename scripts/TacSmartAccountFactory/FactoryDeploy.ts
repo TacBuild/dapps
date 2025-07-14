@@ -26,4 +26,10 @@ export async function deployTacSAFactory(
     
     await tacSAFactory.waitForDeployment();
     return tacSAFactory;
-} 
+}
+
+async function main() {
+    const [deployer] = await hre.ethers.getSigners();
+    const tacSAFactory = await deployTacSAFactory(deployer, "0xeAB80f5369689a2D142f25E654d9822A7725028B");
+    console.log("TacSAFactory deployed to:", tacSAFactory.target);
+}
