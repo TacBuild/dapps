@@ -42,7 +42,6 @@ contract TacBoringVaultProxy is UUPSUpgradeable, Ownable2StepUpgradeable, TacPro
     error ExecutionFailed(bytes returnData);
     error DepositAmountMismatch(uint256 expected, uint256 actual);
     error TransferFailed();
-    error BridgeAmountEqualsZero();
 
     event SaExecutedInteraction(address indexed sa, address indexed target, bytes data);
     event WithdrawRequest(bytes32 indexed requestId, string indexed tvmCaller);
@@ -112,30 +111,6 @@ contract TacBoringVaultProxy is UUPSUpgradeable, Ownable2StepUpgradeable, TacPro
         });
         _bridgeTokens(tacHeader, tokens, "");
         emit WithdrawFunds(args.asset, IERC20(args.asset).balanceOf(address(this)), user, header.tvmCaller);
-    }
-
-    function bridgeTokensFromSmartAccount(
-        bytes calldata tacHeader,
-        bytes calldata arguments
-    ) external _onlyCrossChainLayer() {
-        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
-        (address user, ) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
-        (address[] memory tokens) = abi.decode(arguments, (address[]));
-        TokenAmount[] memory tokenAmounts = new TokenAmount[](tokens.length);
-        for (uint256 i = 0; i < tokens.length; i++) {
-            uint256 amount = IERC20(tokens[i]).balanceOf(user);
-            require(amount > 0, BridgeAmountEqualsZero());
-            ITacSmartAccount(payable(user)).execute(
-                tokens[i],
-                0,
-                abi.encodeWithSelector(IERC20.transfer.selector, address(this), amount)
-            );
-            tokenAmounts[i] = TokenAmount({
-                evmAddress: tokens[i],
-                amount: amount
-            });
-        }
-        _bridgeTokens(tacHeader, tokenAmounts, "");
     }
 
     /// @notice Bridges tokens to the cross-chain layer
