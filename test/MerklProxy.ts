@@ -8,7 +8,7 @@ import { deployTacSmartAccount } from "../scripts/TacSmartAccountFactory/SABluep
 import { TacLocalTestSdk, TokenMintInfo, TokenUnlockInfo} from "@tonappchain/evm-ccl";
 import { sttonTokenInfo, tacTokenInfo } from '../scripts/common/info/tokensInfo';
 import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types";
-import { TacSAFactory, TacSmartAccount, MerklProxy, CustomMerklProxyEuler } from "../typechain-types";
+import { MerklProxy, CustomMerklProxyEuler, ISAFactory } from "../typechain-types";
 import { deployMerklProxy, deployCustomMerklProxyEuler } from "../scripts/Merkl/MerklProxyDeploy";
 
 export const MAXUINT128 = BigInt("340282366920938463463374607431768211455");
@@ -20,17 +20,16 @@ describe("MerklProxy", function () {
     let testSdk: TacLocalTestSdk;
     let merklProxy: MerklProxy;
     let customMerklProxyEuler: CustomMerklProxyEuler;
-    let tacSAFactory: TacSAFactory;
-    let tacSmartAccount: TacSmartAccount;
+    let tacSAFactory: ISAFactory;
     let stton: ERC20;
     let tac: ERC20;
     before(async function () {
         [admin] = await ethers.getSigners();
         testSdk = new TacLocalTestSdk();
-        const crossChainLayerAddress = await testSdk.create(ethers.provider);
+        const crossChainLayerAddress = await testSdk.create(ethers.provider)
+        const tacSAFactoryAddress = "0x95e23BBa93b6c9Ef89A1bFB2659B020e9382C060"
         
-        tacSmartAccount = await deployTacSmartAccount(admin);
-        tacSAFactory = await deployTacSAFactory(admin, await tacSmartAccount.getAddress());
+        tacSAFactory = new ethers.Contract( tacSAFactoryAddress, hre.artifacts.readArtifactSync('ISAFactory').abi, admin) as unknown as ISAFactory;
         merklProxy = await deployMerklProxy(admin, crossChainLayerAddress, await tacSAFactory.getAddress());
         customMerklProxyEuler = await deployCustomMerklProxyEuler(admin, await merklProxy.getAddress());
         
@@ -54,6 +53,8 @@ describe("MerklProxy", function () {
         const methodName = "claim(bytes,bytes)";
         const amount = ethers.parseEther("50")
         const proof = [process.env.MERKL_PROOF_FOR_TEST_1, process.env.MERKL_PROOF_FOR_TEST_2];
+        const userAddress = await tacSAFactory.predictSmartAccountAddress(tvmWalletCaller, await merklProxy.getAddress());
+        console.log("userAddress", userAddress);
         const encodedArguments = new ethers.AbiCoder().encode(
             ['tuple(address[],uint256[],bytes32[][],bool)'],
             [[
@@ -100,16 +101,17 @@ describe("MerklProxy", function () {
         
         const account = await tacSAFactory.predictSmartAccountAddress(tvmWalletCaller, await merklProxy.getAddress());
         const lockTimestamp = (await rEUL.getLockedAmounts(account))[0][0];
+        const functionSelector = customMerklProxyEuler.withdrawToByLockTimestamp.fragment.selector;
         const withdrawToByLockTimestampData = new ethers.AbiCoder().encode(
-            ['tuple(address,uint256,bool)'],
-            [[account, lockTimestamp, true]]
+            ['tuple(uint256,bool)'],
+            [[lockTimestamp, true]]
         )
 
         const encodedArguments = new ethers.AbiCoder().encode(
-            ['tuple(address,string[],bytes[],address[])'],
+            ['tuple(address,bytes4[],bytes[],address[])'],
             [[
                 rEULAddress,
-                ["withdrawToByLockTimestamp(address,bytes)"],
+                [functionSelector],
                 [withdrawToByLockTimestampData],
                 [EULAddress]
             ]]
