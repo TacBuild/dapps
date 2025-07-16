@@ -6,7 +6,7 @@ import {OutMessageV1, TokenAmount, TacHeaderV1, NFTAmount} from "@tonappchain/ev
 import {ICrossChainLayer} from "@tonappchain/evm-ccl/contracts/interfaces/ICrossChainLayer.sol";
 import {TacProxyV1Upgradeable} from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ITacSmartAccount} from "@tonappchain/evm-ccl/contracts/smart-account/interfaces/ITacSmartAccount.sol";
 import {ISAFactory} from "@tonappchain/evm-ccl/contracts/smart-account/interfaces/ISAFactory.sol";
@@ -14,7 +14,7 @@ import {ITellerWithMultiAssetSupport} from "./interface/ITellerWithMultiAssetSup
 import {IBoringOnChainQueue} from "./interface/IBoringOnChainQueue.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IBoringVault} from "./interface/IBoringVault.sol";
-contract TacBoringVaultProxy is UUPSUpgradeable, OwnableUpgradeable, TacProxyV1Upgradeable {
+contract TacBoringVaultProxy is UUPSUpgradeable, Ownable2StepUpgradeable, TacProxyV1Upgradeable {
 
     address public constant NATIVE_ADDRESS = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
@@ -47,9 +47,15 @@ contract TacBoringVaultProxy is UUPSUpgradeable, OwnableUpgradeable, TacProxyV1U
     event WithdrawRequest(bytes32 indexed requestId, string indexed tvmCaller);
     event WithdrawFunds(address indexed asset, uint256 amount, address indexed user, string indexed tvmCaller);
     event Deposit(uint256 amount, string indexed tvmCaller, address indexed user);
+
+    constructor() {
+        _disableInitializers();
+    }
+
     function initialize(address _crossChainLayer, address _teller, address _boringOnChainQueue, address _boringVault, address _tacSAFactory) public initializer {
         __UUPSUpgradeable_init();
         __Ownable_init(msg.sender);
+        __Ownable2Step_init();
         __TacProxyV1Upgradeable_init(_crossChainLayer);
         teller = ITellerWithMultiAssetSupport(_teller);
         boringOnChainQueue = IBoringOnChainQueue(_boringOnChainQueue);
