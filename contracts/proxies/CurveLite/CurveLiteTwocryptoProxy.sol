@@ -27,8 +27,8 @@ import { ITwocryptoswapPool } from "contracts/proxies/CurveLite/ICurveLiteTwocry
  */
 contract CurveLiteTwocryptoswapProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgradeable {
 
-    address internal wtacAddress;
     address internal _tacSAFactoryAddress;
+    address internal wtacAddress;
 
     /**
      * @dev Initialize the contract.
