@@ -1,4 +1,4 @@
-import { ethers } from 'hardhat';
+import { ethers, upgrades  } from 'hardhat';
 import { loadTacContracts, saveContractAddress } from "@tonappchain/evm-ccl";
 import { deployCurveLiteTwocryptoswapProxy } from './deployProxy';
 import { deployTacSAFactory } from '../../TacSmartAccountFactory/FactoryDeploy';
@@ -23,6 +23,9 @@ async function main() {
     const CurveLiteTwocryptoswapProxy = await deployCurveLiteTwocryptoswapProxy(deployer, "0x070820Ed658860f77138d71f74EfbE173775895b", await tacContracts.crossChainLayer.getAddress(), tacNativeAddress);
 
     saveContractAddress(addressesFilePath, 'CurveLiteTwocryptoswapProxy', await CurveLiteTwocryptoswapProxy.getAddress());
+
+
+
 }
 
 
