@@ -1,19 +1,18 @@
-import { deploy, loadTacContracts, saveContractAddress } from "@tonappchain/evm-ccl";
-import path from 'path';
 import { CurveLiteTwocryptoswapProxy } from '../../../typechain-types';
-import hre, { ethers } from 'hardhat';
+import hre from 'hardhat';
 import { ContractFactory, Signer } from 'ethers';
 import { deployUpgradable } from '@tonappchain/evm-ccl'
 import { proxyOptsUUPS} from "../../utils"
 
 
-export async function deployCurveLiteTwocryptoswapProxy(deployer: Signer, crossChainLayerAddress: string, WTAC: string): Promise<CurveLiteTwocryptoswapProxy> { 
+export async function deployCurveLiteTwocryptoswapProxy(deployer: Signer, tacSAFactoryAddress: string, crossChainLayerAddress: string, WTAC: string): Promise<CurveLiteTwocryptoswapProxy> { 
     const CurveLiteTwocryptoswapProxy = await deployUpgradable<CurveLiteTwocryptoswapProxy>(
         deployer,
         hre.artifacts.readArtifactSync('CurveLiteTwocryptoswapProxy'),
-        [await deployer.getAddress(), crossChainLayerAddress, WTAC],
+        [await deployer.getAddress(), tacSAFactoryAddress, crossChainLayerAddress, WTAC],
         proxyOptsUUPS,
         undefined,
         true);
+    await CurveLiteTwocryptoswapProxy.waitForDeployment();
     return CurveLiteTwocryptoswapProxy;
 }

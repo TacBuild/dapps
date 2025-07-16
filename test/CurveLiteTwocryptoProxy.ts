@@ -6,9 +6,11 @@ import { deployCurveLiteTwocryptoswapProxy } from "../scripts/CurveLite/twocrypt
 import { deployPoolTwocryptoswap } from "../scripts/CurveLite/twocryptoswap/deployPoolTwocryptoswap";
 import { CurveLiteTwocryptoswapTestnetConfig } from "../scripts/CurveLite/twocryptoswap/config/testnetConfig";
 import { TacLocalTestSdk, TokenMintInfo, TokenUnlockInfo } from "@tonappchain/evm-ccl";
+import { deployTacSAFactory } from "../scripts/TacSmartAccountFactory/FactoryDeploy";
+import { deployTacSmartAccount } from "../scripts/TacSmartAccountFactory/SABlueprintDeploy";
 
 import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types";
-import { CurveLiteTwocryptoswapProxy, ICurveLiteTwocryptoFactory } from "../typechain-types";
+import { CurveLiteTwocryptoswapProxy, ICurveLiteTwocryptoFactory, TacSAFactory, TacSmartAccount } from "../typechain-types";
 import { curveLiteTwocryptoProxySol } from "../typechain-types/factories/contracts/proxies/CurveLite";
 import factoryAbi from "../scripts/CurveLite/twocryptoswap/factoryAbi.json"
 import implementationAbi from "../scripts/CurveLite/twocryptoswap/implementationAbi.json"
@@ -39,15 +41,18 @@ describe("CurveLiteTwocryptoswapProxy", function () {
     let curveLiteTwocryptoswapProxy: CurveLiteTwocryptoswapProxy;
     let factoryContract: ICurveLiteTwocryptoFactory;
     const NATIVE = "0xf6408c39E150fB5CF065f64C08826Ea6ea0046E2"
+    let tacSAFactory: TacSAFactory;
+    let tacSmartAccount: TacSmartAccount;
 
     before(async function () {
         [admin] = await ethers.getSigners();
         testSdk = new TacLocalTestSdk();
         const crossChainLayerAddress = await testSdk.create(ethers.provider);
-        
+        tacSmartAccount = await deployTacSmartAccount(admin);
+        tacSAFactory = await deployTacSAFactory(admin, await tacSmartAccount.getAddress());
         console.log (crossChainLayerAddress)
 
-        curveLiteTwocryptoswapProxy = await deployCurveLiteTwocryptoswapProxy(admin, crossChainLayerAddress, NATIVE);
+        curveLiteTwocryptoswapProxy = await deployCurveLiteTwocryptoswapProxy(admin, await tacSAFactory.getAddress(), crossChainLayerAddress, NATIVE);
         factoryContract = new ethers.Contract(CurveLiteTwocryptoswapTestnetConfig.CurveLiteTwocryptoswapFactory, factoryAbi, admin) as unknown as ICurveLiteTwocryptoFactory;
     });
 

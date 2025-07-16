@@ -66,6 +66,8 @@ const config: HardhatUserConfig = {
       tac_testnet: 'empty',
       tac_testnet_spb: 'empty',
       tac_mainnet: 'empty'
+      tac_testnet_spb: 'empty',
+      tac_mainnet: 'empty'
     },
     customChains: [
       {
@@ -82,6 +84,14 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: process.env.SPB_API_URL || "",
           browserURL: "https://spb.explorer.tac.build"
+        }
+      },
+      {
+        network: "tac_mainnet",
+        chainId: 239,
+        urls: {
+          apiURL: "https://explorer.tac.build/api",
+          browserURL: "https://explorer.tac.build"
         }
       },
       {
