@@ -10,6 +10,7 @@ import { TacProxyV1Upgradeable } from "@tonappchain/evm-ccl/contracts/proxies/Ta
 import { OutMessageV1, TokenAmount, NFTAmount, TacHeaderV1 } from "@tonappchain/evm-ccl/contracts/core/Structs.sol";
 
 import { ITwocryptoswapPool } from "contracts/proxies/CurveLite/ICurveLiteTwocryptoswapPool.sol";
+import { ITAC } from "contracts/proxies/CurveLite/ITAC.sol";
 
 
 /**
@@ -17,13 +18,19 @@ import { ITwocryptoswapPool } from "contracts/proxies/CurveLite/ICurveLiteTwocry
  * @dev Proxy contract CurveLite, working with twocryptoswap pools contracts directly
  */
 contract CurveLiteTwocryptoswapProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
+
+    address internal wtacAddress;
+    ITAC wtac;
+
     /**
      * @dev Initialize the contract.
      */
-    function initialize(address adminAddress, address crossChainLayer) public initializer {
+    function initialize(address adminAddress, address crossChainLayer, address _wtacAddress) public initializer {
         __TacProxyV1Upgradeable_init(crossChainLayer);
         __Ownable_init(adminAddress);
         __UUPSUpgradeable_init();
+        wtacAddress = _wtacAddress;
+        wtac = ITAC(_wtacAddress);
     }
 
     /**
@@ -38,12 +45,25 @@ contract CurveLiteTwocryptoswapProxy is TacProxyV1Upgradeable, OwnableUpgradeabl
     function addLiquidity(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) public _onlyCrossChainLayer {
+    ) public payable _onlyCrossChainLayer {
         (address pool, uint256[2] memory amounts, uint256 minMintAmount) =
                 abi.decode(arguments, (address, uint256[2], uint256));
         // claim tokens addresses
         address tokenA = ITwocryptoswapPool(pool).coins(0);
         address tokenB = ITwocryptoswapPool(pool).coins(1);
+
+        if (msg.value > 0) {
+            if (tokenA == wtacAddress) {
+                require(msg.value == amounts[0], "ETH amount does not match amount for tokenA");
+                wtac.deposit{value: msg.value}();
+            } else if (tokenB == wtacAddress) {
+                require(msg.value == amounts[1], "ETH amount does not match amount for tokenB");
+                wtac.deposit{value: msg.value}();
+            } else {
+                revert("No ETH expected for this pool");
+            }
+        }
+
 
         // grant token approvals
         TransferHelper.safeApprove(tokenA, pool, amounts[0]);
@@ -174,12 +194,21 @@ contract CurveLiteTwocryptoswapProxy is TacProxyV1Upgradeable, OwnableUpgradeabl
     function exchange(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) public _onlyCrossChainLayer {
+    ) public payable _onlyCrossChainLayer {
         (address pool, uint256 i, uint256 j, uint256 dx, uint256 min_dy) =
                 abi.decode(arguments, (address, uint256, uint256, uint256, uint256));
         // claim tokens addresses
         address tokenIn = ITwocryptoswapPool(pool).coins(i);
         address tokenOut = ITwocryptoswapPool(pool).coins(j);
+
+        if (msg.value > 0) {
+            if (tokenIn == wtacAddress) {
+                require(msg.value == dx, "ETH amount does not match amount for tokenIN");
+                wtac.deposit{value: msg.value}();
+            } else {
+                revert("No ETH expected for this pool");
+            }
+        }
 
         // grant token approvals
         TransferHelper.safeApprove(tokenIn, pool, dx);

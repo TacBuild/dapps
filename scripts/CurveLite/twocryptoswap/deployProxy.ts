@@ -7,11 +7,11 @@ import { deployUpgradable } from '@tonappchain/evm-ccl'
 import { proxyOptsUUPS} from "../../utils"
 
 
-export async function deployCurveLiteTwocryptoswapProxy(deployer: Signer, crossChainLayerAddress: string): Promise<CurveLiteTwocryptoswapProxy> { 
+export async function deployCurveLiteTwocryptoswapProxy(deployer: Signer, crossChainLayerAddress: string, WTAC: string): Promise<CurveLiteTwocryptoswapProxy> { 
     const CurveLiteTwocryptoswapProxy = await deployUpgradable<CurveLiteTwocryptoswapProxy>(
         deployer,
         hre.artifacts.readArtifactSync('CurveLiteTwocryptoswapProxy'),
-        [await deployer.getAddress(), crossChainLayerAddress],
+        [await deployer.getAddress(), crossChainLayerAddress, WTAC],
         proxyOptsUUPS,
         undefined,
         true);
