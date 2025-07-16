@@ -5,21 +5,6 @@ import { loadTacContracts, saveContractAddress } from "@tonappchain/evm-ccl";
 import path from 'path';
 
 
-
-const tokens = [
-    {
-        "tokenName": "",
-        "tokenSymbol": "",
-        "decimals": 6n,
-        "tokenValue": 6400000n,
-        "upperBound": 10000000000n,
-        "lowerBound": 50000n,
-        "tokenAddress": "0x"
-    }
-
-]
-
-
 const TON_ADDRESS = "0xb5d9b465f55af00C60bbE0E7fD1360ba5a307036"
 
 const poolPresetParams = {
@@ -35,33 +20,45 @@ const poolPresetParams = {
     initial_price: 10n ** 18n
 }
 
-async function main(tokens:any) {
+async function main(tokenA: any, tokenB: any) {
     const addressesFilePath = path.resolve(__dirname, '../../../addresses.json');
 
-    for (const token of tokens) {
-        const name = 'TON_' + token.tokenSymbol
-        const poolParams = poolPresetParams
 
-        const tokenValue1 = 1
-        const tokenValue2 = Number(Number(token.tokenValue)/(10**Number(token.decimals)))
-        poolParams.initial_price = BigInt(Math.round( tokenValue1/tokenValue2  * 10**18));
-        
-        
-        console.log(poolParams.initial_price)
-        if(poolParams.initial_price >= 10n ** 30n) {
-            poolParams.initial_price = 10n ** 30n - 1n
-        }
-        if(poolParams.initial_price <= 10n ** 6n) {
-            poolParams.initial_price = 10n ** 6n + 1n
-        }
-        const pool = await deployPoolTwocryptoswap(TON_ADDRESS, token.tokenAddress, name, name, poolParams)
-        console.log(name)
-        console.log(pool)
-        saveContractAddress(addressesFilePath, name, pool);
+    const name = tokenA.tokenSymbol + '_' + tokenB.tokenSymbol
+    const poolParams = poolPresetParams
+
+    const tokenValue1 = Number(Number(tokenA.tokenValue)/(10**Number(tokenA.decimals)))
+    const tokenValue2 = Number(Number(tokenB.tokenValue)/(10**Number(tokenB.decimals)))
+    poolParams.initial_price = BigInt(Math.round( tokenValue1/tokenValue2  * 10**18));
+
+    console.log(poolParams.initial_price)
+    if(poolParams.initial_price >= 10n ** 30n) {
+        poolParams.initial_price = 10n ** 30n - 1n
     }
+    if(poolParams.initial_price <= 10n ** 6n) {
+        poolParams.initial_price = 10n ** 6n + 1n
+    }
+    const pool = await deployPoolTwocryptoswap(tokenA.tokenAddress, tokenB.tokenAddress, name, name, poolParams)
+    console.log(name)
+    console.log(pool)
+    saveContractAddress(addressesFilePath, name, pool);
+
 
 }
 
 
 
-main(tokens);
+main({
+        "tokenName": "LADA",
+        "tokenSymbol": "LADA",
+        "decimals": 9n,
+        "tokenValue": 1n,
+        "tokenAddress": "0x0FACa06594C8d5Bd9eA61D2bb68C0B3676674563"
+    },
+    {
+        "tokenName": "BMW",
+        "tokenSymbol": "BMW",
+        "decimals": 9n,
+        "tokenValue": 1n,
+        "tokenAddress": "0x057B5219486e8cbDfef65a0f090ad72b2D8Fc81D"
+    });

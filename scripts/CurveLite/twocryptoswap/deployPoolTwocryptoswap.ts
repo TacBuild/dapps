@@ -6,9 +6,9 @@ import {CurveLiteTwocryptoswapTestnetConfig} from "./config/testnetConfig"
 
 
 export async function deployPoolTwocryptoswap(tokenAddress1: string, tokenAddress2: string, name: string, symbol: string, poolParams: any): Promise<string> {
-    const sequencerSigner = new ethers.Wallet(process.env.SEQUENCER_PRIVATE_KEY_EVM!, ethers.provider);
+    const deployer = new ethers.Wallet(process.env.DEPLOYER_PRIVATE_KEY!, ethers.provider);
 
-    const factoryContract = new ethers.Contract(CurveLiteTwocryptoswapTestnetConfig.CurveLiteTwocryptoswapFactory, factoryAbi, sequencerSigner);
+    const factoryContract = new ethers.Contract(CurveLiteTwocryptoswapTestnetConfig.CurveLiteTwocryptoswapFactory, factoryAbi, deployer);
     const gasPrice = ethers.parseUnits("50", "gwei");
 
     const tx = await factoryContract.deploy_pool(name, symbol, [tokenAddress1, tokenAddress2], ...Object.values(poolParams),
