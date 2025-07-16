@@ -10,12 +10,12 @@ const proxyOptsUUPS: DeployProxyOptions = {
 };
 
 export async function upgradeMorphoProxy(
-): Promise<MorphoProxy> {
+) {
     const [signer] = await hre.ethers.getSigners();
     const factory = await hre.ethers.getContractFactory("MorphoProxy", signer);
     const morphoProxy = await hre.upgrades.upgradeProxy(morphoMainnetProxyDeployments.proxyAddress, factory, proxyOptsUUPS);
     await morphoProxy.waitForDeployment();
-    return morphoProxy;
+    console.log("MorphoProxy upgraded to:", morphoProxy.target);
 } 
 
 upgradeMorphoProxy();

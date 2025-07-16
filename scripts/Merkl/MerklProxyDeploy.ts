@@ -74,8 +74,6 @@ export async function deployMerklProxyMainnet(
 
 async function main() {
     const [deployer] = await hre.ethers.getSigners();
-    // const account = await deployTacSmartAccount(deployer);
-    // const saFactory = await deployTacSAFactory(deployer, await account.getAddress());
     const merklProxy = await deployMerklProxyMainnet(deployer, merklMainnetConfig.crossChainLayerAddress, tacSAFactoryDeployments.proxyAddress)
     console.log("MerklProxy deployed to:", merklProxy.target);
     // const customMerklProxyEuler = await deployCustomMerklProxyEuler(deployer, await merklProxy.getAddress())

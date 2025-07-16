@@ -37,8 +37,8 @@ const config: HardhatUserConfig = {
       },
       allowBlocksWithSameTimestamp: true,
       forking: {
-        url: TAC_TESTNET_URL,
-        blockNumber: 6482609,
+        url: TAC_TESTNET_SPB_URL,
+        blockNumber: 2866014,
       },
     },
     localhost: {

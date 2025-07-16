@@ -20,7 +20,7 @@
         "@nomicfoundation/hardhat-verify": "^2.0.11",
         "@nomicfoundation/ignition-core": "^0.15.7",
         "@ton/core": "^0.59.1",
-        "@tonappchain/evm-ccl": "0.9.24-smart-account-0.4",
+        "@tonappchain/evm-ccl": "0.9.24",
         "@typechain/ethers-v6": "^0.5.1",
         "@typechain/hardhat": "^9.1.0",
         "@types/cli-color": "^2.0.6",
@@ -524,7 +524,7 @@
 
     "@ton/crypto-primitives": ["@ton/crypto-primitives@2.1.0", "", { "dependencies": { "jssha": "3.2.0" } }, "sha512-PQesoyPgqyI6vzYtCXw4/ZzevePc4VGcJtFwf08v10OevVJHVfW238KBdpj1kEDQkxWLeuNHEpTECNFKnP6tow=="],
 
-    "@tonappchain/evm-ccl": ["@tonappchain/evm-ccl@0.9.24-smart-account-0.4", "", { "dependencies": { "@nomicfoundation/hardhat-ethers": "^3.0.8", "@nomicfoundation/hardhat-ignition": "^0.15.7", "@nomicfoundation/hardhat-ignition-ethers": "^0.15.7", "@nomicfoundation/hardhat-network-helpers": "^1.0.12", "@nomicfoundation/hardhat-toolbox": "^5.0.0", "@nomicfoundation/ignition-core": "^0.15.7", "@openzeppelin/contracts": "^5.0.2", "@openzeppelin/contracts-upgradeable": "^5.1.0", "@openzeppelin/hardhat-upgrades": "^3.9.0", "@openzeppelin/merkle-tree": "^1.0.6", "@typechain/ethers-v6": "^0.5.1", "@typechain/hardhat": "^9.1.0", "@types/mocha": "^10.0.9", "@uniswap/lib": "^4.0.1-alpha", "chai": "^4.3.7", "ethers": "^6.13.2", "hardhat": "^2.22.18", "ton-crypto": "^3.2.0", "ts-node": "^10.9.2", "typechain": "^8.3.2", "typescript": "^5.6.3" } }, "sha512-igZLHv4R0Oma0PFL6uQIFTX9m4g2oUmMw25YgmxA75OGKApNcJU9kIhE6A/sol6Q63wpqQCggbjEIhjNIjp7Cg=="],
+    "@tonappchain/evm-ccl": ["@tonappchain/evm-ccl@0.9.24", "", { "dependencies": { "@nomicfoundation/hardhat-ethers": "^3.0.8", "@nomicfoundation/hardhat-ignition": "^0.15.7", "@nomicfoundation/hardhat-ignition-ethers": "^0.15.7", "@nomicfoundation/hardhat-network-helpers": "^1.0.12", "@nomicfoundation/hardhat-toolbox": "^5.0.0", "@nomicfoundation/ignition-core": "^0.15.7", "@openzeppelin/contracts": "^5.0.2", "@openzeppelin/contracts-upgradeable": "^5.1.0", "@openzeppelin/hardhat-upgrades": "^3.9.0", "@openzeppelin/merkle-tree": "^1.0.6", "@typechain/ethers-v6": "^0.5.1", "@typechain/hardhat": "^9.1.0", "@types/mocha": "^10.0.9", "@uniswap/lib": "^4.0.1-alpha", "chai": "^4.3.7", "ethers": "^6.13.2", "hardhat": "^2.22.18", "ton-crypto": "^3.2.0", "ts-node": "^10.9.2", "typechain": "^8.3.2", "typescript": "^5.6.3" } }, "sha512-89M0SIL11iJJXX26s4TtD0O6D1y8mwotc9JCNptYZDU1B71XkRZfA2JAQ6tJl+qjYFW65nem8kjpN2CwE5gwNw=="],
 
     "@tsconfig/node10": ["@tsconfig/node10@1.0.11", "", {}, "sha512-DcRjDCujK/kCk/cUe8Xz8ZSpm8mS3mNNpta+jGCA6USEDfktlNvm1+IuZ9eTcDbNk41BHwpHHeW+N1lKCz4zOw=="],
 

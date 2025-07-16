@@ -14,14 +14,14 @@ async function main() {
     const market = {
         loanToken: "0x0FACa06594C8d5Bd9eA61D2bb68C0B3676674563",
         collateralToken: "0x057B5219486e8cbDfef65a0f090ad72b2D8Fc81D",
-        oracle: morphoMainnetProxyDeployments.MockOracleAddress,
+        oracle: "0x79a6a379aEf8017B05983A2d6195Ab5f5069e514",
         irm: morphoMainnetConfig.lrmAddress,
         lltv: ethers.parseEther("0.86")
     }
 
-    // let tx = await morpho.createMarket(market);
-    // await tx.wait();
-    // console.log("Market created");
+    let tx = await morpho.createMarket(market);
+    await tx.wait();
+    console.log("Market created");
 
     // tx = await metaMorphoV1_1.createMetaMorpho(
     //     await deployer.getAddress(),
@@ -36,16 +36,16 @@ async function main() {
 
 
         const morphoVault = new ethers.Contract("0x97a9Ce0c463F8855191a4181dCA264Dd02028649", hre.artifacts.readArtifactSync('IMorphoVault').abi, deployer) as unknown as IMorphoVault;
-        let tx = await morphoVault.connect(deployer).setCurator(await deployer.getAddress());
-        await tx.wait();
-        console.log("Curator set");
+    //     let tx = await morphoVault.connect(deployer).setCurator(await deployer.getAddress());
+    //     await tx.wait();
+    //     console.log("Curator set");
         
-    tx = await morphoVault.connect(deployer).setFeeRecipient(await deployer.getAddress());
-    await tx.wait();
-    console.log("Fee recipient set");
-    tx = await morphoVault.connect(deployer).setIsAllocator(await deployer.getAddress(), true);
-    await tx.wait();
-    console.log("Is allocator set");
+    // tx = await morphoVault.connect(deployer).setFeeRecipient(await deployer.getAddress());
+    // await tx.wait();
+    // console.log("Fee recipient set");
+    // tx = await morphoVault.connect(deployer).setIsAllocator(await deployer.getAddress(), true);
+    // await tx.wait();
+    // console.log("Is allocator set");
     tx = await morphoVault.connect(deployer).submitCap(
         market,
             ethers.parseUnits("10000", 18)
