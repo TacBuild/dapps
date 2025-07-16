@@ -8,9 +8,8 @@ import { Ownable2StepUpgradeable } from "@openzeppelin/contracts-upgradeable/acc
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import {TacSmartAccount} from "../../TacSmartAccounts/TacSmartAccount.sol";
-import {TacSAFactory} from "../../TacSmartAccounts/TacSAFactory.sol";
-import {ITacSmartAccount} from "../../TacSmartAccounts/Interface/ITacSmartAccount.sol";
+import {ITacSmartAccount} from "@tonappchain/evm-ccl/contracts/smart-account/interfaces/ITacSmartAccount.sol";
+import {ISAFactory} from "@tonappchain/evm-ccl/contracts/smart-account/interfaces/ISAFactory.sol";
 
 import { TransferHelper } from 'contracts/helpers/TransferHelper.sol';
 import { TacProxyV1Upgradeable } from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
@@ -51,7 +50,7 @@ contract CurveLiteTwocryptoswapProxy is TacProxyV1Upgradeable, Ownable2StepUpgra
         bytes calldata arguments
     ) public _onlyCrossChainLayer {
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
-        (address user, ) = TacSAFactory(_tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
+        (address user, ) = ISAFactory(_tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
 
         (address pool, uint256[2] memory amounts, uint256 minMintAmount) =
                 abi.decode(arguments, (address, uint256[2], uint256));
@@ -118,7 +117,7 @@ contract CurveLiteTwocryptoswapProxy is TacProxyV1Upgradeable, Ownable2StepUpgra
         bytes calldata arguments
     ) public _onlyCrossChainLayer {
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
-        (address user, ) = TacSAFactory(_tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
+        (address user, ) = ISAFactory(_tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
 
         (address pool, uint256 amount, uint256[2] memory min_amounts) =
                 abi.decode(arguments, (address, uint256, uint256[2]));
@@ -231,7 +230,7 @@ contract CurveLiteTwocryptoswapProxy is TacProxyV1Upgradeable, Ownable2StepUpgra
         bytes calldata arguments
     ) public _onlyCrossChainLayer {
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
-        (address user, ) = TacSAFactory(_tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
+        (address user, ) = ISAFactory(_tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
 
         (address pool, uint256 i, uint256 j, uint256 dx, uint256 min_dy) =
                 abi.decode(arguments, (address, uint256, uint256, uint256, uint256));
@@ -289,7 +288,7 @@ contract CurveLiteTwocryptoswapProxy is TacProxyV1Upgradeable, Ownable2StepUpgra
 
     TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
 
-    (address user, ) = TacSAFactory(_tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
+    (address user, ) = ISAFactory(_tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
 
     uint256 balance = IERC20(asset).balanceOf(user);
 
