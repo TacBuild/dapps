@@ -10,7 +10,7 @@ import { deployTacSAFactory } from "../scripts/TacSmartAccountFactory/FactoryDep
 import { deployTacSmartAccount } from "../scripts/TacSmartAccountFactory/SABlueprintDeploy";
 
 import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types";
-import { CurveLiteTwocryptoswapProxy, ICurveLiteTwocryptoFactory, TacSAFactory, TacSmartAccount } from "../typechain-types";
+import { CurveLiteTwocryptoswapProxy, ICurveLiteTwocryptoFactory, ISAFactory } from "../typechain-types";
 import { curveLiteTwocryptoProxySol } from "../typechain-types/factories/contracts/proxies/CurveLite";
 import factoryAbi from "../scripts/CurveLite/twocryptoswap/factoryAbi.json"
 import implementationAbi from "../scripts/CurveLite/twocryptoswap/implementationAbi.json"
@@ -41,15 +41,13 @@ describe("CurveLiteTwocryptoswapProxy", function () {
     let curveLiteTwocryptoswapProxy: CurveLiteTwocryptoswapProxy;
     let factoryContract: ICurveLiteTwocryptoFactory;
     const NATIVE = "0xf6408c39E150fB5CF065f64C08826Ea6ea0046E2"
-    let tacSAFactory: TacSAFactory;
-    let tacSmartAccount: TacSmartAccount;
+    let tacSAFactory: ISAFactory;
 
     before(async function () {
         [admin] = await ethers.getSigners();
         testSdk = new TacLocalTestSdk();
         const crossChainLayerAddress = await testSdk.create(ethers.provider);
-        tacSmartAccount = await deployTacSmartAccount(admin);
-        tacSAFactory = await deployTacSAFactory(admin, await tacSmartAccount.getAddress());
+        tacSAFactory = new ethers.Contract(testSdk.getSmartAccountFactoryAddress(), hre.artifacts.readArtifactSync('ISAFactory').abi, admin) as unknown as ISAFactory;
         console.log (crossChainLayerAddress)
 
         curveLiteTwocryptoswapProxy = await deployCurveLiteTwocryptoswapProxy(admin, await tacSAFactory.getAddress(), crossChainLayerAddress, NATIVE);

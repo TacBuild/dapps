@@ -66,8 +66,6 @@ const config: HardhatUserConfig = {
       tac_testnet: 'empty',
       tac_testnet_spb: 'empty',
       tac_mainnet: 'empty'
-      tac_testnet_spb: 'empty',
-      tac_mainnet: 'empty'
     },
     customChains: [
       {

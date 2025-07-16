@@ -9,10 +9,11 @@ export async function deployCurveLiteTwocryptoswapProxy(deployer: Signer, tacSAF
     const CurveLiteTwocryptoswapProxy = await deployUpgradable<CurveLiteTwocryptoswapProxy>(
         deployer,
         hre.artifacts.readArtifactSync('CurveLiteTwocryptoswapProxy'),
-        [await deployer.getAddress(), tacSAFactoryAddress, crossChainLayerAddress, WTAC],
+        [await deployer.getAddress(), tacSAFactoryAddress, crossChainLayerAddress],
         proxyOptsUUPS,
         undefined,
         true);
     await CurveLiteTwocryptoswapProxy.waitForDeployment();
+    await CurveLiteTwocryptoswapProxy.setWTACAddress(WTAC);
     return CurveLiteTwocryptoswapProxy;
 }
