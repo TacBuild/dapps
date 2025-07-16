@@ -127,7 +127,7 @@ contract CurveLiteTwocryptoswapProxy is TacProxyV1Upgradeable, Ownable2StepUpgra
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(tokenLiquidity, liquidity);
 
-        _bridgeTokens(tacHeader, tokensToBridge, new NFTAmount[](0), "");
+        _bridgeTokens(tacHeader, tokensToBridge, new NFTAmount[](0), "", 0);
     }
 
     /**
@@ -191,24 +191,23 @@ contract CurveLiteTwocryptoswapProxy is TacProxyV1Upgradeable, Ownable2StepUpgra
             )
         );
 
+
         if (tokenA == wtacAddress) {
             IWTAC(wtacAddress).withdraw(tokenAAmount);
             TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
-            tokensToBridge[0] = TokenAmount(tokenA, tokenAAmount);
-            _bridgeTokens(tacHeader, tokensToBridge, new NFTAmount[](0), "");
+            tokensToBridge[0] = TokenAmount(tokenB, tokenBAmount);
+            _bridgeTokens(tacHeader, tokensToBridge, new NFTAmount[](0), "", tokenAAmount);
         } else if (tokenB == wtacAddress) {
             IWTAC(wtacAddress).withdraw(tokenBAmount);
             TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
             tokensToBridge[0] = TokenAmount(tokenA, tokenAAmount);
-            _bridgeTokens(tacHeader, tokensToBridge, new NFTAmount[](0), "");
+            _bridgeTokens(tacHeader, tokensToBridge, new NFTAmount[](0), "", tokenBAmount);
         } else {
             TokenAmount[] memory tokensToBridge = new TokenAmount[](2);
             tokensToBridge[0] = TokenAmount(tokenA, tokenAAmount);
             tokensToBridge[1] = TokenAmount(tokenB, tokenBAmount);
-            _bridgeTokens(tacHeader, tokensToBridge, new NFTAmount[](0), "");
+            _bridgeTokens(tacHeader, tokensToBridge, new NFTAmount[](0), "", 0);
         } 
-
-       
     }
 
     /**
@@ -267,11 +266,11 @@ contract CurveLiteTwocryptoswapProxy is TacProxyV1Upgradeable, Ownable2StepUpgra
 
         if (token == wtacAddress) {
             IWTAC(wtacAddress).withdraw(returnTokenAmount);
-            _bridgeTokens(tacHeader, new TokenAmount[](0), new NFTAmount[](0), "");
+            _bridgeTokens(tacHeader, new TokenAmount[](0), new NFTAmount[](0), "", returnTokenAmount);
         } else {
             TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
             tokensToBridge[0] = TokenAmount(token, returnTokenAmount);
-            _bridgeTokens(tacHeader, tokensToBridge, new NFTAmount[](0), "");
+            _bridgeTokens(tacHeader, tokensToBridge, new NFTAmount[](0), "", 0);
         }
 
     }
@@ -337,11 +336,11 @@ contract CurveLiteTwocryptoswapProxy is TacProxyV1Upgradeable, Ownable2StepUpgra
 
         if (tokenOut == wtacAddress) {
             IWTAC(wtacAddress).withdraw(amountOut);
-            _bridgeTokens(tacHeader, new TokenAmount[](0), new NFTAmount[](0), "");
+            _bridgeTokens(tacHeader, new TokenAmount[](0), new NFTAmount[](0), "", amountOut);
         } else {
             TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
             tokensToBridge[0] = TokenAmount(tokenOut, amountOut);
-            _bridgeTokens(tacHeader, tokensToBridge, new NFTAmount[](0), "");
+            _bridgeTokens(tacHeader, tokensToBridge, new NFTAmount[](0), "", 0);
         }
     }
 
@@ -374,7 +373,7 @@ contract CurveLiteTwocryptoswapProxy is TacProxyV1Upgradeable, Ownable2StepUpgra
             balance
         );
 
-    _bridgeTokens(tacHeader, tokensToBridge, new NFTAmount[](0), "");
+    _bridgeTokens(tacHeader, tokensToBridge, new NFTAmount[](0), "", 0);
 }
 
     /// @notice Bridges tokens and NFTs to the cross-chain layer
@@ -386,7 +385,8 @@ contract CurveLiteTwocryptoswapProxy is TacProxyV1Upgradeable, Ownable2StepUpgra
         bytes calldata tacHeader,
         TokenAmount[] memory tokens,
         NFTAmount[] memory nfts,
-        string memory payload
+        string memory payload,
+        uint256 tacAmount
     ) private {
         for (uint256 i = 0; i < tokens.length; i++) {
             TransferHelper.safeApprove(
@@ -410,6 +410,9 @@ contract CurveLiteTwocryptoswapProxy is TacProxyV1Upgradeable, Ownable2StepUpgra
             toBridge: tokens,
             toBridgeNFT: nfts
         });
-        _sendMessageV1(message, address(this).balance);
+        _sendMessageV1(message, tacAmount);
     }
+
+    receive() external payable {}
+
 }
