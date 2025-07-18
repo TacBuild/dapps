@@ -128,12 +128,6 @@ contract EulerProxy is
         emit SetAccountOperator(account, operator, authorized);
     }
 
-    function _setAuthorization(address user, address operator) internal {
-        bytes19 addressPrefix = bytes19(bytes20(user));
-        ITacSmartAccount(payable(user)).execute(address(eulerVaultConnector), 0, abi.encodeWithSelector(IEthereumVaultConnector.setOperator.selector, addressPrefix, operator, type(uint256).max));
-        emit SetOperator(addressPrefix, operator, type(uint256).max);
-    }
-
     function _constructBridgeAndBridge(BridgeBackData memory bridgeBackData, bytes calldata tacHeader) internal {
         require(bridgeBackData.tokensToBridge.length <= MAX_BRIDGE_TOKENS, BridgeMaxLengthReached());
         TokenAmount[] memory tokenAmounts = new TokenAmount[](bridgeBackData.tokensToBridge.length);
