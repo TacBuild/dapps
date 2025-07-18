@@ -116,15 +116,6 @@ contract EulerProxy is
         emit Batch(result);
     }
 
-    function batchSimulation(
-        bytes calldata,
-        bytes calldata arguments
-    ) external _onlyCrossChainLayer {
-        IEthereumVaultConnector.BatchItem[] memory items = abi.decode(arguments, (IEthereumVaultConnector.BatchItem[]));
-        (IEthereumVaultConnector.BatchItemResult[] memory batchItemsResult, IEthereumVaultConnector.StatusCheckResult[] memory accountsStatusCheckResult, IEthereumVaultConnector.StatusCheckResult[] memory vaultsStatusCheckResult) = eulerVaultConnector.batchSimulation(items);
-        emit BatchSimulation(batchItemsResult, accountsStatusCheckResult, vaultsStatusCheckResult);
-    }
-
     function setOperator(
         bytes calldata tacHeader,
         bytes calldata arguments
