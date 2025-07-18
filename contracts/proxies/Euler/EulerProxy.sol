@@ -22,6 +22,7 @@ contract EulerProxy is
 
     IEthereumVaultConnector public eulerVaultConnector;
     ISAFactory public tacSAFactory;
+    uint256 public constant MAX_BRIDGE_TOKENS = 10;
 
     struct BridgeBackData {
         address[] tokensToBridge;
@@ -39,6 +40,8 @@ contract EulerProxy is
     event BatchSimulation(IEthereumVaultConnector.BatchItemResult[] indexed batchItemsResult, IEthereumVaultConnector.StatusCheckResult[] indexed accountsStatusCheckResult, IEthereumVaultConnector.StatusCheckResult[] indexed vaultsStatusCheckResult);
     event SetOperator(bytes19 indexed addressPrefix, address indexed operator, uint256 indexed operatorBitField);
     event SetAccountOperator(address indexed account, address indexed operator, bool indexed authorized);
+
+    error BridgeMaxLengthReached();
 
     constructor() {
         _disableInitializers();
@@ -79,6 +82,7 @@ contract EulerProxy is
         bytes memory result = ITacSmartAccount(payable(user)).execute(address(eulerVaultConnector), msg.value, abi.encodeWithSelector(IEthereumVaultConnector.call.selector, callArguments.targetContract, callArguments.onBehalfOfAccount, callArguments.value, callArguments.data));
         SaHelper.executePostHooks(user, hooks);
         if (bridgeBackData.tokensToBridge.length > 0 && bridgeBackData.tokensToBridge[0] != address(0)) {
+            require(bridgeBackData.tokensToBridge.length <= MAX_BRIDGE_TOKENS, BridgeMaxLengthReached());
             TokenAmount[] memory tokenAmounts = new TokenAmount[](bridgeBackData.tokensToBridge.length);
             for (uint256 i = 0; i < bridgeBackData.tokensToBridge.length; i++) {
                 tokenAmounts[i] = TokenAmount(
@@ -104,6 +108,7 @@ contract EulerProxy is
         (bytes memory result) = ITacSmartAccount(payable(user)).execute(address(eulerVaultConnector), msg.value, abi.encodeWithSelector(IEthereumVaultConnector.batch.selector, items));
         SaHelper.executePostHooks(user, hooks);
         if (bridgeBackData.tokensToBridge.length > 0) {
+            require(bridgeBackData.tokensToBridge.length <= MAX_BRIDGE_TOKENS, BridgeMaxLengthReached());
             TokenAmount[] memory tokenAmounts = new TokenAmount[](bridgeBackData.tokensToBridge.length);
             for (uint256 i = 0; i < bridgeBackData.tokensToBridge.length; i++) {
                 tokenAmounts[i] = TokenAmount(
