@@ -8,32 +8,18 @@ import { TacLocalTestSdk, TokenMintInfo, NFTInfo, NFTMintInfo, NFTUnlockInfo, To
 import { sttonTokenInfo, tacTokenInfo } from '../scripts/common/info/tokensInfo';
 import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types";
 import { YieldManagerProxy, ManagerMock, TestToken, ReceiptMock, ISAFactory, ITacSmartAccount } from "../typechain-types";
-<<<<<<< HEAD
 import { yiedMainnetConfig } from "../scripts/Yield/config/mainnetConfig";
 
 const USDT_MAINNET_ADDRESS = "0xAF988C3f7CB2AceAbB15f96b19388a259b6C438f"
-=======
->>>>>>> develop
 
 describe("YieldProxy", function () {
     let admin: Signer;
     let testSdk: TacLocalTestSdk;
     let yieldProxy: YieldManagerProxy;
     let tacSAFactory: ISAFactory;
-<<<<<<< HEAD
     let usdt: ERC20;
     let yUsd: ERC20;
    
-=======
-    let tacSmartAccount: ITacSmartAccount;
-    let stton: ERC20;
-    let tac: ERC20;
-    let mockManager: ManagerMock;
-    let mockReceipt: ReceiptMock;
-    let mockSUSDT: TestToken;
-    let mockYUSDT: TestToken;
-    let mockYUSDTTVMAddress: string;
->>>>>>> develop
 
     before(async function () {
         [admin] = await ethers.getSigners();
