@@ -16,7 +16,7 @@ import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/O
 import { IERC721Receiver } from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { IFactory } from "./Interface/IFactory.sol";
-import { IWTAC } from "./Interface/IWTAC.sol";
+import { IWTAC } from "@tonappchain/evm-ccl/contracts/interfaces/IWTAC.sol";
 /// @title IzumiProxy
 /// @notice A proxy contract that interfaces with Izumi protocol for liquidity management and trading operations
 /// @dev Implements TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable, and IERC721Receiver
@@ -772,10 +772,5 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         bytes calldata
     ) external pure override(IERC721Receiver) returns (bytes4) {
         return this.onERC721Received.selector;
-    }
-
-    /// @notice Receives ETH
-    receive() external payable {
-        IWTAC(wTac).deposit{value: msg.value}(0);
     }
 }
