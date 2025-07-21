@@ -3,8 +3,7 @@ import { AddressLike, BytesLike, Signer } from "ethers";
 import {time} from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { expect } from "chai";
 
-import { deployTacSAFactory } from "../scripts/TacSmartAccountFactory/FactoryDeploy";
-import { deployTacSmartAccount } from "../scripts/TacSmartAccountFactory/SABlueprintDeploy";
+
 import { TacLocalTestSdk, TokenMintInfo, TokenUnlockInfo} from "@tonappchain/evm-ccl";
 import { sttonTokenInfo, tacTokenInfo } from '../scripts/common/info/tokensInfo';
 import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types";

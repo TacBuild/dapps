@@ -1,7 +1,7 @@
 import hre, { ethers } from "hardhat";
 import { Signer } from "ethers";
 import { expect } from "chai";
-import { SaHooksBuilder } from "../scripts/TacSmartAccountFactory/SDK/SaHooksSDK";
+import { SaHooksBuilder } from "../scripts/TacSmartAccountSDK/SaHooksSDK";
 import { TacLocalTestSdk, TokenUnlockInfo} from "@tonappchain/evm-ccl";
 import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types";
 import { deployEulerProxy } from "../scripts/Euler/EulerProxyDeploy";

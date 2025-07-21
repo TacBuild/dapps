@@ -3,20 +3,18 @@ import { AddressLike, BytesLike, Signer } from "ethers";
 import { expect } from "chai";
 
 import { deployYieldProxy } from "../scripts/Yield/deployProxy";
-import { deployTacSAFactory } from "../scripts/TacSmartAccountFactory/FactoryDeploy";
-import { deployTacSmartAccount } from "../scripts/TacSmartAccountFactory/SABlueprintDeploy";
 import { yiedTestnetConfig } from "../scripts/Yield/config/testnetConfig";
 import { TacLocalTestSdk, TokenMintInfo, NFTInfo, NFTMintInfo, NFTUnlockInfo, TokenUnlockInfo} from "@tonappchain/evm-ccl";
 import { sttonTokenInfo, tacTokenInfo } from '../scripts/common/info/tokensInfo';
 import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types";
-import { YieldManagerProxy, ManagerMock, TacSAFactory, TacSmartAccount, TestToken, ReceiptMock } from "../typechain-types";
+import { YieldManagerProxy, ManagerMock, TestToken, ReceiptMock, ISAFactory, ITacSmartAccount } from "../typechain-types";
 
 describe("YieldProxy", function () {
     let admin: Signer;
     let testSdk: TacLocalTestSdk;
     let yieldProxy: YieldManagerProxy;
-    let tacSAFactory: TacSAFactory;
-    let tacSmartAccount: TacSmartAccount;
+    let tacSAFactory: ISAFactory;
+    let tacSmartAccount: ITacSmartAccount;
     let stton: ERC20;
     let tac: ERC20;
     let mockManager: ManagerMock;
