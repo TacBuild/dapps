@@ -12,11 +12,15 @@ async function main() {
 
     const tacContracts = await loadTacContracts(addressesFilePath, deployer);
 
+    const tacNativeAddress = await tacContracts.crossChainLayer.NATIVE_TOKEN_ADDRESS();
+
+    console.log("---------------------------", tacNativeAddress, "---------------------------")
+
     // const tacSmartAccount = await deployTacSmartAccount(deployer);
 
     // const tacSAFactory = await deployTacSAFactory(deployer, await tacSmartAccount.getAddress());
 
-    const CurveLiteTwocryptoswapProxy = await deployCurveLiteTwocryptoswapProxy(deployer, "0x070820Ed658860f77138d71f74EfbE173775895b", await tacContracts.crossChainLayer.getAddress());
+    const CurveLiteTwocryptoswapProxy = await deployCurveLiteTwocryptoswapProxy(deployer, "0x070820Ed658860f77138d71f74EfbE173775895b", await tacContracts.crossChainLayer.getAddress(), tacNativeAddress);
 
     saveContractAddress(addressesFilePath, 'CurveLiteTwocryptoswapProxy', await CurveLiteTwocryptoswapProxy.getAddress());
 

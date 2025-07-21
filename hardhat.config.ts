@@ -91,6 +91,14 @@ const config: HardhatUserConfig = {
           apiURL: "https://explorer.tac.build/api",
           browserURL: "https://explorer.tac.build"
         }
+      },
+      {
+        network: "tac_mainnet",
+        chainId: 239,
+        urls: {
+          apiURL: "https://explorer.tac.build/api",
+          browserURL: "https://explorer.tac.build"
+        }
       }
     ]
   },
