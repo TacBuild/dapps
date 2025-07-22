@@ -93,13 +93,10 @@ contract MerklProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgra
                     TokenAmount[] memory tokens = new TokenAmount[](1);
                     tokens[0] = TokenAmount({
                         evmAddress: data.tokens[0],
-                        amount: IERC20(data.tokens[0]).balanceOf(address(this))
+                        amount: amount
                     });
                     _bridgeTokens(tacHeader, tokens, "", 0);
                 }
-                
-
-                
             }
         }
     }
@@ -125,8 +122,9 @@ contract MerklProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgra
 
         if (data.tokenToBridge.length > 0) {
             
-            TokenAmount[] memory tokens = new TokenAmount[](0);
+            TokenAmount[] memory tokens = new TokenAmount[](data.tokenToBridge.length);
             uint256 nativeAmount = 0;
+            uint256 realAmountOfTokensToBridge = 0;
             for (uint256 i = 0; i < data.tokenToBridge.length; i++) {
                 uint256 amount = IERC20(data.tokenToBridge[i]).balanceOf(user);
                 if (amount == 0) {
@@ -138,12 +136,19 @@ contract MerklProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgra
                     abi.encodeWithSelector(IERC20.transfer.selector, address(this), amount)
                 );
                 if (data.tokenToBridge[i] == address(WTAC)){
-                    WTAC.withdraw(amount);
                     nativeAmount += amount;
                 } else {
-                    tokens = _addTokenToBridge(data.tokenToBridge[i], tokens);
+                    tokens[realAmountOfTokensToBridge] = TokenAmount({
+                        evmAddress: data.tokenToBridge[i],
+                        amount: amount
+                    });
+                    realAmountOfTokensToBridge++;
                 }
             }
+            assembly {
+                mstore(tokens, realAmountOfTokensToBridge)
+            }
+            WTAC.withdraw(nativeAmount);
             _bridgeTokens(tacHeader, tokens, "", nativeAmount);
         }
     }
@@ -155,7 +160,9 @@ contract MerklProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgra
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user, ) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
         (address[] memory tokens) = abi.decode(arguments, (address[]));
-        TokenAmount[] memory tokenAmounts = new TokenAmount[](0);
+        TokenAmount[] memory tokenAmounts = new TokenAmount[](tokens.length);
+        uint256 realAmountOfTokensToBridge = 0;
+
         uint256 nativeAmount = 0;
         for (uint256 i = 0; i < tokens.length; i++) {
             uint256 amount = IERC20(tokens[i]).balanceOf(user);
@@ -168,12 +175,20 @@ contract MerklProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgra
                 abi.encodeWithSelector(IERC20.transfer.selector, address(this), amount)
             );
             if (tokens[i] == address(WTAC)){
-                WTAC.withdraw(amount);
+                
                 nativeAmount += amount;
             } else {
-                tokenAmounts = _addTokenToBridge(tokens[i], tokenAmounts);
+                tokenAmounts[realAmountOfTokensToBridge] = TokenAmount({
+                    evmAddress: tokens[i],
+                    amount: amount
+                });
+                realAmountOfTokensToBridge++;
             }
         }
+        assembly {
+            mstore(tokenAmounts, realAmountOfTokensToBridge)
+        }
+        WTAC.withdraw(nativeAmount);
         _bridgeTokens(tacHeader, tokenAmounts, "", nativeAmount);
     }
 
@@ -217,16 +232,6 @@ contract MerklProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgra
         });
 
         _sendMessageV1(message, nativeAmount);
-    }
-
-    function _addTokenToBridge(address tokenToAdd, TokenAmount[] memory oldInfo) internal view returns (TokenAmount[] memory tokensToBridge) {
-        uint256 oldLength = oldInfo.length;
-        tokensToBridge = new TokenAmount[](oldLength + 1);
-        for (uint256 i = 0; i < oldLength; i++) {
-            tokensToBridge[i] = oldInfo[i];
-        }
-        tokensToBridge[oldLength] = TokenAmount(tokenToAdd, IERC20(tokenToAdd).balanceOf(address(this)));
-        return tokensToBridge;
     }
 
     receive() external payable {}
