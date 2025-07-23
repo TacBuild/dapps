@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import { TransferHelper } from '@uniswap/lib/contracts/libraries/TransferHelper.sol';
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { OutMessageV1, TokenAmount, TacHeaderV1, NFTAmount } from "@tonappchain/evm-ccl/contracts/core/Structs.sol";
 import { ICrossChainLayer } from "@tonappchain/evm-ccl/contracts/interfaces/ICrossChainLayer.sol";
 import { TacProxyV1Upgradeable } from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
@@ -252,7 +252,7 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
             deadline: args.deadline
         });
 
-        TransferHelper.safeApprove(args.tokenY, swapAddress, args.amount);
+        SafeERC20.forceApprove(IERC20(args.tokenY), swapAddress, args.amount);
 
         ISwap(swapAddress).swapY2X{value: msg.value}(params);
 
@@ -284,7 +284,7 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
             deadline: args.deadline
         });
 
-        TransferHelper.safeApprove(firstToken, swapAddress, args.amount);
+        SafeERC20.forceApprove(IERC20(firstToken), swapAddress, args.amount);
 
         ISwap(swapAddress).swapAmount{value: msg.value}(params);
 
@@ -315,7 +315,7 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
             deadline: args.deadline
         });
 
-        TransferHelper.safeApprove(args.tokenX, swapAddress, args.amount);
+        SafeERC20.forceApprove(IERC20(args.tokenX), swapAddress, args.amount);
 
         ISwap(swapAddress).swapX2Y{value: msg.value}(params);
 
@@ -346,7 +346,7 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
             deadline: args.deadline
         });
 
-        TransferHelper.safeApprove(args.tokenX, swapAddress, args.maxPayed);
+        SafeERC20.forceApprove(IERC20(args.tokenX), swapAddress, args.maxPayed);
 
         ISwap(swapAddress).swapX2YDesireY{value: msg.value}(params);
 
@@ -377,7 +377,7 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
             deadline: args.deadline
         });
 
-        TransferHelper.safeApprove(args.tokenY, swapAddress, args.maxPayed);
+        SafeERC20.forceApprove(IERC20(args.tokenY), swapAddress, args.maxPayed);
 
         ISwap(swapAddress).swapY2XDesireX{value: msg.value}(params);
 
@@ -410,7 +410,7 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
             deadline: args.deadline
         });
 
-        TransferHelper.safeApprove(firstToken, swapAddress, args.maxPayed);
+        SafeERC20.forceApprove(IERC20(firstToken), swapAddress, args.maxPayed);
 
         ISwap(swapAddress).swapDesire{value: msg.value}(params);
 
@@ -517,7 +517,7 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         address tokenToReceive = sellXEarnY ? tokenY : tokenX;
         
 
-        TransferHelper.safeApprove(tokenToSell, limitOrderAddress, amount);
+        SafeERC20.forceApprove(IERC20(tokenToSell), limitOrderAddress, amount);
         (,uint128 acquire) = ILimitOrderManager(limitOrderAddress).newLimOrder{value: msg.value}(
             args.idx,
             args.originAddLimitOrderParam
@@ -545,8 +545,8 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
             params.tokenX = params.tokenY;
             params.tokenY = temp;
         }
-        TransferHelper.safeApprove(params.tokenX, liquidityManagerAddress, params.xLim);
-        TransferHelper.safeApprove(params.tokenY, liquidityManagerAddress, params.yLim);
+        SafeERC20.forceApprove(IERC20(params.tokenX), liquidityManagerAddress, params.xLim);
+        SafeERC20.forceApprove(IERC20(params.tokenY), liquidityManagerAddress, params.yLim);
 
         (uint256 lid,,,) = 
             ILiquidityManager(liquidityManagerAddress).mint{value: msg.value}(params);
@@ -589,8 +589,8 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         ILiquidityManager.Liquidity memory liq = ILiquidityManager(liquidityManagerAddress).liquidities(params.lid);
         (address tokenX, address tokenY,) = ILiquidityManager(liquidityManagerAddress).poolMetas(liq.poolId);
 
-        TransferHelper.safeApprove(tokenX, liquidityManagerAddress, params.xLim);
-        TransferHelper.safeApprove(tokenY, liquidityManagerAddress, params.yLim);
+        SafeERC20.forceApprove(IERC20(tokenX), liquidityManagerAddress, params.xLim);
+        SafeERC20.forceApprove(IERC20(tokenY), liquidityManagerAddress, params.yLim);
         IERC721(liquidityManagerAddress).approve(liquidityManagerAddress, params.lid);
 
         ILiquidityManager(liquidityManagerAddress).addLiquidity{value: msg.value}(params);
@@ -740,8 +740,8 @@ contract IzumiProxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeabl
         string memory payload
     ) private {
         for (uint256 i = 0; i < tokens.length; i++) {
-            TransferHelper.safeApprove(
-                tokens[i].evmAddress,
+            SafeERC20.forceApprove(
+                IERC20(tokens[i].evmAddress),
                 _getCrossChainLayerAddress(),
                 tokens[i].amount
             );

@@ -1,28 +1,27 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import {TransferHelper} from "@uniswap/lib/contracts/libraries/TransferHelper.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {OutMessageV1, TokenAmount, TacHeaderV1, NFTAmount} from "@tonappchain/evm-ccl/contracts/core/Structs.sol";
 import {ICrossChainLayer} from "@tonappchain/evm-ccl/contracts/interfaces/ICrossChainLayer.sol";
 import {TacProxyV1Upgradeable} from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {TacSmartAccount} from "../../TacSmartAccounts/TacSmartAccount.sol";
-import {TacSAFactory} from "../../TacSmartAccounts/TacSAFactory.sol";
-import {ITacSmartAccount} from "../../TacSmartAccounts/Interface/ITacSmartAccount.sol";
+import {ITacSmartAccount} from "@tonappchain/evm-ccl/contracts/smart-account/interfaces/ITacSmartAccount.sol";
+import {ISAFactory} from "@tonappchain/evm-ccl/contracts/smart-account/interfaces/ISAFactory.sol";
 import {ITellerWithMultiAssetSupport} from "./interface/ITellerWithMultiAssetSupport.sol";
 import {IBoringOnChainQueue} from "./interface/IBoringOnChainQueue.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IBoringVault} from "./interface/IBoringVault.sol";
-contract TacBoringVaultProxy is UUPSUpgradeable, OwnableUpgradeable, TacProxyV1Upgradeable {
+contract TacBoringVaultProxy is UUPSUpgradeable, Ownable2StepUpgradeable, TacProxyV1Upgradeable {
 
     address public constant NATIVE_ADDRESS = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
     ITellerWithMultiAssetSupport public teller;
     IBoringOnChainQueue public boringOnChainQueue;
     IBoringVault public boringVault;
-    TacSAFactory public tacSAFactory;
+    ISAFactory public tacSAFactory;
     struct DepositArguments {
         address depositAsset;
         uint256 depositAmount;
@@ -48,13 +47,19 @@ contract TacBoringVaultProxy is UUPSUpgradeable, OwnableUpgradeable, TacProxyV1U
     event WithdrawRequest(bytes32 indexed requestId, string indexed tvmCaller);
     event WithdrawFunds(address indexed asset, uint256 amount, address indexed user, string indexed tvmCaller);
     event Deposit(uint256 amount, string indexed tvmCaller, address indexed user);
+
+    constructor() {
+        _disableInitializers();
+    }
+
     function initialize(address _crossChainLayer, address _teller, address _boringOnChainQueue, address _boringVault, address _tacSAFactory) public initializer {
         __UUPSUpgradeable_init();
         __Ownable_init(msg.sender);
+        __Ownable2Step_init();
         __TacProxyV1Upgradeable_init(_crossChainLayer);
         teller = ITellerWithMultiAssetSupport(_teller);
         boringOnChainQueue = IBoringOnChainQueue(_boringOnChainQueue);
-        tacSAFactory = TacSAFactory(_tacSAFactory);
+        tacSAFactory = ISAFactory(_tacSAFactory);
         boringVault = IBoringVault(_boringVault);
     }
 
@@ -66,8 +71,8 @@ contract TacBoringVaultProxy is UUPSUpgradeable, OwnableUpgradeable, TacProxyV1U
         (address user,) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
 
         if(args.depositAsset != NATIVE_ADDRESS){
-            TransferHelper.safeTransfer(args.depositAsset, user, args.depositAmount);
-            TacSmartAccount(payable(user)).approve(args.depositAsset, address(boringVault), args.depositAmount);
+            SafeERC20.safeTransfer(IERC20(args.depositAsset), user, args.depositAmount);
+            ITacSmartAccount(payable(user)).approve(args.depositAsset, address(boringVault), args.depositAmount);
         } else {
             require(msg.value == args.depositAmount, DepositAmountMismatch(args.depositAmount, msg.value));
             (bool success,) = payable(user).call{value: msg.value}("");
@@ -76,25 +81,17 @@ contract TacBoringVaultProxy is UUPSUpgradeable, OwnableUpgradeable, TacProxyV1U
         
         bytes memory data = abi.encodeWithSelector(ITellerWithMultiAssetSupport.deposit.selector, args.depositAsset, args.depositAmount, args.minimumMint);
         _saExecution(user, address(teller), msg.value, data);
-        data = abi.encodeWithSelector(IERC20.transfer.selector, address(this), boringVault.balanceOf(address(user)));
-        _saExecution(user, address(boringVault), 0, data);
-
-        TokenAmount[] memory tokens = new TokenAmount[](1);
-        tokens[0] = TokenAmount({
-            evmAddress: address(boringVault),
-            amount: boringVault.balanceOf(address(this))
-        });
-        emit Deposit(tokens[0].amount, header.tvmCaller, user);
-        _bridgeTokens(tacHeader, tokens, "");
+        
+        emit Deposit(args.depositAmount, header.tvmCaller, user);
     }
 
     function withdrawRequest(bytes calldata tacHeader, bytes calldata arguments) public _onlyCrossChainLayer{
         WithdrawArguments memory args = abi.decode(arguments, (WithdrawArguments));
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user,) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
-        TransferHelper.safeTransfer(address(boringVault), user, args.amountOfShares);
+        SafeERC20.safeTransfer(IERC20(address(boringVault)), user, args.amountOfShares);
         bytes memory data = abi.encodeWithSelector(IBoringOnChainQueue.requestOnChainWithdraw.selector, args.assetOut, args.amountOfShares, args.discount, args.secondsToDeadline);
-        TacSmartAccount(payable(user)).approve(address(boringVault), address(boringOnChainQueue), args.amountOfShares);
+        ITacSmartAccount(payable(user)).approve(address(boringVault), address(boringOnChainQueue), args.amountOfShares);
         (, bytes memory returnData) = _saExecution(user, address(boringOnChainQueue), 0, data);
         bytes32 requestId = abi.decode(returnData, (bytes32));
         emit WithdrawRequest(requestId, header.tvmCaller);
@@ -126,8 +123,8 @@ contract TacBoringVaultProxy is UUPSUpgradeable, OwnableUpgradeable, TacProxyV1U
         string memory payload
     ) private {
         for (uint256 i = 0; i < tokens.length; i++) {
-            TransferHelper.safeApprove(
-                tokens[i].evmAddress,
+            SafeERC20.forceApprove(
+                IERC20(tokens[i].evmAddress),
                 _getCrossChainLayerAddress(),
                 tokens[i].amount
             );
@@ -149,7 +146,7 @@ contract TacBoringVaultProxy is UUPSUpgradeable, OwnableUpgradeable, TacProxyV1U
     }
 
     function _saExecution(address sa, address target, uint256 value, bytes memory data) internal returns(bool success, bytes memory returnData) {
-        (success, returnData) = TacSmartAccount(payable(sa)).executeUnsafe(target, value, data);
+        (success, returnData) = ITacSmartAccount(payable(sa)).executeUnsafe(target, value, data);
         require(success, ExecutionFailed(returnData));
         emit SaExecutedInteraction(sa, target, data);   
     }

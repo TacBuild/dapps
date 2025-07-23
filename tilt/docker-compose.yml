@@ -2,9 +2,6 @@ services:
   dapps-deployer:
     container_name: dapps-deployer
     hostname: dapps-deployer
-    env_file:
-      - .env.tilt.fixed
-      - .env.tilt.populated
     image: dapps-deployer-image
     build:
       dockerfile: tilt/Dockerfile
@@ -12,6 +9,10 @@ services:
     network_mode: "host"
     volumes:
       - tilt-shared-volume:/usr/src/app/shared
+    env_file:
+      - ../../../.env.tilt.global
+    environment:
+      - DEPLOY_ENV=localhost
 
 volumes:
   tilt-shared-volume:

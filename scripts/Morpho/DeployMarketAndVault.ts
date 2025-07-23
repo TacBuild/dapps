@@ -1,70 +1,61 @@
 import hre from "hardhat";
-import { morphoTestnetConfig, morphoProxyDeployments } from "./config/testnetConfig";
-import { IMorpho, IMetaMorpho, IMorphoVault } from "../../typechain-types";
+import { morphoMainnetConfig, morphoMainnetProxyDeployments } from "./config/mainnetConfig";
+import { IMorpho, IMetaMorphoV1_1Factory, IMorphoVault } from "../../typechain-types";
 
 async function main() {
     const [deployer] = await hre.ethers.getSigners();
-    const morpho = new ethers.Contract(morphoTestnetConfig.morphoAddress, hre.artifacts.readArtifactSync('IMorpho').abi, deployer) as unknown as IMorpho;
-    const metaMorphoV1_1 = new ethers.Contract(morphoTestnetConfig.metaMorphoV1_1Address, hre.artifacts.readArtifactSync('IMetaMorpho').abi, deployer) as unknown as IMetaMorpho;
+    const morpho = new ethers.Contract(morphoMainnetConfig.morphoAddress, hre.artifacts.readArtifactSync('IMorpho').abi, deployer) as unknown as IMorpho;
+    const metaMorphoV1_1 = new ethers.Contract(morphoMainnetConfig.metaMorphoV1_1Address, hre.artifacts.readArtifactSync('IMetaMorphoV1_1Factory').abi, deployer) as unknown as IMetaMorphoV1_1Factory;
 
 
-    await morpho.createMarket({
-        loanToken: "0x8b274AD9CC861eF360c779ce23B26fEb7595A40e",
-        collateralToken: "0xc37412747c1000B7400cF9d3fdd905D2B0620B4C",
-        oracle: morphoProxyDeployments.MockOracleAddress,
-        irm: morphoTestnetConfig.lrmAddress,
-        lltv: ethers.parseEther("0.945")
-    });
+    // 0x0FACa06594C8d5Bd9eA61D2bb68C0B3676674563 лада
+    // 0x057B5219486e8cbDfef65a0f090ad72b2D8Fc81D бмв
 
-    console.log(await metaMorphoV1_1.createMetaMorpho(
-        await deployer.getAddress(),
-        0n,
-        "0x8b274AD9CC861eF360c779ce23B26fEb7595A40e",
-        "TEST_VAULT",
-        "TSTVLT",
-        ethers.encodeBytes32String("0x")
-    ));
+    const market = {
+        loanToken: "0x0FACa06594C8d5Bd9eA61D2bb68C0B3676674563",
+        collateralToken: "0x057B5219486e8cbDfef65a0f090ad72b2D8Fc81D",
+        oracle: "0x79a6a379aEf8017B05983A2d6195Ab5f5069e514",
+        irm: morphoMainnetConfig.lrmAddress,
+        lltv: ethers.parseEther("0.86")
+    }
+
+    let tx = await morpho.createMarket(market);
+    await tx.wait();
+    console.log("Market created");
+
+    // tx = await metaMorphoV1_1.createMetaMorpho(
+    //     await deployer.getAddress(),
+    //     0n,
+    //     "0x0FACa06594C8d5Bd9eA61D2bb68C0B3676674563",
+    //     "Lada_Bmw_Deviation_1000",
+    //     "LBMW_1000_V2",
+    //     ethers.encodeBytes32String("1x")
+    // );
+    // await tx.wait();
+    // console.log("MetaMorpho created");
 
 
-        const morphoVault = new ethers.Contract("0x4C46008D989D2B7dd931c909bc7C0cC35Ab79829", hre.artifacts.readArtifactSync('IMorphoVault').abi, deployer) as unknown as IMorphoVault;
-        let tx = await morphoVault.connect(deployer).setCurator(await deployer.getAddress());
-        await tx.wait();
-        console.log("Curator set");
+        const morphoVault = new ethers.Contract("0x97a9Ce0c463F8855191a4181dCA264Dd02028649", hre.artifacts.readArtifactSync('IMorphoVault').abi, deployer) as unknown as IMorphoVault;
+    //     let tx = await morphoVault.connect(deployer).setCurator(await deployer.getAddress());
+    //     await tx.wait();
+    //     console.log("Curator set");
         
-    tx = await morphoVault.connect(deployer).setFeeRecipient(await deployer.getAddress());
-    await tx.wait();
-    console.log("Fee recipient set");
-    tx = await morphoVault.connect(deployer).setIsAllocator(await deployer.getAddress(), true);
-    await tx.wait();
-    console.log("Is allocator set");
+    // tx = await morphoVault.connect(deployer).setFeeRecipient(await deployer.getAddress());
+    // await tx.wait();
+    // console.log("Fee recipient set");
+    // tx = await morphoVault.connect(deployer).setIsAllocator(await deployer.getAddress(), true);
+    // await tx.wait();
+    // console.log("Is allocator set");
     tx = await morphoVault.connect(deployer).submitCap(
-        {
-            loanToken: "0x8b274AD9CC861eF360c779ce23B26fEb7595A40e",
-            collateralToken: "0xc37412747c1000B7400cF9d3fdd905D2B0620B4C",
-            oracle: morphoProxyDeployments.MockOracleAddress,
-            irm: morphoTestnetConfig.lrmAddress,
-            lltv: ethers.parseEther("0.945")
-            },
-            ethers.parseEther("100")
+        market,
+            ethers.parseUnits("10000", 18)
         );
         await tx.wait();
         console.log("Cap submitted");
-        const marketParamsId = computeMarketParamsId({
-            loanToken: "0x8b274AD9CC861eF360c779ce23B26fEb7595A40e",
-            collateralToken: "0xc37412747c1000B7400cF9d3fdd905D2B0620B4C",
-            oracle: morphoProxyDeployments.MockOracleAddress,
-            irm: morphoTestnetConfig.lrmAddress,
-            lltv: ethers.parseEther("0.945")
-            });
-
+        const marketParamsId = computeMarketParamsId(market);
+        console.log("Market params id", marketParamsId);
         tx = await morphoVault.connect(deployer).acceptCap(
-            {
-                loanToken: "0x8b274AD9CC861eF360c779ce23B26fEb7595A40e",
-                collateralToken: "0xc37412747c1000B7400cF9d3fdd905D2B0620B4C",
-                oracle: morphoProxyDeployments.MockOracleAddress,
-                irm: morphoTestnetConfig.lrmAddress,
-                lltv: ethers.parseEther("0.945")
-            }
+            market
         );
         await tx.wait();
         console.log("Cap accepted");
