@@ -157,7 +157,7 @@ contract ZerolendPoolProxy is
             args.amount
         );
 
-        _bridgeTokens(tacHeader, tokensToBridge, new NFTAmount[](0), "");
+        _bridgeTokens(tacHeader, tokensToBridge, new NFTAmount[](0), "", 0);
     }
 
     /**
@@ -203,7 +203,7 @@ contract ZerolendPoolProxy is
             args.amount
         );
 
-        _bridgeTokens(tacHeader, tokensToBridge, new NFTAmount[](0), "");
+        _bridgeTokens(tacHeader, tokensToBridge, new NFTAmount[](0), "", 0);
     }
 
     /**
@@ -299,7 +299,7 @@ contract ZerolendPoolProxy is
             IERC20(asset).balanceOf(address(this))
         );
 
-        _bridgeTokens(tacHeader, tokensToBridge, new NFTAmount[](0), "");
+        _bridgeTokens(tacHeader, tokensToBridge, new NFTAmount[](0), "", 0);
     }
 
     /// @notice Bridges tokens and NFTs to the cross-chain layer
@@ -311,7 +311,8 @@ contract ZerolendPoolProxy is
         bytes calldata tacHeader,
         TokenAmount[] memory tokens,
         NFTAmount[] memory nfts,
-        string memory payload
+        string memory payload,
+        uint256 tacAmount
     ) private {
         for (uint256 i = 0; i < tokens.length; i++) {
             TransferHelper.safeApprove(
@@ -336,6 +337,6 @@ contract ZerolendPoolProxy is
             toBridgeNFT: nfts
         });
 
-        _sendMessageV1(message, address(this).balance);
+        _sendMessageV1(message, tacAmount);
     }
 }
