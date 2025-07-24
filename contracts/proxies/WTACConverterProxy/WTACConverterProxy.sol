@@ -25,6 +25,7 @@ contract WTACConverterProxy is TacProxyV1Upgradeable, UUPSUpgradeable, Ownable2S
         __UUPSUpgradeable_init();
         __TacProxyV1Upgradeable_init(crossChainLayer);
         __Ownable_init(admin);
+        __Ownable2Step_init();
 
         wtac = _wtac;
     }
