@@ -8,7 +8,9 @@ import { deployTacSAFactory } from "../scripts/TacSmartAccountFactory/FactoryDep
 import { deployTacSmartAccount } from "../scripts/TacSmartAccountFactory/SABlueprintDeploy";
 
 import { TacLocalTestSdk, TokenMintInfo, TokenUnlockInfo } from "@tonappchain/evm-ccl";
-import { ZerolendPoolProxy, TacSAFactory, TacSmartAccount, MockZerolendPool } from '../typechain-types';
+import {ITacSmartAccount} from "@tonappchain/evm-ccl/contracts/smart-account/interfaces/ITacSmartAccount.sol";
+import {ISAFactory} from "@tonappchain/evm-ccl/contracts/smart-account/interfaces/ISAFactory.sol";
+import { ZerolendPoolProxy, MockZerolendPool } from '../typechain-types';
 
 import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types"
 import { sttonTokenInfo, tacTokenInfo } from '../scripts/common/info/tokensInfo';
@@ -33,8 +35,7 @@ describe("ZerolandPoolProxy", function () {
     let admin: Signer;
     let testSdk: TacLocalTestSdk;
     let zerolendPoolProxy: ZerolendPoolProxy;
-    let tacSAFactory: TacSAFactory;
-    let tacSmartAccount: TacSmartAccount;
+    let tacSAFactory: ISAFactory;
     let mockPool: MockZerolendPool;
 
     const tokenValue = 100000n
@@ -43,8 +44,7 @@ describe("ZerolandPoolProxy", function () {
         [admin] = await ethers.getSigners();
         testSdk = new TacLocalTestSdk();
         const crossChainLayerAddress = await testSdk.create(ethers.provider);
-        tacSmartAccount = await deployTacSmartAccount(admin);
-        tacSAFactory = await deployTacSAFactory(admin, await tacSmartAccount.getAddress());
+        tacSAFactory = new ethers.Contract(testSdk.getSmartAccountFactoryAddress(), hre.artifacts.readArtifactSync('ISAFactory').abi, admin) as unknown as ISAFactory;
         zerolendPoolProxy = await deployZerolendPoolProxy(admin, zerolendPoolConfig.appAddress,await tacSAFactory.getAddress(), crossChainLayerAddress);
         const sttonEVMAddress = testSdk.getEVMJettonAddress(sttonTokenInfo.tvmAddress);
         const tacEVMAddress = testSdk.getEVMJettonAddress(tacTokenInfo.tvmAddress);
@@ -53,7 +53,6 @@ describe("ZerolandPoolProxy", function () {
     
         const mockPoolFactory = await ethers.getContractFactory("MockZerolendPool", admin);
         mockPool = await mockPoolFactory.deploy(sttonEVMAddress, tokenValue);
-
 
     });
 
