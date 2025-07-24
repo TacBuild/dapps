@@ -10,6 +10,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ITacSmartAccount} from "@tonappchain/evm-ccl/contracts/smart-account/interfaces/ITacSmartAccount.sol";
 import {ISAFactory} from "@tonappchain/evm-ccl/contracts/smart-account/interfaces/ISAFactory.sol";
 import {IMerkl} from "./interface/IMerkl.sol";
+import {IWTAC} from "@tonappchain/evm-ccl/contracts/interfaces/IWTAC.sol";
 
 contract MerklProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgradeable {
 
@@ -17,6 +18,8 @@ contract MerklProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgra
     IMerkl public merkl;
 
     mapping(address token => address customMerklLogic) public tokenToLogic;
+
+    IWTAC constant public WTAC = IWTAC(0xB63B9f0eb4A6E6f191529D71d4D88cc8900Df2C9);
 
     struct ClaimData {
         address[] tokens;
@@ -74,20 +77,26 @@ contract MerklProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgra
                     abi.encodeWithSelector(IMerkl.claim.selector, users, data.tokens, data.amounts, data.proofs)
         );
         if (data.transferAndBridge) {
-            ITacSmartAccount(payable(user)).execute(
+            uint256 amount = IERC20(data.tokens[0]).balanceOf(user);
+            if (amount > 0) {
+                ITacSmartAccount(payable(user)).execute(
                     data.tokens[0],
                     0,
-                    abi.encodeWithSelector(IERC20.transfer.selector, address(this), IERC20(data.tokens[0]).balanceOf(user))
+                    abi.encodeWithSelector(IERC20.transfer.selector, address(this), amount)
                 );
         
-            if (IERC20(data.tokens[0]).balanceOf(address(this)) > 0) {
-                TokenAmount[] memory tokens = new TokenAmount[](1);
-                tokens[0] = TokenAmount({
-                    evmAddress: data.tokens[0],
-                    amount: IERC20(data.tokens[0]).balanceOf(address(this))
-                });
-
-                _bridgeTokens(tacHeader, tokens, "");
+                if (data.tokens[0] == address(WTAC)){
+                    WTAC.withdraw(amount);
+                    _bridgeTokens(tacHeader, new TokenAmount[](0), "", amount);
+                    
+                } else {
+                    TokenAmount[] memory tokens = new TokenAmount[](1);
+                    tokens[0] = TokenAmount({
+                        evmAddress: data.tokens[0],
+                        amount: amount
+                    });
+                    _bridgeTokens(tacHeader, tokens, "", 0);
+                }
             }
         }
     }
@@ -114,19 +123,33 @@ contract MerklProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgra
         if (data.tokenToBridge.length > 0) {
             
             TokenAmount[] memory tokens = new TokenAmount[](data.tokenToBridge.length);
+            uint256 nativeAmount = 0;
+            uint256 realAmountOfTokensToBridge = 0;
             for (uint256 i = 0; i < data.tokenToBridge.length; i++) {
                 uint256 amount = IERC20(data.tokenToBridge[i]).balanceOf(user);
+                if (amount == 0) {
+                    continue;
+                }
                 ITacSmartAccount(payable(user)).execute(
                     data.tokenToBridge[i],
                     0,
                     abi.encodeWithSelector(IERC20.transfer.selector, address(this), amount)
                 );
-                tokens[i] = TokenAmount({
-                    evmAddress: data.tokenToBridge[i],
-                    amount: amount
-                });
+                if (data.tokenToBridge[i] == address(WTAC)){
+                    nativeAmount += amount;
+                } else {
+                    tokens[realAmountOfTokensToBridge] = TokenAmount({
+                        evmAddress: data.tokenToBridge[i],
+                        amount: amount
+                    });
+                    realAmountOfTokensToBridge++;
+                }
             }
-            _bridgeTokens(tacHeader, tokens, "");
+            assembly {
+                mstore(tokens, realAmountOfTokensToBridge)
+            }
+            WTAC.withdraw(nativeAmount);
+            _bridgeTokens(tacHeader, tokens, "", nativeAmount);
         }
     }
 
@@ -138,19 +161,35 @@ contract MerklProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgra
         (address user, ) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
         (address[] memory tokens) = abi.decode(arguments, (address[]));
         TokenAmount[] memory tokenAmounts = new TokenAmount[](tokens.length);
+        uint256 realAmountOfTokensToBridge = 0;
+
+        uint256 nativeAmount = 0;
         for (uint256 i = 0; i < tokens.length; i++) {
             uint256 amount = IERC20(tokens[i]).balanceOf(user);
+            if (amount == 0) {
+                continue;
+            }
             ITacSmartAccount(payable(user)).execute(
                 tokens[i],
                 0,
                 abi.encodeWithSelector(IERC20.transfer.selector, address(this), amount)
             );
-            tokenAmounts[i] = TokenAmount({
-                evmAddress: tokens[i],
-                amount: amount
-            });
+            if (tokens[i] == address(WTAC)){
+                
+                nativeAmount += amount;
+            } else {
+                tokenAmounts[realAmountOfTokensToBridge] = TokenAmount({
+                    evmAddress: tokens[i],
+                    amount: amount
+                });
+                realAmountOfTokensToBridge++;
+            }
         }
-        _bridgeTokens(tacHeader, tokenAmounts, "");
+        assembly {
+            mstore(tokenAmounts, realAmountOfTokensToBridge)
+        }
+        WTAC.withdraw(nativeAmount);
+        _bridgeTokens(tacHeader, tokenAmounts, "", nativeAmount);
     }
 
     function getUserAddressForTvmCaller(string calldata tvmCaller) public view returns (address) {
@@ -169,7 +208,8 @@ contract MerklProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgra
     function _bridgeTokens(
         bytes calldata tacHeader,
         TokenAmount[] memory tokens,
-        string memory payload
+        string memory payload,
+        uint256 nativeAmount
     ) private {
         for (uint256 i = 0; i < tokens.length; i++) {
             SafeERC20.forceApprove(
@@ -191,8 +231,10 @@ contract MerklProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgra
             toBridgeNFT: new NFTAmount[](0)
         });
 
-        _sendMessageV1(message, address(this).balance);
+        _sendMessageV1(message, nativeAmount);
     }
+
+    receive() external payable {}
 }
 
 
