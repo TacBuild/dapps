@@ -15,7 +15,8 @@ interface IStableswapPool {
      */
     function add_liquidity(
         uint256[2] calldata amounts,
-        uint256 min_mint_amount
+        uint256 min_mint_amount,
+        address receiver
     ) external returns (uint256);
 
     /**
@@ -26,7 +27,8 @@ interface IStableswapPool {
      */
     function remove_liquidity(
         uint256 burn_amount,
-        uint256[2] calldata min_amounts
+        uint256[2] calldata min_amounts,
+        address receiver
     ) external returns (uint256[2] memory);
 
     /**
@@ -41,7 +43,8 @@ interface IStableswapPool {
         uint256 i,
         uint256 j,
         uint256 dx,
-        uint256 min_dy
+        uint256 min_dy,
+        address receiver
     ) external returns (uint256);
 
     /**
