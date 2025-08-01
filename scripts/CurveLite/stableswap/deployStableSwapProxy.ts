@@ -11,7 +11,7 @@ const proxyOpts: DeployProxyOptions = {
     unsafeAllow: ["constructor"]
 };
 
-export async function deployCurveLiteStableswapProxy(deployer: Signer, crossChainLayerAddress: string, smartAccountFactory: string): Promise<CurveLiteStableswapProxy> {
+export async function deployCurveLiteStableswapProxy(deployer: Signer, crossChainLayerAddress: string, smartAccountFactory: string, WTAC: string): Promise<CurveLiteStableswapProxy> {
     const CurveLiteStableswapProxy = await deployUpgradable<CurveLiteStableswapProxy>(
         deployer,
         hre.artifacts.readArtifactSync('CurveLiteStableswapProxy'),
@@ -19,5 +19,7 @@ export async function deployCurveLiteStableswapProxy(deployer: Signer, crossChai
         proxyOpts,
         undefined,
         true);
+    await CurveLiteStableswapProxy.waitForDeployment();
+    await CurveLiteStableswapProxy.setWTACAddress(WTAC);
     return CurveLiteStableswapProxy;
 }

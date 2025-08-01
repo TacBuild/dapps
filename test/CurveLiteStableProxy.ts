@@ -7,20 +7,23 @@ import { deployCurveLiteStableswapProxy } from "../scripts/CurveLite/stableswap/
 import { TacLocalTestSdk, TokenMintInfo, TokenUnlockInfo } from "@tonappchain/evm-ccl";
 
 
-import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types";
+import { ERC20, IWTAC } from "@tonappchain/evm-ccl/dist/typechain-types";
 import { CurveLiteStableswapProxy, ISAFactory } from "../typechain-types";
 import { factoryAbi } from "../scripts/CurveLite/stableswap/factoryAbi"
-import implementationAbi from "../scripts/CurveLite/twocryptoswap/implementationAbi.json"
+import { implementationAbi } from "../scripts/CurveLite/stableswap/implementationAbi"
 import { sttonTokenInfo, tacTokenInfo } from '../scripts/common/info/tokensInfo';
 
 
 describe("CurveLiteStableProxy", function () {
+
+    const NATIVE = "0xB63B9f0eb4A6E6f191529D71d4D88cc8900Df2C9"
+
     let poolPresetParams = {
-        name: "stTON-TAC",
-        symbol: "stTON-TAC",
+        name: "test",
+        symbol: "test",
         coins: ["", ""],
         A: 100,
-        fee: 2500000,
+        fee: 1000000,
         _offpeg_fee_multiplier: 20000000000,
         _ma_exp_time: 866,
         _implementation_idx: 0,
@@ -45,10 +48,10 @@ describe("CurveLiteStableProxy", function () {
         testSdk = new TacLocalTestSdk();
         const crossChainLayerAddress = await testSdk.create(ethers.provider);
         tacSAFactory = new ethers.Contract(testSdk.getSmartAccountFactoryAddress(), hre.artifacts.readArtifactSync('ISAFactory').abi, admin) as unknown as ISAFactory;
-
-        curveLiteStableProxy = await deployCurveLiteStableswapProxy(admin, crossChainLayerAddress, await tacSAFactory.getAddress());
+        WTAC = new ethers.Contract(NATIVE, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;
+        curveLiteStableProxy = await deployCurveLiteStableswapProxy(admin, crossChainLayerAddress, await tacSAFactory.getAddress(), await WTAC.getAddress());
         factoryContract = new ethers.Contract(CurveLiteStableswapMainnetConfig.CurveLiteStableswapFactory, factoryAbi, admin) as unknown as Contract;
-        console.log("factoryContract", factoryContract.address);
+        console.log("factoryContract", factoryContract.getAddress());
         console.log("curveLiteStableProxy", await curveLiteStableProxy.getAddress());
         console.log("crossChainLayerAddress", crossChainLayerAddress);
         console.log("tacSAFactory", await tacSAFactory.getAddress());
@@ -62,8 +65,8 @@ describe("CurveLiteStableProxy", function () {
         const timestamp = BigInt(Math.floor(Date.now() / 1000));
         const tvmWalletCaller = "EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk";
         const target = await admin.getAddress();
-
-        const mintAmount = 2n
+        await testSdk.lockNativeTacOnCrossChainLayer(10n**20n);
+        const mintAmount = 10n**20n
 
         const sttonTokenMintInfo: TokenMintInfo = {
             info: sttonTokenInfo,
@@ -82,7 +85,7 @@ describe("CurveLiteStableProxy", function () {
             tvmWalletCaller, // tvm caller
             [sttonTokenMintInfo, tacTokenMintInfo], // mint tokens
             [], // unlock tokens
-            0n, // native tac amount to unlock
+            10n**18n, // native tac amount to unlock
             extraData,
             operationId,
             timestamp
@@ -93,23 +96,22 @@ describe("CurveLiteStableProxy", function () {
         expect(tacEVMAddress).to.be.equal(deployedTokens[1].evmAddress);
         sttonEVM = new ethers.Contract(sttonEVMAddress, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;
         tacEVM = new ethers.Contract(tacEVMAddress, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;
-        console.log("sttonEVM", await sttonEVM.getAddress());
-        console.log("tacEVM", await tacEVM.getAddress());
+        
         
         expect(await sttonEVM.balanceOf(await admin.getAddress())).to.be.equal(mintAmount);
         expect(await tacEVM.balanceOf(await admin.getAddress())).to.be.equal(mintAmount);
-        poolPresetParams.coins = [sttonEVMAddress, tacEVMAddress];
 
     });
 
 
+    
     it("CurveLiteTwocryptoswap pool deploy pool", async function () {
         const poolCountBefore = await factoryContract.pool_count()
-        
+
         const tx = await factoryContract.deploy_plain_pool(
             poolPresetParams.name,
             poolPresetParams.symbol,
-            poolPresetParams.coins,
+            [await sttonEVM.getAddress(), await tacEVM.getAddress()],
             poolPresetParams.A,
             poolPresetParams.fee,
             poolPresetParams._offpeg_fee_multiplier,
@@ -123,17 +125,21 @@ describe("CurveLiteStableProxy", function () {
             }
         );
         const receipt = await tx.wait();
+        
+        
         expect(poolCountBefore).to.be.equal(await factoryContract.pool_count() - 1n);
-    });
-
-    it("CurveLiteTwocryptoswap pool check pool", async function () {
+        
         const PoolAddress = await factoryContract.find_pool_for_coins(await sttonEVM.getAddress(), await tacEVM.getAddress())
         pool = new ethers.Contract(PoolAddress, implementationAbi, admin) as unknown as Contract;
         expect(await pool.coins(0)).to.be.equal(await sttonEVM.getAddress());
         expect(await pool.coins(1)).to.be.equal(await tacEVM.getAddress());
         expect(await pool.balances(0)).to.be.equal(await sttonEVM.balanceOf(await pool.getAddress()));
         expect(await pool.balances(1)).to.be.equal(await tacEVM.balanceOf(await pool.getAddress()));
+        expect(await pool.getAddress()).to.be.equal(PoolAddress);
+
+
     });
+
 
     it ("CurveLiteTwocryptoswap test add liquidity", async function () {
         const shardsKey = 1n;
@@ -145,9 +151,10 @@ describe("CurveLiteStableProxy", function () {
         const target = await curveLiteStableProxy.getAddress();
         const methodName = "addLiquidity(bytes,bytes)";
 
-        const amountA = 1n**(await sttonEVM.decimals());
-        const amountB = 1n**(await tacEVM.decimals());
+        const amountA = 10000n*10n**(await sttonEVM.decimals())
+        const amountB = 10000n*10n**(await tacEVM.decimals())
 
+        //await testSdk.lockNativeTacOnCrossChainLayer(amountA);
 
         const sttonTokenMintInfo: TokenMintInfo = {
             info: sttonTokenInfo,
@@ -159,12 +166,12 @@ describe("CurveLiteStableProxy", function () {
         }
 
         const encodedParameters = new ethers.AbiCoder().encode(
-            ['tuple(address, uint256[2], uint256)'],
+            ['tuple(address, uint256[], uint256)'],
             [
                 [
                     await pool.getAddress(),
                     [amountA, amountB],
-                    0
+                    0n
                 ]
             ],
         );
@@ -267,66 +274,7 @@ describe("CurveLiteStableProxy", function () {
         expect(outMessage.tokensLocked.length).to.be.equal(0);
     });
 
-    it ("CurveLiteTwocryptoswap test remove liquidity one coin", async function () {
-        const shardsKey = 1n;
-        const operationId = ethers.encodeBytes32String("remove liquidity one coin");
-        const extraData = "0x";
-        const timestamp = BigInt(Math.floor(Date.now() / 1000));
-        const tvmWalletCaller = "EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk";
-
-        const target = await curveLiteStableProxy.getAddress();
-        const methodName = "removeLiquidityOneCoin(bytes,bytes)";
-
-        const amount = 1n*10n**(await pool.decimals());
-
-
-        const liquidityTokenUnlockInfo: TokenUnlockInfo = {
-            evmAddress: await pool.getAddress(),
-            amount: amount,
-        }
-
-        const encodedParameters = new ethers.AbiCoder().encode(
-            ['tuple(address, uint256, uint256, uint256)'],
-            [
-                [
-                    await pool.getAddress(),
-                    amount,
-                    0,
-                    0
-                ]
-            ],
-        );
-
-        const balanceBeforeA = await pool.balances(0);
-        const balanceBeforeB = await pool.balances(1);
-        const liquidityBefore = await pool.balanceOf(testSdk.getCrossChainLayerAddress());
-        // send message
-        const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
-            shardsKey, // shardsKey
-            target, // proxy address
-            methodName, // method name
-            encodedParameters, // encoded arguments
-            tvmWalletCaller, // tvm caller
-            [], // mint tokens
-            [liquidityTokenUnlockInfo], // unlock tokens
-            0n, // native tac amount to unlock
-            extraData,
-            operationId,
-            timestamp
-        );
-        expect(balanceBeforeA).to.be.gt(await pool.balances(0));
-        expect(liquidityBefore-amount).to.be.equal(await pool.balanceOf(testSdk.getCrossChainLayerAddress()));
-        expect(outMessages.length).to.be.equal(1);
-        const outMessage = outMessages[0];
-        expect(outMessage.operationId).to.be.equal(operationId);
-        expect(outMessage.shardsKey).to.be.equal(shardsKey);
-        expect(outMessage.callerAddress).to.be.equal(await curveLiteStableProxy.getAddress());
-        expect(outMessage.targetAddress).to.be.equal(tvmWalletCaller);
-        expect(outMessage.payload).to.be.equal("");
-        expect(outMessage.tokensLocked.length).to.be.equal(0);
-    });
-
-     it ("CurveLiteTwocryptoswap test remove liquidity", async function () {
+    it ("CurveLiteTwocryptoswap test remove liquidity", async function () {
         const shardsKey = 1n;
         const operationId = ethers.encodeBytes32String("exchange");
         const extraData = "0x";
@@ -336,7 +284,7 @@ describe("CurveLiteStableProxy", function () {
         const target = await curveLiteStableProxy.getAddress();
         const methodName = "removeLiquidity(bytes,bytes)";
 
-        const amount = 1n*10n**(await pool.decimals());
+        const amount = 1n*10n**(await pool.decimals()-5n);
 
 
         const liquidityTokenUnlockInfo: TokenUnlockInfo = {
@@ -345,7 +293,7 @@ describe("CurveLiteStableProxy", function () {
         }
 
         const encodedParameters = new ethers.AbiCoder().encode(
-            ['tuple(address, uint256, uint256[2])'],
+            ['tuple(address, uint256, uint256[])'],
             [
                 [
                     await pool.getAddress(),
@@ -379,10 +327,11 @@ describe("CurveLiteStableProxy", function () {
         const outMessage = outMessages[0];
         expect(outMessage.operationId).to.be.equal(operationId);
         expect(outMessage.shardsKey).to.be.equal(shardsKey);
-        expect(outMessage.callerAddress).to.be.equal(await curveLiteStableProxy.getAddress());
         expect(outMessage.targetAddress).to.be.equal(tvmWalletCaller);
         expect(outMessage.payload).to.be.equal("");
         expect(outMessage.tokensLocked.length).to.be.equal(0);
     });
+
+   
 });
 

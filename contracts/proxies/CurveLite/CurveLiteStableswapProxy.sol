@@ -11,7 +11,28 @@ import { IStableswapPool } from "contracts/proxies/CurveLite/ICurveLiteStableswa
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ITacSmartAccount } from "@tonappchain/evm-ccl/contracts/smart-account/interfaces/ITacSmartAccount.sol";
 import { ISAFactory } from "@tonappchain/evm-ccl/contracts/smart-account/interfaces/ISAFactory.sol";
-import "hardhat/console.sol";
+import { IWTAC } from "@tonappchain/evm-ccl/contracts/interfaces/IWTAC.sol";
+
+struct AddLiquidityArguments {
+    address pool;
+    uint256[] amounts;
+    uint256 minMintAmount;
+}
+
+struct RemoveLiquidityArguments {
+    address pool;
+    uint256 amount;
+    uint256[] min_amounts;
+}
+
+struct ExchangeArguments {
+    address pool;
+    int128 i;
+    int128 j;
+    uint256 dx;
+    uint256 min_dy;
+}
+
 
 /**
  * @title CurveLiteStableswapProxy
@@ -19,7 +40,7 @@ import "hardhat/console.sol";
  */
 contract CurveLiteStableswapProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgradeable {
     ISAFactory internal _smartAccountFactory;
-
+    address internal wtacAddress;
     address internal constant _ETH_ADDRESS_ = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
     error ValueAndAmountInMismatch();
@@ -40,10 +61,17 @@ contract CurveLiteStableswapProxy is TacProxyV1Upgradeable, Ownable2StepUpgradea
         _smartAccountFactory = ISAFactory(smartAccountFactory);
     }
 
+    function setWTACAddress(address _wtacAddress) external onlyOwner {
+        require(wtacAddress == address(0), "WTAC already inited");
+        wtacAddress = _wtacAddress;
+    }
+
     /**
      * @dev Upgrades the contract.
      */
     function _authorizeUpgrade(address) internal override onlyOwner {}
+
+
 
     /**
      * @dev A proxy to addLiquidity
@@ -54,33 +82,29 @@ contract CurveLiteStableswapProxy is TacProxyV1Upgradeable, Ownable2StepUpgradea
     ) public payable _onlyCrossChainLayer {
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user,) = _smartAccountFactory.getOrCreateSmartAccount(header.tvmCaller);
+        AddLiquidityArguments memory args = abi.decode(arguments, (AddLiquidityArguments));
+        uint256 coinsNum = IStableswapPool(args.pool).N_COINS();
+        address[] memory tokens = new address[](coinsNum);
+        require(coinsNum == args.amounts.length, "amounts len is not equal to pool coins num");
+        for(uint i = 0; i < coinsNum; i++){
+            tokens[i] = IStableswapPool(args.pool).coins(i);
+            if ((tokens[i] == wtacAddress && msg.value > 0) ){
+                require(msg.value == args.amounts[i], "TAC amount does not match amount for token");
+                IWTAC(wtacAddress).deposit{value: msg.value}();
+            }
+            SafeERC20.safeTransfer(IERC20(tokens[i]), user, args.amounts[i]);
+            ITacSmartAccount(payable(user)).approve(tokens[i], args.pool, args.amounts[i]);
+        }
 
-        (address pool, uint256[2] memory amounts, uint256 minMintAmount) =
-                abi.decode(arguments, (address, uint256[2], uint256));
-        
-        address tokenA = IStableswapPool(pool).coins(0);
-        address tokenB = IStableswapPool(pool).coins(1);
-        console.log("tokenA", tokenA);
-        console.log("tokenB", tokenB);
-        console.log("user", user);
-        SafeERC20.safeTransfer(IERC20(tokenA), user, amounts[0]);
-        SafeERC20.safeTransfer(IERC20(tokenB), user, amounts[1]);
-        ITacSmartAccount(payable(user)).approve(tokenA, pool, amounts[0]);
-        ITacSmartAccount(payable(user)).approve(tokenB, pool, amounts[1]);
-        console.log("1");
+        bytes memory outData = ITacSmartAccount(user).execute(args.pool, 0, abi.encodeWithSelector(IStableswapPool.add_liquidity.selector, args.amounts, args.minMintAmount));
 
-        bytes memory data = abi.encodeWithSelector(IStableswapPool.add_liquidity.selector, [amounts[0],amounts[1]], minMintAmount);
-        console.log("2");
-        bytes memory outData = ITacSmartAccount(payable(user)).execute(pool, 0, data);
-        console.log("3");
         (uint liquidity) = abi.decode(outData, (uint));
-        console.log("4");
 
-        ITacSmartAccount(payable(user)).execute(pool, 0, abi.encodeWithSelector(IERC20.transfer.selector, address(this), liquidity));
+        ITacSmartAccount(payable(user)).execute(args.pool, 0, abi.encodeWithSelector(IERC20.transfer.selector, address(this), liquidity));
 
         // bridge LP tokens to TON
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
-        tokensToBridge[0] = TokenAmount(pool, liquidity);
+        tokensToBridge[0] = TokenAmount(args.pool, liquidity);
 
         _bridgeTokens(tacHeader, tokensToBridge, "", 0);
     }
@@ -94,27 +118,34 @@ contract CurveLiteStableswapProxy is TacProxyV1Upgradeable, Ownable2StepUpgradea
     ) public _onlyCrossChainLayer {
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user,) = _smartAccountFactory.getOrCreateSmartAccount(header.tvmCaller);
+        RemoveLiquidityArguments memory args = abi.decode(arguments, (RemoveLiquidityArguments));
+        SafeERC20.safeTransfer(IERC20(args.pool), user, args.amount);
+        ITacSmartAccount(payable(user)).approve(args.pool, args.pool, args.amount);
+        bytes memory data = abi.encodeWithSelector(IStableswapPool.remove_liquidity.selector, args.amount, args.min_amounts, address(this));
+        bytes memory outData = ITacSmartAccount(payable(user)).execute(args.pool, 0, data);
+        (uint256[] memory amounts) = abi.decode(outData, (uint256[]));
+        uint256 coinsNum = IStableswapPool(args.pool).N_COINS();
+        uint256 nativeTacAmount = 0;
 
-        (address pool, uint256 amount, uint256[2] memory min_amounts) =
-                abi.decode(arguments, (address, uint256, uint256[2]));
-        // claim tokens addresses
-        address tokenA = IStableswapPool(pool).coins(0);
-        address tokenB = IStableswapPool(pool).coins(1);
+        TokenAmount[] memory tempTokens = new TokenAmount[](coinsNum);
+        uint256 count = 0;
 
-        SafeERC20.safeTransfer(IERC20(pool), user, amount);
-        // ITacSmartAccount(payable(user)).approve(pool, pool, amount);
+        for(uint i = 0; i < coinsNum; i++){
+            address token = IStableswapPool(args.pool).coins(i);
+            ITacSmartAccount(payable(user)).execute(token, 0, abi.encodeWithSelector(IERC20.transfer.selector, address(this), amounts[i]));
+            if ((token == wtacAddress) ){
+                IWTAC(wtacAddress).withdraw(amounts[i]);
+                nativeTacAmount += amounts[i];
+            } else {
+                tempTokens[count] = TokenAmount(token, amounts[i]);
+                count++;
+            }
+        }
 
-        bytes memory data = abi.encodeWithSelector(IStableswapPool.remove_liquidity.selector, amount, min_amounts, address(this));
-        bytes memory outData = ITacSmartAccount(payable(user)).execute(pool, 0, data);
-        (uint256[2] memory amounts) = abi.decode(outData, (uint256[2]));
-
-        ITacSmartAccount(payable(user)).execute(tokenA, 0, abi.encodeWithSelector(IERC20.transfer.selector, address(this), amounts[0]));
-        ITacSmartAccount(payable(user)).execute(tokenB, 0, abi.encodeWithSelector(IERC20.transfer.selector, address(this), amounts[1]));
-
-        // bridge tokens to TON
-        TokenAmount[] memory tokensToBridge = new TokenAmount[](2);
-        tokensToBridge[0] = TokenAmount(tokenA, amounts[0]);
-        tokensToBridge[1] = TokenAmount(tokenB, amounts[1]);
+        TokenAmount[] memory tokensToBridge = new TokenAmount[](count);
+        for (uint i = 0; i < count; i++) {
+            tokensToBridge[i] = tempTokens[i];
+        }
 
         _bridgeTokens(tacHeader, tokensToBridge, "", 0);
     }
@@ -129,20 +160,23 @@ contract CurveLiteStableswapProxy is TacProxyV1Upgradeable, Ownable2StepUpgradea
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user,) = _smartAccountFactory.getOrCreateSmartAccount(header.tvmCaller);
 
-        (address pool, uint256 i, uint256 j, uint256 dx, uint256 min_dy) =
-                abi.decode(arguments, (address, uint256, uint256, uint256, uint256));
+        ExchangeArguments memory args = abi.decode(arguments, (ExchangeArguments));
         // claim tokens addresses
-        address tokenIn = IStableswapPool(pool).coins(i);
-        address tokenOut = IStableswapPool(pool).coins(j);
+        address tokenIn = IStableswapPool(args.pool).coins(uint256(uint128(args.i)));
+        address tokenOut = IStableswapPool(args.pool).coins(uint256(uint128(args.j)));
 
-        SafeERC20.safeTransfer(IERC20(tokenIn), user, dx);
-        ITacSmartAccount(payable(user)).approve(tokenIn, pool, dx);
+        SafeERC20.safeTransfer(IERC20(tokenIn), user, args.dx);
+        ITacSmartAccount(payable(user)).approve(tokenIn, args.pool, args.dx);
+        bytes memory data = abi.encodeWithSelector(IStableswapPool.exchange.selector, args.i, args.j, args.dx, args.min_dy);
+        bytes memory outData = ITacSmartAccount(payable(user)).execute(args.pool, 0, data);
+        (uint256 amountOut) = abi.decode(outData, (uint));
+        ITacSmartAccount(payable(user)).execute(tokenOut, 0, abi.encodeWithSelector(IERC20.transfer.selector, address(this), amountOut));
 
-        bytes memory outData = ITacSmartAccount(payable(user)).execute(pool, 0, abi.encodeWithSelector(IStableswapPool.exchange.selector, i, j, dx, min_dy, address(this)));
+        
 
         // bridge tokens to TON
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
-        tokensToBridge[0] = TokenAmount(tokenOut, abi.decode(outData, (uint256)));
+        tokensToBridge[0] = TokenAmount(tokenOut, amountOut);
 
         _bridgeTokens(tacHeader, tokensToBridge, "", 0);
     }
@@ -180,4 +214,16 @@ contract CurveLiteStableswapProxy is TacProxyV1Upgradeable, Ownable2StepUpgradea
 
         _sendMessageV1(message, nativeTacAmount);
     }
+
+    function containsToken(address[] memory tokens, address tokenToFind) internal pure returns (bool) {
+        for (uint i = 0; i < tokens.length; i++) {
+            if (tokens[i] == tokenToFind) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    receive() external payable {}
 }
