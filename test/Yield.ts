@@ -75,6 +75,9 @@ describe("YieldProxy", function () {
         operationId,
         timestamp
     )
+
+    const userContract = new ethers.Contract(user, hre.artifacts.readArtifactSync('ITacSmartAccount').abi, admin) as unknown;
+    console.log("userContract", await userContract.onERC721Received(user, user, 0, "0x"));
 });
 
 

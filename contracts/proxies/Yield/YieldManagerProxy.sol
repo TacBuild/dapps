@@ -11,18 +11,22 @@ import {ITacSmartAccount} from "@tonappchain/evm-ccl/contracts/smart-account/int
 import {ISAFactory} from "@tonappchain/evm-ccl/contracts/smart-account/interfaces/ISAFactory.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IManager} from "./IManager.sol";
+import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "hardhat/console.sol";
 
 /**
  * @title YieldManagerProxy
  * @dev Proxy contract for Yield Manager
  */
-contract YieldManagerProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgradeable {
-
+contract YieldManagerProxy is
+    TacProxyV1Upgradeable,
+    Ownable2StepUpgradeable,
+    UUPSUpgradeable,
+    IERC721Receiver
+{
     address public managerAddress;
     address public yUSD;
     address public tacSAFactoryAddress;
-
 
     struct DepositArguments {
         address yToken;
@@ -43,11 +47,17 @@ contract YieldManagerProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UU
         bytes callbackData;
     }
 
-    constructor(){
+    constructor() {
         _disableInitializers();
     }
-    
-    function initialize(address _adminAddress, address _managerAddress, address _yUSD,  address _tacSAFactoryAddress, address _crossChainLayer) public initializer {
+
+    function initialize(
+        address _adminAddress,
+        address _managerAddress,
+        address _yUSD,
+        address _tacSAFactoryAddress,
+        address _crossChainLayer
+    ) public initializer {
         __TacProxyV1Upgradeable_init(_crossChainLayer);
         __Ownable_init(_adminAddress);
         __Ownable2Step_init();
@@ -71,42 +81,67 @@ contract YieldManagerProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UU
         bytes calldata tacHeader,
         bytes calldata arguments
     ) public payable _onlyCrossChainLayer {
-        (DepositArguments memory depositArguments) = abi.decode(arguments, (DepositArguments));
+        DepositArguments memory depositArguments = abi.decode(
+            arguments,
+            (DepositArguments)
+        );
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
-        (address user, ) = ISAFactory(tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
-        require(IERC20(depositArguments.asset).balanceOf(address(this)) == depositArguments.amount, "Invalid amount");
-        console.log(1);
-        SafeERC20.safeTransfer(IERC20(depositArguments.asset), user, depositArguments.amount);
+        (address user, ) = ISAFactory(tacSAFactoryAddress)
+            .getOrCreateSmartAccount(header.tvmCaller);
+        // require(
+        //     IERC20(depositArguments.asset).balanceOf(address(this)) ==
+        //         depositArguments.amount,
+        //     "Invalid amount"
+        // );
+        // console.log(1);
+        // SafeERC20.safeTransfer(
+        //     IERC20(depositArguments.asset),
+        //     user,
+        //     depositArguments.amount
+        // );
         console.log(2);
-        ITacSmartAccount(user).execute(
+        // ITacSmartAccount(user).approve(
+        //     depositArguments.asset,
+        //     managerAddress,
+        //     depositArguments.amount
+        // );
+        SafeERC20.forceApprove(
+            IERC20(depositArguments.asset),
+            managerAddress,
+            depositArguments.amount
+        );
+        IManager(managerAddress).deposit(
+            depositArguments.yToken,
             depositArguments.asset,
-            0,
-            abi.encodeWithSelector(
-                IERC20(depositArguments.asset).approve.selector,
-                managerAddress,
-                depositArguments.amount
-            )
+            depositArguments.amount,
+            address(this),
+            depositArguments.callback,
+            depositArguments.callbackData,
+            depositArguments.referralCode
         );
         console.log(3);
-        (bool success, bytes memory data) = ITacSmartAccount(user).executeUnsafe(
-            managerAddress,
-            0,
-            abi.encodeWithSelector(
-                IManager.deposit.selector,
-                depositArguments.yToken,
-                depositArguments.asset,
-                depositArguments.amount,
-                depositArguments.receiver,
-                depositArguments.callback,
-                depositArguments.callbackData,
-                depositArguments.referralCode
-                )
-        );
-        console.log(success);
-        console.logBytes(data);
-        console.log(4);
-    }
+        console.log("user", user);
+        console.log("depositArguments.receiver", depositArguments.receiver);
 
+        // (bool success, bytes memory data) = ITacSmartAccount(user)
+        //     .executeUnsafe(
+        //         managerAddress,
+        //         0,
+        //         abi.encodeWithSelector(
+        //             IManager.deposit.selector,
+        //             depositArguments.yToken,
+        //             depositArguments.asset,
+        //             depositArguments.amount,
+        //             address(this),
+        //             depositArguments.callback,
+        //             depositArguments.callbackData,
+        //             depositArguments.referralCode
+        //         )
+        //     );
+        // console.log(success);
+        // console.logBytes(data);
+        // console.log(4);
+    }
 
     /**
      * @dev A proxy to withdraw
@@ -114,14 +149,18 @@ contract YieldManagerProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UU
      * @param arguments arguments data
      */
     function redeem(
-    bytes calldata tacHeader,
-    bytes calldata arguments
+        bytes calldata tacHeader,
+        bytes calldata arguments
     ) public _onlyCrossChainLayer {
-        (WithdrawArguments memory withdrawArguments) = abi.decode(arguments, (WithdrawArguments));
+        WithdrawArguments memory withdrawArguments = abi.decode(
+            arguments,
+            (WithdrawArguments)
+        );
 
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
-        (address user,) = ISAFactory(tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
-        
+        (address user, ) = ISAFactory(tacSAFactoryAddress)
+            .getOrCreateSmartAccount(header.tvmCaller);
+
         SafeERC20.safeTransfer(IERC20(yUSD), user, withdrawArguments.shares);
 
         ITacSmartAccount(user).execute(
@@ -135,19 +174,19 @@ contract YieldManagerProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UU
         );
 
         ITacSmartAccount(user).execute(
-                managerAddress,
-                0,
-                abi.encodeWithSelector(
-                    IManager.redeem.selector,
-                    user,
-                    withdrawArguments.yToken,
-                    withdrawArguments.asset,
-                    withdrawArguments.shares,
-                    withdrawArguments.receiver,
-                    withdrawArguments.callback,
-                    withdrawArguments.callbackData
-                    )
-            );
+            managerAddress,
+            0,
+            abi.encodeWithSelector(
+                IManager.redeem.selector,
+                user,
+                withdrawArguments.yToken,
+                withdrawArguments.asset,
+                withdrawArguments.shares,
+                withdrawArguments.receiver,
+                withdrawArguments.callback,
+                withdrawArguments.callbackData
+            )
+        );
     }
 
     function claimYToken(
@@ -155,7 +194,8 @@ contract YieldManagerProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UU
         bytes calldata
     ) public _onlyCrossChainLayer {
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
-        (address user,) = ISAFactory(tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
+        (address user, ) = ISAFactory(tacSAFactoryAddress)
+            .getOrCreateSmartAccount(header.tvmCaller);
         uint256 amount = IERC20(yUSD).balanceOf(user);
         ITacSmartAccount(user).execute(
             yUSD,
@@ -178,8 +218,9 @@ contract YieldManagerProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UU
         bytes calldata arguments
     ) public _onlyCrossChainLayer {
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
-        (address asset) = abi.decode(arguments, (address));
-        (address user,) = ISAFactory(tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
+        address asset = abi.decode(arguments, (address));
+        (address user, ) = ISAFactory(tacSAFactoryAddress)
+            .getOrCreateSmartAccount(header.tvmCaller);
         uint256 amount = IERC20(asset).balanceOf(user);
         SafeERC20.safeTransfer(IERC20(asset), address(this), amount);
 
@@ -187,9 +228,6 @@ contract YieldManagerProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UU
         tokens[0] = TokenAmount(asset, amount);
         _bridgeTokens(tacHeader, tokens, "");
     }
-
-    
-
 
     /// @notice Bridges tokens and NFTs to the cross-chain layer
     /// @param tacHeader TAC header data
@@ -208,7 +246,6 @@ contract YieldManagerProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UU
             );
         }
 
-        
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         OutMessageV1 memory message = OutMessageV1({
             shardsKey: header.shardsKey,
@@ -221,5 +258,14 @@ contract YieldManagerProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UU
             toBridgeNFT: new NFTAmount[](0)
         });
         _sendMessageV1(message, address(this).balance);
+    }
+
+    function onERC721Received(
+        address,
+        address,
+        uint256,
+        bytes calldata
+    ) external pure override returns (bytes4) {
+        return IERC721Receiver.onERC721Received.selector;
     }
 }
