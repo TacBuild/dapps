@@ -96,13 +96,17 @@ describe("MerklProxy", function () {
         const tvmWalletCaller = "EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk";
 
         const target = await merklProxy.getAddress();
+        const functionSelector = customMerklProxyEuler.withdrawToByLockTimestamp.fragment.selector;
+        const functionSelector2 = customMerklProxyEuler.withdrawToByLockTimestamps.fragment.selector;
+        console.log("functionSelector", functionSelector);
+        console.log("functionSelector2", functionSelector2);
         const methodName = "customFunctionCall(bytes,bytes)";
         const rEUL = await ethers.getContractAt(hre.artifacts.readArtifactSync('IREUL').abi, rEULAddress);
         const EUL = await ethers.getContractAt(hre.artifacts.readArtifactSync('contracts/faucet/interfaces/IERC20.sol:IERC20').abi, EULAddress);
         
         const account = await tacSAFactory.predictSmartAccountAddress(tvmWalletCaller, await merklProxy.getAddress());
         const lockTimestamp = (await rEUL.getLockedAmounts(account))[0][0];
-        const functionSelector = customMerklProxyEuler.withdrawToByLockTimestamp.fragment.selector;
+        
         const withdrawToByLockTimestampData = new ethers.AbiCoder().encode(
             ['tuple(uint256,bool)'],
             [[lockTimestamp, true]]
