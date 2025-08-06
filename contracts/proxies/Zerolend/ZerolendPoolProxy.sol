@@ -18,14 +18,12 @@ import {IPool, DataTypes} from "./interfaces/IPool.sol";
 struct SupplyArguments {
     address asset;
     uint256 amount;
-    address onBehalfOf;
     uint16 referralCode;
 }
 
 struct WithdrawArguments {
     address asset;
     uint256 amount;
-    address to;
 }
 
 struct BorrowArguments {
@@ -33,14 +31,12 @@ struct BorrowArguments {
     uint256 amount;
     uint256 interestRateMode;
     uint16 referralCode;
-    address onBehalfOf;
 }
 
 struct RepayArguments {
     address asset;
     uint256 amount;
     uint256 interestRateMode;
-    address onBehalfOf;
 }
 
 /**
@@ -59,7 +55,7 @@ contract ZerolendPoolProxy is
 
 
 
-    function initialize(address deployer, address appAddress,address tacSAFactoryAddress, address _crossChainLayer) public initializer {
+    function initialize(address deployer, address appAddress, address tacSAFactoryAddress, address _crossChainLayer) public initializer {
         __TacProxyV1Upgradeable_init(_crossChainLayer);
         __Ownable_init(deployer);
         __Ownable2Step_init();
@@ -87,9 +83,7 @@ contract ZerolendPoolProxy is
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
 
         (address user, bool isNewAccount) = ISAFactory(_tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
-
         TransferHelper.safeTransfer(args.asset, user, args.amount);
-
         ITacSmartAccount(user).execute(
             args.asset,
             0,
@@ -99,7 +93,6 @@ contract ZerolendPoolProxy is
                 args.amount
             )
         );
-
         ITacSmartAccount(user).execute(
             _appAddress,
             0,
@@ -122,10 +115,7 @@ contract ZerolendPoolProxy is
         bytes calldata tacHeader,
         bytes calldata arguments
     ) external _onlyCrossChainLayer {
-        WithdrawArguments memory args = abi.decode(
-            arguments,
-            (WithdrawArguments)
-        );
+        WithdrawArguments memory args = abi.decode(arguments,(WithdrawArguments));
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
 
         (address user, bool isNewAccount) = ISAFactory(_tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
@@ -138,7 +128,7 @@ contract ZerolendPoolProxy is
                 args.asset,
                 args.amount,
                 user
-                )
+            )
         );
 
         ITacSmartAccount(user).execute(

@@ -8,9 +8,8 @@ import { deployTacSAFactory } from "../scripts/TacSmartAccountFactory/FactoryDep
 import { deployTacSmartAccount } from "../scripts/TacSmartAccountFactory/SABlueprintDeploy";
 
 import { TacLocalTestSdk, TokenMintInfo, TokenUnlockInfo } from "@tonappchain/evm-ccl";
-import {ITacSmartAccount} from "@tonappchain/evm-ccl/contracts/smart-account/interfaces/ITacSmartAccount.sol";
 import {ISAFactory} from "@tonappchain/evm-ccl/contracts/smart-account/interfaces/ISAFactory.sol";
-import { ZerolendPoolProxy, MockZerolendPool } from '../typechain-types';
+import { ZerolendPoolProxy, MockZerolendPool, TestToken} from '../typechain-types';
 
 import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types"
 import { sttonTokenInfo, tacTokenInfo } from '../scripts/common/info/tokensInfo';
@@ -37,23 +36,27 @@ describe("ZerolandPoolProxy", function () {
     let zerolendPoolProxy: ZerolendPoolProxy;
     let tacSAFactory: ISAFactory;
     let mockPool: MockZerolendPool;
+    let crossChainLayerAddress: string
+    let mockAToken: TestToken;
 
     const tokenValue = 100000n
 
     before(async function () {
         [admin] = await ethers.getSigners();
         testSdk = new TacLocalTestSdk();
-        const crossChainLayerAddress = await testSdk.create(ethers.provider);
+        crossChainLayerAddress = await testSdk.create(ethers.provider);
         tacSAFactory = new ethers.Contract(testSdk.getSmartAccountFactoryAddress(), hre.artifacts.readArtifactSync('ISAFactory').abi, admin) as unknown as ISAFactory;
-        zerolendPoolProxy = await deployZerolendPoolProxy(admin, zerolendPoolConfig.appAddress,await tacSAFactory.getAddress(), crossChainLayerAddress);
+
+        const testTokenFactory = await ethers.getContractFactory("TestToken", admin);
+        mockAToken = await testTokenFactory.deploy("AToken","AToken");
+
         const sttonEVMAddress = testSdk.getEVMJettonAddress(sttonTokenInfo.tvmAddress);
         const tacEVMAddress = testSdk.getEVMJettonAddress(tacTokenInfo.tvmAddress);
         sttonEVM = new ethers.Contract(sttonEVMAddress, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;
         tacEVM = new ethers.Contract(tacEVMAddress, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;    
-    
         const mockPoolFactory = await ethers.getContractFactory("MockZerolendPool", admin);
-        mockPool = await mockPoolFactory.deploy(sttonEVMAddress, tokenValue);
-
+        mockPool = await mockPoolFactory.deploy(mockAToken, tokenValue);
+        zerolendPoolProxy = await deployZerolendPoolProxy(admin, await mockPool.getAddress(), await tacSAFactory.getAddress(), crossChainLayerAddress);
     });
 
     it("Zerolend supply", async function () {
@@ -66,27 +69,24 @@ describe("ZerolandPoolProxy", function () {
         const target = await zerolendPoolProxy.getAddress();
         const methodName = "supply(bytes,bytes)";
 
-        const amount = 100n
-
-        const onBehalf = await tacSAFactory.getSmartAccountForApplication(tvmWalletCaller, await zerolendPoolProxy.getAddress());
+        const amount = 1000n
 
         const encodedArguments = new ethers.AbiCoder().encode(
-            ['tuple(address,uint256,address,uint256)'],
+            ['tuple(address,uint256,uint16)'],
             [[
-                await tacEVM.getAddress(),
+                await sttonEVM.getAddress(),
                 amount,
-                onBehalf,
-                0
+                0n
             ]]
         );
         
         const mintTokens: TokenMintInfo[] = [
         {
-            info: tacTokenInfo,
-            amount: ethers.parseUnits("100", tacTokenInfo.decimals)
+            info: sttonTokenInfo,
+            amount: ethers.parseUnits("100", sttonTokenInfo.decimals)
         }];
 
-        await testSdk.sendMessage(
+        const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
             shardsKey,
             target,
             methodName,
@@ -99,8 +99,58 @@ describe("ZerolandPoolProxy", function () {
             operationId,
             timestamp
         );
+
+        expect(receipt?.status).to.equal(1);
+        expect(deployedTokens.length).to.be.eq(1);
+
+        const smartAccountAddress = await tacSAFactory.getSmartAccountForApplication(tvmWalletCaller, await zerolendPoolProxy.getAddress());
+        expect(smartAccountAddress).to.not.equal(ethers.ZeroAddress);
+
     });
 
+    it("Zerolend withdraw", async function () {
+        const shardsKey = 1n;
+        const operationId = ethers.encodeBytes32String("supply");
+        const extraData = "0x";
+        const timestamp = BigInt(Math.floor(Date.now() / 1000));
+        const tvmWalletCaller = "EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk";
+
+        const target = await zerolendPoolProxy.getAddress();
+        const methodName = "withdraw(bytes,bytes)";
+
+        const amount = 100n
+
+        const onBehalf = await tacSAFactory.getSmartAccountForApplication(tvmWalletCaller, await zerolendPoolProxy.getAddress());
+
+        const encodedArguments = new ethers.AbiCoder().encode(
+            ['tuple(address,uint256)'],
+            [[
+                await sttonEVM.getAddress(),
+                amount,
+            ]]
+        );
+        
+
+        const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
+            shardsKey,
+            target,
+            methodName,
+            encodedArguments,
+            tvmWalletCaller,
+            [],
+            [],
+            0n,
+            extraData,
+            operationId,
+            timestamp
+        );
+
+        expect(receipt?.status).to.equal(1);
+        expect(deployedTokens.length).to.be.eq(0);
+
+        const smartAccountAddress = await tacSAFactory.getSmartAccountForApplication(tvmWalletCaller, await zerolendPoolProxy.getAddress());
+        expect(smartAccountAddress).to.not.equal(ethers.ZeroAddress);
+    });
 
 
 });
