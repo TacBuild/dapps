@@ -11,8 +11,6 @@ import {ITacSmartAccount} from "@tonappchain/evm-ccl/contracts/smart-account/int
 import {ISAFactory} from "@tonappchain/evm-ccl/contracts/smart-account/interfaces/ISAFactory.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IManager} from "./IManager.sol";
-import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
-import "hardhat/console.sol";
 
 /**
  * @title YieldManagerProxy
@@ -21,18 +19,23 @@ import "hardhat/console.sol";
 contract YieldManagerProxy is
     TacProxyV1Upgradeable,
     Ownable2StepUpgradeable,
-    UUPSUpgradeable,
-    IERC721Receiver
+    UUPSUpgradeable
 {
     address public managerAddress;
     address public yUSD;
     address public tacSAFactoryAddress;
 
+    error InvalidAmount();
+
+    event Deposit(address indexed user, address indexed yToken, address indexed asset, uint256 amount);
+    event Redeem(address indexed user, address indexed yToken, address indexed asset, uint256 amount);
+    event ClaimYToken(address indexed user, address indexed yToken, uint256 amount);
+    event ClaimAsset(address indexed user, address indexed asset, uint256 amount);
+
     struct DepositArguments {
         address yToken;
         address asset;
         uint256 amount;
-        address receiver;
         address callback;
         bytes callbackData;
         bytes32 referralCode;
@@ -42,7 +45,6 @@ contract YieldManagerProxy is
         address yToken;
         address asset;
         uint256 shares;
-        address receiver;
         address callback;
         bytes callbackData;
     }
@@ -88,59 +90,38 @@ contract YieldManagerProxy is
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user, ) = ISAFactory(tacSAFactoryAddress)
             .getOrCreateSmartAccount(header.tvmCaller);
-        // require(
-        //     IERC20(depositArguments.asset).balanceOf(address(this)) ==
-        //         depositArguments.amount,
-        //     "Invalid amount"
-        // );
-        // console.log(1);
-        // SafeERC20.safeTransfer(
-        //     IERC20(depositArguments.asset),
-        //     user,
-        //     depositArguments.amount
-        // );
-        console.log(2);
-        // ITacSmartAccount(user).approve(
-        //     depositArguments.asset,
-        //     managerAddress,
-        //     depositArguments.amount
-        // );
-        SafeERC20.forceApprove(
+        require(
+            IERC20(depositArguments.asset).balanceOf(address(this)) ==
+                depositArguments.amount,
+            InvalidAmount()
+        );
+        SafeERC20.safeTransfer(
             IERC20(depositArguments.asset),
+            user,
+            depositArguments.amount
+        );
+        ITacSmartAccount(user).approve(
+            depositArguments.asset,
             managerAddress,
             depositArguments.amount
         );
-        IManager(managerAddress).deposit(
-            depositArguments.yToken,
-            depositArguments.asset,
-            depositArguments.amount,
-            address(this),
-            depositArguments.callback,
-            depositArguments.callbackData,
-            depositArguments.referralCode
-        );
-        console.log(3);
-        console.log("user", user);
-        console.log("depositArguments.receiver", depositArguments.receiver);
 
-        // (bool success, bytes memory data) = ITacSmartAccount(user)
-        //     .executeUnsafe(
-        //         managerAddress,
-        //         0,
-        //         abi.encodeWithSelector(
-        //             IManager.deposit.selector,
-        //             depositArguments.yToken,
-        //             depositArguments.asset,
-        //             depositArguments.amount,
-        //             address(this),
-        //             depositArguments.callback,
-        //             depositArguments.callbackData,
-        //             depositArguments.referralCode
-        //         )
-        //     );
-        // console.log(success);
-        // console.logBytes(data);
-        // console.log(4);
+        ITacSmartAccount(user)
+            .execute(
+                managerAddress,
+                0,
+                abi.encodeWithSelector(
+                    IManager.deposit.selector,
+                    depositArguments.yToken,
+                    depositArguments.asset,
+                    depositArguments.amount,
+                    user,
+                    depositArguments.callback,
+                    depositArguments.callbackData,
+                    depositArguments.referralCode
+                )
+            );
+        emit Deposit(user, depositArguments.yToken, depositArguments.asset, depositArguments.amount);
     }
 
     /**
@@ -182,11 +163,12 @@ contract YieldManagerProxy is
                 withdrawArguments.yToken,
                 withdrawArguments.asset,
                 withdrawArguments.shares,
-                withdrawArguments.receiver,
+                user,
                 withdrawArguments.callback,
                 withdrawArguments.callbackData
             )
         );
+        emit Redeem(user, withdrawArguments.yToken, withdrawArguments.asset, withdrawArguments.shares);
     }
 
     function claimYToken(
@@ -211,6 +193,7 @@ contract YieldManagerProxy is
         tokens[0] = TokenAmount(yUSD, amount);
 
         _bridgeTokens(tacHeader, tokens, "");
+        emit ClaimYToken(user, yUSD, amount);
     }
 
     function claimAsset(
@@ -222,11 +205,19 @@ contract YieldManagerProxy is
         (address user, ) = ISAFactory(tacSAFactoryAddress)
             .getOrCreateSmartAccount(header.tvmCaller);
         uint256 amount = IERC20(asset).balanceOf(user);
-        SafeERC20.safeTransfer(IERC20(asset), address(this), amount);
-
+        ITacSmartAccount(user).execute(
+            asset,
+            0,
+            abi.encodeWithSelector(
+                IERC20(asset).transfer.selector,
+                address(this),
+                amount
+            )
+        );
         TokenAmount[] memory tokens = new TokenAmount[](1);
         tokens[0] = TokenAmount(asset, amount);
         _bridgeTokens(tacHeader, tokens, "");
+        emit ClaimAsset(user, asset, amount);
     }
 
     /// @notice Bridges tokens and NFTs to the cross-chain layer
@@ -258,14 +249,5 @@ contract YieldManagerProxy is
             toBridgeNFT: new NFTAmount[](0)
         });
         _sendMessageV1(message, address(this).balance);
-    }
-
-    function onERC721Received(
-        address,
-        address,
-        uint256,
-        bytes calldata
-    ) external pure override returns (bytes4) {
-        return IERC721Receiver.onERC721Received.selector;
     }
 }

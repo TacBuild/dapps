@@ -3,6 +3,7 @@ import { YieldManagerProxy } from '../../typechain-types/';
 import { Signer } from 'ethers';
 import { deployUpgradable } from '@tonappchain/evm-ccl'
 import { DeployProxyOptions } from "@openzeppelin/hardhat-upgrades/dist/utils";
+import { yiedMainnetConfig } from "./config/mainnetConfig";
 
 const proxyOptsUUPS: DeployProxyOptions = {
     kind: "uups",
