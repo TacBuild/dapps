@@ -33,6 +33,15 @@ struct ExchangeArguments {
     uint256 min_dy;
 }
 
+struct RemoveLiquidityOneCoinArguments {
+    address pool;
+    uint256 burn_amount;
+    int128 i;
+    uint256 min_received;
+}
+
+
+
 
 /**
  * @title CurveLiteStableswapProxy
@@ -121,7 +130,7 @@ contract CurveLiteStableswapProxy is TacProxyV1Upgradeable, Ownable2StepUpgradea
         RemoveLiquidityArguments memory args = abi.decode(arguments, (RemoveLiquidityArguments));
         SafeERC20.safeTransfer(IERC20(args.pool), user, args.amount);
         ITacSmartAccount(payable(user)).approve(args.pool, args.pool, args.amount);
-        bytes memory data = abi.encodeWithSelector(IStableswapPool.remove_liquidity.selector, args.amount, args.min_amounts, address(this));
+        bytes memory data = abi.encodeWithSelector(IStableswapPool.remove_liquidity.selector, args.amount, args.min_amounts);
         bytes memory outData = ITacSmartAccount(payable(user)).execute(args.pool, 0, data);
         (uint256[] memory amounts) = abi.decode(outData, (uint256[]));
         uint256 coinsNum = IStableswapPool(args.pool).N_COINS();
@@ -148,6 +157,36 @@ contract CurveLiteStableswapProxy is TacProxyV1Upgradeable, Ownable2StepUpgradea
         }
 
         _bridgeTokens(tacHeader, tokensToBridge, "", 0);
+    }
+
+    /**
+     * @dev A proxy to removeLiquidity
+     */
+    function remove_liquidity_one_coin(
+        bytes calldata tacHeader,
+        bytes calldata arguments
+    ) public _onlyCrossChainLayer {
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
+        (address user,) = _smartAccountFactory.getOrCreateSmartAccount(header.tvmCaller);
+        RemoveLiquidityOneCoinArguments memory args = abi.decode(arguments, (RemoveLiquidityOneCoinArguments));
+        SafeERC20.safeTransfer(IERC20(args.pool), user, args.burn_amount);
+        ITacSmartAccount(payable(user)).approve(args.pool, args.pool, args.burn_amount);
+        bytes memory data = abi.encodeWithSelector(IStableswapPool.remove_liquidity_one_coin.selector, args.burn_amount, args.i, args.min_received);
+        bytes memory outData = ITacSmartAccount(payable(user)).execute(args.pool, 0, data);
+        (uint256 amount) = abi.decode(outData, (uint256));
+
+        
+        address token = IStableswapPool(args.pool).coins(uint256(uint128(args.i)));
+        ITacSmartAccount(payable(user)).execute(token, 0, abi.encodeWithSelector(IERC20.transfer.selector, address(this), amount));
+
+        if (token == wtacAddress ){
+            IWTAC(wtacAddress).withdraw(amount);
+            _bridgeTokens(tacHeader, new TokenAmount[](0), "", amount);
+        } else {
+            TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
+            tokensToBridge[0] = TokenAmount(token, amount);
+            _bridgeTokens(tacHeader, new TokenAmount[](0), "", amount);
+        }
     }
 
     /**

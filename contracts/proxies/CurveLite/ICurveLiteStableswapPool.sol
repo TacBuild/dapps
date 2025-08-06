@@ -29,6 +29,19 @@ interface IStableswapPool {
         uint256[] calldata min_amounts
     ) external returns (uint256[] memory);
 
+    /** 
+    * @notice Withdraw a single coin from the pool
+    * @param burn_amount Amount of LP tokens to burn in the withdrawal
+    * @param i Index value of the coin to withdraw
+    * @param min_received Minimum amount of coin to receive
+    * @return Amount of coin received
+    */
+    function remove_liquidity_one_coin(
+        uint256 burn_amount,
+        int128 i,
+        uint256 min_received
+    ) external returns (uint256);
+
     /**
      * @notice Exchange tokens 
      * @param i Index value for the input coin
