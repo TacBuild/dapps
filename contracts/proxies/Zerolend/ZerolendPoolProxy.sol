@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.25;
+pragma solidity ^0.8.28;
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {OutMessageV1, TokenAmount, TacHeaderV1, NFTAmount} from "@tonappchain/evm-ccl/contracts/core/Structs.sol";
@@ -12,7 +12,6 @@ import {ITacSmartAccount} from "@tonappchain/evm-ccl/contracts/smart-account/int
 import {ISAFactory} from "@tonappchain/evm-ccl/contracts/smart-account/interfaces/ISAFactory.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IPool, DataTypes} from "./interfaces/IPool.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 
 struct SupplyArguments {
@@ -144,7 +143,7 @@ contract ZerolendPoolProxy is
             args.amount
         );
 
-        _bridgeTokens(tacHeader, tokensToBridge, new NFTAmount[](0), "", 0);
+        _bridgeTokens(tacHeader, tokensToBridge, "", 0);
     }
 
     /**
@@ -190,7 +189,7 @@ contract ZerolendPoolProxy is
             args.amount
         );
 
-        _bridgeTokens(tacHeader, tokensToBridge, new NFTAmount[](0), "", 0);
+        _bridgeTokens(tacHeader, tokensToBridge, "", 0);
     }
 
     /**
@@ -278,18 +277,16 @@ contract ZerolendPoolProxy is
             IERC20(asset).balanceOf(address(this))
         );
 
-        _bridgeTokens(tacHeader, tokensToBridge, new NFTAmount[](0), "", 0);
+        _bridgeTokens(tacHeader, tokensToBridge, "", 0);
     }
 
     /// @notice Bridges tokens and NFTs to the cross-chain layer
     /// @param tacHeader TAC header data
     /// @param tokens Array of token amounts to bridge
-    /// @param nfts Array of NFT amounts to bridge
     /// @param payload Additional payload data
     function _bridgeTokens(
         bytes calldata tacHeader,
         TokenAmount[] memory tokens,
-        NFTAmount[] memory nfts,
         string memory payload,
         uint256 tacAmount
     ) private {
@@ -301,9 +298,6 @@ contract ZerolendPoolProxy is
             );
         }
 
-        for (uint256 i = 0; i < nfts.length; i++) {
-            IERC721(nfts[i].evmAddress).approve(_getCrossChainLayerAddress(), nfts[i].tokenId);
-        }
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         OutMessageV1 memory message = OutMessageV1({
             shardsKey: header.shardsKey,
@@ -313,7 +307,7 @@ contract ZerolendPoolProxy is
             tvmExecutorFee: 0,
             tvmValidExecutors: new string[](0),
             toBridge: tokens,
-            toBridgeNFT: nfts
+            toBridgeNFT: new NFTAmount[](0)
         });
 
         _sendMessageV1(message, tacAmount);

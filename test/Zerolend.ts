@@ -152,5 +152,98 @@ describe("ZerolandPoolProxy", function () {
         expect(smartAccountAddress).to.not.equal(ethers.ZeroAddress);
     });
 
+    it("Zerolend borrow", async function () {
+        const shardsKey = 1n;
+        const operationId = ethers.encodeBytes32String("supply");
+        const extraData = "0x";
+        const timestamp = BigInt(Math.floor(Date.now() / 1000));
+        const tvmWalletCaller = "EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk";
+
+        const target = await zerolendPoolProxy.getAddress();
+        const methodName = "borrow(bytes,bytes)";
+
+        const amount = 10n
+
+        const encodedArguments = new ethers.AbiCoder().encode(
+            ['tuple(address,uint256,uint256,uint16)'],
+            [[
+                await sttonEVM.getAddress(),
+                amount,
+                1n,
+                0n
+            ]]
+        );
+        
+        const mintTokens: TokenMintInfo[] = [
+        {
+            info: sttonTokenInfo,
+            amount: ethers.parseUnits("100", sttonTokenInfo.decimals)
+        }];
+
+        const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
+            shardsKey,
+            target,
+            methodName,
+            encodedArguments,
+            tvmWalletCaller,
+            mintTokens,
+            [],
+            0n,
+            extraData,
+            operationId,
+            timestamp
+        );
+
+        expect(receipt?.status).to.equal(1);
+
+        const smartAccountAddress = await tacSAFactory.getSmartAccountForApplication(tvmWalletCaller, await zerolendPoolProxy.getAddress());
+        expect(smartAccountAddress).to.not.equal(ethers.ZeroAddress);
+    });
+
+    it("Zerolend repay", async function () {
+        const shardsKey = 1n;
+        const operationId = ethers.encodeBytes32String("supply");
+        const extraData = "0x";
+        const timestamp = BigInt(Math.floor(Date.now() / 1000));
+        const tvmWalletCaller = "EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk";
+
+        const target = await zerolendPoolProxy.getAddress();
+        const methodName = "repay(bytes,bytes)";
+
+        const amount = 10n
+
+        const onBehalf = await tacSAFactory.getSmartAccountForApplication(tvmWalletCaller, await zerolendPoolProxy.getAddress());
+        const encodedArguments = new ethers.AbiCoder().encode(
+            ['tuple(address,uint256,uint256)'],
+            [[
+                await sttonEVM.getAddress(),
+                amount,
+                1n
+            ]]
+        );
+        
+
+        const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
+            shardsKey,
+            target,
+            methodName,
+            encodedArguments,
+            tvmWalletCaller,
+            [],
+            [],
+            0n,
+            extraData,
+            operationId,
+            timestamp
+        );
+
+        expect(receipt?.status).to.equal(1);
+        expect(deployedTokens.length).to.be.eq(0);
+
+        const smartAccountAddress = await tacSAFactory.getSmartAccountForApplication(tvmWalletCaller, await zerolendPoolProxy.getAddress());
+        expect(smartAccountAddress).to.not.equal(ethers.ZeroAddress);
+    });
+
+
 
 });
