@@ -38,7 +38,7 @@ elif [ "$useTilt" = true ]; then
   cp /usr/src/app/shared/addresses_l2.json /usr/src/app/addresses.json
   npx hardhat --network localhost run ./scripts/UniswapV2/deploy.ts
   cp addresses.json /usr/src/app/shared/addresses_dapps.json
-  touch /tmp/DEPLOY_FINISHED
+  touch /tmp/DAPPS_DEPLOY_FINISHED
   echo "------------------DEPLOY FINISHED------------------"
   tail -f /dev/null
 fi
