@@ -13,10 +13,8 @@ import {ISAFactory} from "@tonappchain/evm-ccl/contracts/smart-account/interface
 import {ITacSmartAccount} from "@tonappchain/evm-ccl/contracts/smart-account/interfaces/ITacSmartAccount.sol";
 import {OutMessageV1, TokenAmount, TacHeaderV1, NFTAmount} from "@tonappchain/evm-ccl/contracts/core/Structs.sol";
 import {ICarbonController, Order, Token, TradeAction, Strategy} from "./interfaces/ICarbonController.sol";
-import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
-import "hardhat/console.sol";
 
-contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgradeable, IERC721Receiver {
+contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgradeable {
 
     ICarbonController public carbonController;
     ISAFactory public tacSAFactory;
@@ -78,7 +76,6 @@ contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgr
     }
 
 
-    // TODO native handler
     function createStrategy(
         bytes calldata tacHeader,
         bytes calldata arguments
@@ -253,14 +250,7 @@ contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgr
         _bridgeTokens(tacHeader, tokenAmounts, "", nativeAmount);
     }
 
-    function onERC721Received(
-        address ,
-        address ,
-        uint256 ,
-        bytes calldata 
-    ) external override pure returns (bytes4) {
-        return IERC721Receiver.onERC721Received.selector;
-    }
+    receive() external payable {}
 
 
 }

@@ -2,7 +2,7 @@ import hre, { ethers } from "hardhat";
 import { Signer } from "ethers";
 import { expect } from "chai";
 import { reset, getStorageAt, setStorageAt } from "@nomicfoundation/hardhat-network-helpers"
-import { TacLocalTestSdk, TokenUnlockInfo} from "@tonappchain/evm-ccl";
+import { TacLocalTestSdk, TokenMintInfo, TokenUnlockInfo} from "@tonappchain/evm-ccl";
 import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types";
 import { deployCarbonProxy } from "../scripts/Carbon/deployProxy";
 import { carbonMainnetConfig } from "../scripts/Carbon/config/mainnetConfig"
@@ -15,16 +15,7 @@ const lBTCAddress = "0xecAc9C5F704e954931349Da37F60E39f515c11c1"
 const ownerStorageSlotLbtc = BigInt("65173360639460082030725920392146925864023520599682862633725751242436743107328")
 const saFactoryAddress = "0x070820Ed658860f77138d71f74EfbE173775895b"
 
-let usdtAbi = [
-    
-]
-
-type Order = {
-    y: bigint;
-    z: bigint;
-    A: bigint;
-    B: bigint;
-}
+const NATIVE_ADDRESS = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
 
 
 describe("Carbon Proxy", function () {
@@ -45,13 +36,9 @@ describe("Carbon Proxy", function () {
         [admin] = await ethers.getSigners();
         testSdk = new TacLocalTestSdk();
         const crossChainLayerAddress = await testSdk.create(ethers.provider);
-        console.log(await getStorageAt(usdtAddress, ownerStorageSlotUsdt));
-        console.log(await getStorageAt(lBTCAddress, ownerStorageSlotLbtc));
         await setStorageAt(usdtAddress, ownerStorageSlotUsdt, await admin.getAddress());
         await setStorageAt(lBTCAddress, ownerStorageSlotLbtc, await admin.getAddress());
-        console.log(await getStorageAt(usdtAddress, ownerStorageSlotUsdt));
-        console.log(await getStorageAt(lBTCAddress, ownerStorageSlotLbtc));
-        
+
         tacSAFactory = new ethers.Contract(saFactoryAddress, hre.artifacts.readArtifactSync('ISAFactory').abi, admin) as unknown as ISAFactory;
         carbonProxy = await deployCarbonProxy(admin, crossChainLayerAddress, await tacSAFactory.getAddress(), carbonMainnetConfig.carbonControllerAddress);
         usdt = new ethers.Contract(usdtAddress, ['function mint(address,uint256) external', 'function balanceOf(address) external view returns (uint256)'], admin) as unknown;
@@ -70,13 +57,9 @@ describe("Carbon Proxy", function () {
         const target = await carbonProxy.getAddress();
         const methodName = "createStrategy(bytes,bytes)";
 
-        console.log(await usdt.balanceOf(await admin.getAddress()));
-        console.log(await lBTC.balanceOf(await admin.getAddress()));
         await usdt.connect(admin).mint(await carbonProxy.getAddress(), ethers.parseUnits("20000", 6));
         await lBTC.connect(admin).mint(await carbonProxy.getAddress(), ethers.parseUnits("0.2", 8));
-        console.log(await usdt.balanceOf(await admin.getAddress()));
-        console.log(await lBTC.balanceOf(await admin.getAddress()));
-
+        
         const userAddress = await tacSAFactory.predictSmartAccountAddress(tvmWalletCaller, await carbonProxy.getAddress())
 
         const baseToken = await lBTC.getAddress();
@@ -104,6 +87,10 @@ describe("Carbon Proxy", function () {
             operationId,
             timestamp
         );
+        expect(await usdt.balanceOf(userAddress)).to.be.eq(0);
+        expect(await lBTC.balanceOf(userAddress)).to.be.eq(0);
+        expect(await usdt.balanceOf(target)).to.be.eq(0);
+        expect(await lBTC.balanceOf(target)).to.be.eq(0);
 
         let abi = [
             "event StrategyCreated(uint256 indexed strategyId, address indexed user, string indexed tvmWalletCaller)"
@@ -115,7 +102,8 @@ describe("Carbon Proxy", function () {
         
         const event = events[0] as unknown as { args: { strategyId: string } };
         strategyId = event.args.strategyId
-        console.log(strategyId)
+        expect(strategyId).to.not.be.null;
+
 
     });
 
@@ -129,17 +117,11 @@ describe("Carbon Proxy", function () {
         const target = await carbonProxy.getAddress();
         const methodName = "updateStrategy(bytes,bytes)";
 
-        console.log(await usdt.balanceOf(await admin.getAddress()));
-        console.log(await lBTC.balanceOf(await admin.getAddress()));
         await usdt.connect(admin).mint(await carbonProxy.getAddress(), ethers.parseUnits("60000", 6));
         await lBTC.connect(admin).mint(await carbonProxy.getAddress(), ethers.parseUnits("0.9", 8));
-        console.log(await usdt.balanceOf(await admin.getAddress()));
-        console.log(await lBTC.balanceOf(await admin.getAddress()));
 
         const userAddress = await tacSAFactory.predictSmartAccountAddress(tvmWalletCaller, await carbonProxy.getAddress())
 
-        const baseToken = await lBTC.getAddress();
-        const quoteToken = await usdt.getAddress();
         const OldOrder: Array<[bigint,bigint,bigint,bigint]> = [
             [16000000n, 1480465677n, 276335970240068n, 5139006470588n],
             [20000000000n, 31968270820n, 1925342742061687n, 422212465065984n],
@@ -168,6 +150,11 @@ describe("Carbon Proxy", function () {
             operationId,
             timestamp
         );
+
+        expect(await usdt.balanceOf(userAddress)).to.be.eq(0);
+        expect(await lBTC.balanceOf(userAddress)).to.be.eq(0);
+        expect(await usdt.balanceOf(target)).to.be.eq(0);
+        expect(await lBTC.balanceOf(target)).to.be.eq(0);
 
     });
 
@@ -219,6 +206,11 @@ describe("Carbon Proxy", function () {
             timestamp
         );
 
+        expect(await usdt.balanceOf(userAddress)).to.be.eq(0);
+        expect(await lBTC.balanceOf(userAddress)).to.be.eq(0);
+        expect(await usdt.balanceOf(target)).to.be.eq(0);
+        expect(await lBTC.balanceOf(target)).to.be.eq(0);
+
     });
 
     it("Trade by source amount", async function () {
@@ -231,7 +223,7 @@ describe("Carbon Proxy", function () {
         const target = await carbonProxy.getAddress();
         const methodName = "tradeBySourceAmount(bytes,bytes)";
 
-        await usdt.connect(admin).mint(await carbonProxy.getAddress(), ethers.parseUnits("10000", 6));
+        await usdt.connect(admin).mint(await carbonProxy.getAddress(), ethers.parseUnits("1000", 6));
 
         const userAddress = await tacSAFactory.predictSmartAccountAddress(tvmWalletCaller, await carbonProxy.getAddress())
 
@@ -265,10 +257,16 @@ describe("Carbon Proxy", function () {
             operationId,
             timestamp
         );
+        const outMessage = outMessages[0];
+        expect(outMessage.tokensLocked.length).to.be.equal(1);
+
+        // check lp token locked
+        expect(outMessage.tokensLocked[0].evmAddress).to.be.equal(await lBTC.getAddress());
+        expect(outMessage.tokensLocked[0].amount).to.be.gt(0);
 
     });
 
-    // TODO
+    
     it("Trade by target amount", async function () {
         const shardsKey = 1n;
         const operationId = ethers.encodeBytes32String("tradeByTargetAmount");
@@ -314,9 +312,15 @@ describe("Carbon Proxy", function () {
             timestamp
         );
 
+        const outMessage = outMessages[0];
+        expect(outMessage.tokensLocked.length).to.be.equal(2);
+
+        // check lp token locked
+        expect(outMessage.tokensLocked[0].evmAddress).to.be.equal(await lBTC.getAddress());
+        expect(outMessage.tokensLocked[0].amount).to.be.eq(ethers.parseUnits("0.001", 8));
+
     });
 
-    // TODO
     it("Delete strategy", async function () {
         const shardsKey = 1n;
         const operationId = ethers.encodeBytes32String("deleteStrategy");
@@ -353,8 +357,352 @@ describe("Carbon Proxy", function () {
             operationId,
             timestamp
         );
+        const outMessage = outMessages[0];
+        expect(outMessage.tokensLocked.length).to.be.equal(2);
+        expect(outMessage.tokensLocked[0].evmAddress).to.be.equal(await lBTC.getAddress());
+        expect(outMessage.tokensLocked[0].amount).to.be.gt(0);
+        expect(outMessage.tokensLocked[1].evmAddress).to.be.equal(await usdt.getAddress());
+        expect(outMessage.tokensLocked[1].amount).to.be.gt(0);
 
     });
+
+
+    it("Carbon proxy create strategy with native token", async function () {
+      const shardsKey = 2n;
+      const operationId = ethers.encodeBytes32String("createStrategy 2");
+      const extraData = "0x";
+      const timestamp = BigInt(Math.floor(Date.now() / 1000));
+      const tvmWalletCaller = "EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk";
+
+      const target = await carbonProxy.getAddress();
+      const methodName = "createStrategy(bytes,bytes)";
+
+      await usdt.connect(admin).mint(await carbonProxy.getAddress(), ethers.parseUnits("120000", 6));
+      const tx = await admin.sendTransaction({
+        to: await carbonProxy.getAddress(),
+        value: ethers.parseUnits("1000", 18)
+      })
+      await tx.wait();
+      
+      
+      const userAddress = await tacSAFactory.predictSmartAccountAddress(tvmWalletCaller, await carbonProxy.getAddress())
+
+      const baseToken = NATIVE_ADDRESS;
+      const quoteToken = await usdt.getAddress();
+      const order: Array<[bigint,bigint,bigint,bigint]> = [
+          [1000000000000000000000n, 2677518557547884418481n, 5505270407005458n, 5819312065461623n],
+          [1000000000n, 1843038983n, 116590753n, 281474976n],
+        ];
+        const nativeTokenAddress = testSdk.getNativeTokenAddress();
+        
+        const encodedArguments = new ethers.AbiCoder().encode(
+          ['tuple(address,address,tuple(uint128,uint128,uint64,uint64)[2])'],
+          [[baseToken, quoteToken, order]]
+        );
+
+      
+      const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
+          shardsKey,
+          target,
+          methodName,
+          encodedArguments,
+          tvmWalletCaller,
+          [],
+          [],
+          0n,
+          extraData,
+          operationId,
+          timestamp
+      );
+      expect(await usdt.balanceOf(userAddress)).to.be.eq(0);
+      expect(await ethers.provider.getBalance(userAddress)).to.be.eq(0);
+      expect(await usdt.balanceOf(target)).to.be.eq(0);
+      expect(await ethers.provider.getBalance(target)).to.be.eq(0);
+
+      let abi = [
+          "event StrategyCreated(uint256 indexed strategyId, address indexed user, string indexed tvmWalletCaller)"
+      ];
+
+      const carbonProxyEvent = new ethers.Contract(await carbonProxy.getAddress(), abi, admin);
+      const eventFilter = carbonProxyEvent.filters.StrategyCreated
+      const events = await carbonProxyEvent.queryFilter(eventFilter, -1);
+      
+      const event = events[0] as unknown as { args: { strategyId: string } };
+      strategyId = event.args.strategyId
+      expect(strategyId).to.not.be.null;
+
+
+  });
+
+  it("Carbon proxy update strategy, add liquidity", async function () {
+    const shardsKey = 2n;
+    const operationId = ethers.encodeBytes32String("updateStrategy 2");
+    const extraData = "0x";
+    const timestamp = BigInt(Math.floor(Date.now() / 1000));
+    const tvmWalletCaller = "EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk";
+
+    const target = await carbonProxy.getAddress();
+    const methodName = "updateStrategy(bytes,bytes)";
+
+    await usdt.connect(admin).mint(await carbonProxy.getAddress(), ethers.parseUnits("1000", 6));
+    const tx = await admin.sendTransaction({
+      to: await carbonProxy.getAddress(),
+      value: ethers.parseUnits("1000", 18)
+    })
+    await tx.wait();
+
+    const userAddress = await tacSAFactory.predictSmartAccountAddress(tvmWalletCaller, await carbonProxy.getAddress())
+
+    const OldOrder: Array<[bigint,bigint,bigint,bigint]> = [
+      [1000000000000000000000n, 2677518557547884418481n, 5505270407005458n, 5819312065461623n],
+      [1000000000n, 1843038983n, 116590753n, 281474976n],
+    ];
+
+      const NewOrder: Array<[bigint,bigint,bigint,bigint]> = [
+        [2000000000000000000000n, 5355037115095768836963n, 5505270407005458n, 5819312065461623n],
+        [2000000000n, 3686077967n, 116590753n, 281474976n],
+      ];
+      
+      const encodedArguments = new ethers.AbiCoder().encode(
+        ['tuple(uint256,tuple(uint128,uint128,uint64,uint64)[2],tuple(uint128,uint128,uint64,uint64)[2])'],
+        [[strategyId, OldOrder, NewOrder]]
+      );
+
+    const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
+        shardsKey,
+        target,
+        methodName,
+        encodedArguments,
+        tvmWalletCaller,
+        [],
+        [],
+        0n,
+        extraData,
+        operationId,
+        timestamp
+    );
+
+    expect(await usdt.balanceOf(userAddress)).to.be.eq(0);
+    expect(await ethers.provider.getBalance(userAddress)).to.be.eq(0);
+    expect(await usdt.balanceOf(target)).to.be.eq(0);
+    expect(await ethers.provider.getBalance(target)).to.be.eq(0);
+
+});
+
+
+it("Carbon proxy update strategy, remove liquidity", async function () {
+  const shardsKey = 2n;
+  const operationId = ethers.encodeBytes32String("updateStrategy 2");
+  const extraData = "0x";
+  const timestamp = BigInt(Math.floor(Date.now() / 1000));
+  const tvmWalletCaller = "EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk";
+
+  const target = await carbonProxy.getAddress();
+  const methodName = "updateStrategy(bytes,bytes)";
+
+  
+
+  const userAddress = await tacSAFactory.predictSmartAccountAddress(tvmWalletCaller, await carbonProxy.getAddress())
+
+  const NewOrder: Array<[bigint,bigint,bigint,bigint]> = [
+    [1000000000000000000000n, 2677518557547884418481n, 5505270407005458n, 5819312065461623n],
+    [1000000000n, 1843038983n, 116590753n, 281474976n],
+  ];
+
+    const OldOrder: Array<[bigint,bigint,bigint,bigint]> = [
+      [2000000000000000000000n, 5355037115095768836963n, 5505270407005458n, 5819312065461623n],
+      [2000000000n, 3686077967n, 116590753n, 281474976n],
+    ];
+    
+    const encodedArguments = new ethers.AbiCoder().encode(
+      ['tuple(uint256,tuple(uint128,uint128,uint64,uint64)[2],tuple(uint128,uint128,uint64,uint64)[2])'],
+      [[strategyId, OldOrder, NewOrder]]
+    );
+
+  const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
+      shardsKey,
+      target,
+      methodName,
+      encodedArguments,
+      tvmWalletCaller,
+      [],
+      [],
+      0n,
+      extraData,
+      operationId,
+      timestamp
+  );
+
+  expect(await usdt.balanceOf(userAddress)).to.be.eq(0);
+  expect(await ethers.provider.getBalance(userAddress)).to.be.eq(0);
+  expect(await usdt.balanceOf(target)).to.be.eq(0);
+  expect(await ethers.provider.getBalance(target)).to.be.eq(0);
+
+  const outMessage = outMessages[0];
+      expect(outMessage.tokensLocked.length).to.be.equal(2);
+
+        // check lp token locked
+      expect(outMessage.tokensLocked[0].evmAddress).to.be.equal(await usdt.getAddress());
+
+});
+
+it("Trade by source amount", async function () {
+  const shardsKey = 2n;
+  const operationId = ethers.encodeBytes32String("tradeBySourceAmount 2");
+  const extraData = "0x";
+  const timestamp = BigInt(Math.floor(Date.now() / 1000));
+  const tvmWalletCaller = "EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk";
+
+  const target = await carbonProxy.getAddress();
+  const methodName = "tradeBySourceAmount(bytes,bytes)";
+
+  await usdt.connect(admin).mint(await carbonProxy.getAddress(), ethers.parseUnits("1000", 6));
+
+  const userAddress = await tacSAFactory.predictSmartAccountAddress(tvmWalletCaller, await carbonProxy.getAddress())
+
+  const targetToken = NATIVE_ADDRESS;
+  const sourceToken = await usdt.getAddress();
+  const deadline = ethers.MaxUint256;
+  const minReturn = ethers.parseUnits("1", 18);
+  const tradeActions : Array<[bigint,bigint]> = [
+      [BigInt(strategyId), ethers.parseUnits("10", 6)],
+  ];
+
+  
+
+    
+    
+    const encodedArguments = new ethers.AbiCoder().encode(
+      ['tuple(address,address,tuple(uint256,uint128)[],uint256,uint128)'],
+      [[sourceToken, targetToken, tradeActions, deadline, minReturn]]
+    );
+
+  const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
+      shardsKey,
+      target,
+      methodName,
+      encodedArguments,
+      tvmWalletCaller,
+      [],
+      [],
+      0n,
+      extraData,
+      operationId,
+      timestamp
+  );
+  const outMessage = outMessages[0];
+  expect(outMessage.tokensLocked.length).to.be.equal(2);
+
+  // check lp token locked
+  expect(outMessage.tokensLocked[1].evmAddress).to.be.equal(NATIVE_ADDRESS);
+  expect(outMessage.tokensLocked[1].amount).to.be.gt(0);
+
+  expect(await usdt.balanceOf(userAddress)).to.be.eq(0);
+  expect(await ethers.provider.getBalance(userAddress)).to.be.eq(0);
+  expect(await usdt.balanceOf(target)).to.be.eq(0);
+  expect(await ethers.provider.getBalance(target)).to.be.eq(0);
+
+});
+
+it("Trade by target amount", async function () {
+  const shardsKey = 1n;
+  const operationId = ethers.encodeBytes32String("tradeByTargetAmount 2");
+  const extraData = "0x";
+  const timestamp = BigInt(Math.floor(Date.now() / 1000));
+  const tvmWalletCaller = "EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk";
+
+  const target = await carbonProxy.getAddress();
+  const methodName = "tradeByTargetAmount(bytes,bytes)";
+
+  await usdt.connect(admin).mint(await carbonProxy.getAddress(), ethers.parseUnits("10000", 6));
+
+  const userAddress = await tacSAFactory.predictSmartAccountAddress(tvmWalletCaller, await carbonProxy.getAddress())
+
+  const targetToken = NATIVE_ADDRESS;
+  const sourceToken = await usdt.getAddress();
+  const deadline = ethers.MaxUint256;
+  const maxInput = ethers.parseUnits("1000", 6);
+  const tradeActions : Array<[bigint,bigint]> = [
+      [BigInt(strategyId), ethers.parseUnits("100", 18)],
+  ];
+
+  
+
+    
+    
+    const encodedArguments = new ethers.AbiCoder().encode(
+      ['tuple(address,address,tuple(uint256,uint128)[],uint256,uint128)'],
+      [[sourceToken, targetToken, tradeActions, deadline, maxInput]]
+    );
+
+  const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
+      shardsKey,
+      target,
+      methodName,
+      encodedArguments,
+      tvmWalletCaller,
+      [],
+      [],
+      0n,
+      extraData,
+      operationId,
+      timestamp
+  );
+
+  const outMessage = outMessages[0];
+  expect(outMessage.tokensLocked.length).to.be.equal(2);
+
+  // check lp token locked
+  expect(outMessage.tokensLocked[1].evmAddress).to.be.equal(NATIVE_ADDRESS);
+  expect(outMessage.tokensLocked[1].amount).to.be.eq(ethers.parseUnits("100", 18));
+
+});
+
+it("Delete strategy", async function () {
+  const shardsKey = 1n;
+  const operationId = ethers.encodeBytes32String("deleteStrategy 2");
+  const extraData = "0x";
+  const timestamp = BigInt(Math.floor(Date.now() / 1000));
+  const tvmWalletCaller = "EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk";
+
+  const target = await carbonProxy.getAddress();
+  const methodName = "deleteStrategy(bytes,bytes)";
+
+
+  const targetToken = NATIVE_ADDRESS;
+  const sourceToken = await usdt.getAddress();
+  
+
+    
+    
+    const encodedArguments = new ethers.AbiCoder().encode(
+      ['tuple(uint256,address,address)'],
+      [[strategyId, targetToken, sourceToken]]
+    );
+
+  const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
+      shardsKey,
+      target,
+      methodName,
+      encodedArguments,
+      tvmWalletCaller,
+      [],
+      [],
+      0n,
+      extraData,
+      operationId,
+      timestamp
+  );
+  const outMessage = outMessages[0];
+  expect(outMessage.tokensLocked.length).to.be.equal(2);
+  expect(outMessage.tokensLocked[1].evmAddress).to.be.equal(NATIVE_ADDRESS);
+  expect(outMessage.tokensLocked[1].amount).to.be.gt(0);
+  expect(outMessage.tokensLocked[0].evmAddress).to.be.equal(await usdt.getAddress());
+  expect(outMessage.tokensLocked[0].amount).to.be.gt(0);
+
+});
+
+
 
     
     
