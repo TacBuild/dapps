@@ -2,9 +2,6 @@
 pragma solidity ^0.8.28;
 
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {SaHelper} from "@tonappchain/evm-ccl/contracts/smart-account/libs/SaHelper.sol";
-import {IHooks} from "@tonappchain/evm-ccl/contracts/smart-account/interfaces/IHooks.sol";
-import {ICrossChainLayer} from "@tonappchain/evm-ccl/contracts/interfaces/ICrossChainLayer.sol";
 import {TacProxyV1Upgradeable} from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
@@ -59,6 +56,8 @@ contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgr
     event StrategyDeleted(uint256 indexed strategyId);
     event TradeBySourceAmount(Token indexed sourceToken, Token indexed targetToken, address indexed user, string tvmWalletCaller, TradeAction[] tradeActions, uint256 deadline, uint128 minReturn, uint128 returnAmount);
     event TradeByTargetAmount(Token indexed sourceToken, Token indexed targetToken, address indexed user, string tvmWalletCaller, TradeAction[] tradeActions, uint256 deadline, uint128 maxInput, uint128 returnAmount);
+
+    error TransferFailed();
 
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
@@ -203,7 +202,7 @@ contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgr
         if (token == NATIVE_ADDRESS) {
             amount = address(this).balance;
             (bool success, )= payable(user).call{value: amount}("");
-            require(success, "Transfer failed");
+            require(success, TransferFailed());
             return amount;
         } else {
             amount = IERC20(token).balanceOf(address(this));

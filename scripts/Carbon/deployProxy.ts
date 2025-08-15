@@ -2,6 +2,7 @@ import { Signer } from "ethers";
 import { CarbonProxy } from "../../typechain-types";
 import { deployUpgradable } from '@tonappchain/evm-ccl'
 import { DeployProxyOptions } from "@openzeppelin/hardhat-upgrades/dist/utils";
+import { carbonMainnetConfig } from "./config/mainnetConfig"
 import hre from 'hardhat';
 
 const proxyOptsUUPS: DeployProxyOptions = {
