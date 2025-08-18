@@ -142,16 +142,12 @@ contract YieldManagerProxy is
         (address user, ) = ISAFactory(tacSAFactoryAddress)
             .getOrCreateSmartAccount(header.tvmCaller);
 
-        SafeERC20.safeTransfer(IERC20(yUSD), user, withdrawArguments.shares);
+        SafeERC20.safeTransfer(IERC20(withdrawArguments.yToken), user, withdrawArguments.shares);
 
-        ITacSmartAccount(user).execute(
-            yUSD,
-            0,
-            abi.encodeWithSelector(
-                IERC20(yUSD).approve.selector,
-                managerAddress,
-                withdrawArguments.shares
-            )
+        ITacSmartAccount(user).approve(
+            withdrawArguments.yToken,
+            managerAddress,
+            withdrawArguments.shares
         );
 
         ITacSmartAccount(user).execute(
