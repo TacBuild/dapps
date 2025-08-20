@@ -33,3 +33,11 @@ export async function deployCarbonProxy(
     return carbonProxy;
 }
 
+async function main() {
+    const [deployer] = await hre.ethers.getSigners();
+    const carbonProxy = await deployCarbonProxy(deployer, "0x4f3b05a601B7103CF8Fc0aBB56d042e04f222ceE", "0x5919D1D0D1b36F08018d7C9650BF914AEbC6BAd6", "0xe4816658ad10bF215053C533cceAe3f59e1f1087");
+    console.log("CarbonProxy deployed to:", carbonProxy.target);
+}
+
+main();
+

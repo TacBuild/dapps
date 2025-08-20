@@ -29,7 +29,7 @@ describe("Carbon Proxy", function () {
     
 
     before(async function () {
-        await reset(process.env.TAC_MAINNET_URL, 3818195);
+        await reset(process.env.TAC_MAINNET_URL, 4200253);
         
         
 
@@ -70,8 +70,8 @@ describe("Carbon Proxy", function () {
           ];
           
           const encodedArguments = new ethers.AbiCoder().encode(
-            ['tuple(address,address,tuple(uint128,uint128,uint64,uint64)[2])'],
-            [[baseToken, quoteToken, order]]
+            ['address','address','tuple(uint128,uint128,uint64,uint64)[2]'],
+            [baseToken, quoteToken, order]
           );
 
         const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
@@ -240,8 +240,8 @@ describe("Carbon Proxy", function () {
           
           
           const encodedArguments = new ethers.AbiCoder().encode(
-            ['tuple(address,address,tuple(uint256,uint128)[],uint256,uint128)'],
-            [[sourceToken, targetToken, tradeActions, deadline, minReturn]]
+            ['address','address','tuple(uint256,uint128)[]','uint256','uint128'],
+            [sourceToken, targetToken, tradeActions, deadline, minReturn]
           );
 
         const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
@@ -294,8 +294,8 @@ describe("Carbon Proxy", function () {
           
           
           const encodedArguments = new ethers.AbiCoder().encode(
-            ['tuple(address,address,tuple(uint256,uint128)[],uint256,uint128)'],
-            [[sourceToken, targetToken, tradeActions, deadline, maxInput]]
+            ['address','address','tuple(uint256,uint128)[]','uint256','uint128'],
+            [sourceToken, targetToken, tradeActions, deadline, maxInput]
           );
 
         const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
@@ -316,8 +316,8 @@ describe("Carbon Proxy", function () {
         expect(outMessage.tokensLocked.length).to.be.equal(2);
 
         // check lp token locked
-        expect(outMessage.tokensLocked[0].evmAddress).to.be.equal(await lBTC.getAddress());
-        expect(outMessage.tokensLocked[0].amount).to.be.eq(ethers.parseUnits("0.001", 8));
+        expect(outMessage.tokensLocked[1].evmAddress).to.be.equal(await lBTC.getAddress());
+        expect(outMessage.tokensLocked[1].amount).to.be.eq(ethers.parseUnits("0.001", 8));
 
     });
 
@@ -340,8 +340,8 @@ describe("Carbon Proxy", function () {
           
           
           const encodedArguments = new ethers.AbiCoder().encode(
-            ['tuple(uint256,address,address)'],
-            [[strategyId, targetToken, sourceToken]]
+            ['uint256'],
+            [strategyId]
           );
 
         const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
@@ -573,8 +573,8 @@ it("Trade by source amount", async function () {
     
     
     const encodedArguments = new ethers.AbiCoder().encode(
-      ['tuple(address,address,tuple(uint256,uint128)[],uint256,uint128)'],
-      [[sourceToken, targetToken, tradeActions, deadline, minReturn]]
+      ['address','address','tuple(uint256,uint128)[]','uint256','uint128'],
+      [sourceToken, targetToken, tradeActions, deadline, minReturn]
     );
 
   const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
@@ -631,8 +631,8 @@ it("Trade by target amount", async function () {
     
     
     const encodedArguments = new ethers.AbiCoder().encode(
-      ['tuple(address,address,tuple(uint256,uint128)[],uint256,uint128)'],
-      [[sourceToken, targetToken, tradeActions, deadline, maxInput]]
+      ['address','address','tuple(uint256,uint128)[]','uint256','uint128'],
+      [sourceToken, targetToken, tradeActions, deadline, maxInput]
     );
 
   const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
@@ -676,8 +676,8 @@ it("Delete strategy", async function () {
     
     
     const encodedArguments = new ethers.AbiCoder().encode(
-      ['tuple(uint256,address,address)'],
-      [[strategyId, targetToken, sourceToken]]
+      ['uint256'],
+      [strategyId]
     );
 
   const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(

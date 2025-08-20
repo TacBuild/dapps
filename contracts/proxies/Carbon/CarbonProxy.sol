@@ -17,45 +17,12 @@ contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgr
     ISAFactory public tacSAFactory;
     address constant NATIVE_ADDRESS = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
-    struct CreateStrategyArgs {
-        Token token0;
-        Token token1;
-        Order[2] orders;
-    }
-
-    struct UpdateStrategyArgs {
-        uint256 strategyId;
-        Order[2] currentOrders;
-        Order[2] newOrders;
-    }
-
-    struct DeleteStrategyArgs {
-        uint256 strategyId;
-        Token token0;
-        Token token1;
-    }
-
-    struct TradeBySourceAmountArgs {
-        Token sourceToken;
-        Token targetToken;
-        TradeAction[] tradeActions;
-        uint256 deadline;
-        uint128 minReturn;
-    }
-
-    struct TradeByTargetAmountArgs {
-        Token sourceToken;
-        Token targetToken;
-        TradeAction[] tradeActions;
-        uint256 deadline;
-        uint128 maxInput;
-    }
 
     event StrategyCreated(uint256 indexed strategyId, address indexed user, string indexed tvmWalletCaller);
     event StrategyUpdated(uint256 indexed strategyId);
     event StrategyDeleted(uint256 indexed strategyId);
-    event TradeBySourceAmount(Token indexed sourceToken, Token indexed targetToken, address indexed user, string tvmWalletCaller, TradeAction[] tradeActions, uint256 deadline, uint128 minReturn, uint128 returnAmount);
-    event TradeByTargetAmount(Token indexed sourceToken, Token indexed targetToken, address indexed user, string tvmWalletCaller, TradeAction[] tradeActions, uint256 deadline, uint128 maxInput, uint128 returnAmount);
+    event TradeBySourceAmount(Token indexed sourceToken, Token indexed targetToken, address indexed user, string tvmWalletCaller, TradeAction[] tradeActions, uint256 deadline, uint128 minReturn);
+    event TradeByTargetAmount(Token indexed sourceToken, Token indexed targetToken, address indexed user, string tvmWalletCaller, TradeAction[] tradeActions, uint256 deadline, uint128 maxInput);
 
     error TransferFailed();
 
@@ -79,18 +46,17 @@ contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgr
         bytes calldata tacHeader,
         bytes calldata arguments
     ) external payable _onlyCrossChainLayer {
-        (CreateStrategyArgs memory args) = abi.decode(arguments, (CreateStrategyArgs));
+        (Token token0, Token token1, Order[2] memory orders) = abi.decode(arguments, (Token, Token, Order[2]));
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user,) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
-        address token0 = Token.unwrap(args.token0);
-        address token1 = Token.unwrap(args.token1);
-        uint256 nativeAmount = _handleTokenPrepBeforeOp(user, token0);
-        nativeAmount += _handleTokenPrepBeforeOp(user, token1);
-        bytes memory response = ITacSmartAccount(payable(user)).execute(address(carbonController), nativeAmount, abi.encodeWithSelector(ICarbonController.createStrategy.selector, args.token0, args.token1, args.orders));
-        uint256 strategyId = abi.decode(response, (uint256));
         address[] memory tokensToClear = new address[](2);
-        tokensToClear[0] = token0;
-        tokensToClear[1] = token1;
+        tokensToClear[0] = Token.unwrap(token0);
+        tokensToClear[1] = Token.unwrap(token1);
+        uint256 nativeAmount = _handleTokenPrepBeforeOp(user, Token.unwrap(token0));
+        nativeAmount += _handleTokenPrepBeforeOp(user, Token.unwrap(token1));
+        bytes memory response = ITacSmartAccount(payable(user)).execute(address(carbonController), nativeAmount, abi.encodeWithSelector(ICarbonController.createStrategy.selector, token0, token1, orders));
+        uint256 strategyId = abi.decode(response, (uint256));
+        
         _clearDustFromSa(user, tokensToClear, tacHeader);
         emit StrategyCreated(strategyId, user, header.tvmCaller);
     }
@@ -99,69 +65,66 @@ contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgr
         bytes calldata tacHeader,
         bytes calldata arguments
     ) external payable _onlyCrossChainLayer {
-        (UpdateStrategyArgs memory args) = abi.decode(arguments, (UpdateStrategyArgs));
+        (uint256 strategyId, Order[2] memory currentOrders, Order[2] memory newOrders) = abi.decode(arguments, (uint256, Order[2], Order[2]));
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user,) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
-        Strategy memory strategy = carbonController.strategy(args.strategyId);
+        Strategy memory strategy = carbonController.strategy(strategyId);
         uint256 nativeAmount = _handleTokenPrepBeforeOp(user, Token.unwrap(strategy.tokens[0]));
         nativeAmount += _handleTokenPrepBeforeOp(user, Token.unwrap(strategy.tokens[1]));
-        ITacSmartAccount(payable(user)).execute(address(carbonController), nativeAmount, abi.encodeWithSelector(ICarbonController.updateStrategy.selector, args.strategyId, args.currentOrders, args.newOrders));
+        ITacSmartAccount(payable(user)).execute(address(carbonController), nativeAmount, abi.encodeWithSelector(ICarbonController.updateStrategy.selector, strategyId, currentOrders, newOrders));
         address[] memory tokensToClear = new address[](2);
         tokensToClear[0] = Token.unwrap(strategy.tokens[0]);
         tokensToClear[1] = Token.unwrap(strategy.tokens[1]);
         _clearDustFromSa(user, tokensToClear, tacHeader);
-        emit StrategyUpdated(args.strategyId);
+        emit StrategyUpdated(strategyId);
     }
 
     function deleteStrategy(
         bytes calldata tacHeader,
         bytes calldata arguments
     ) external _onlyCrossChainLayer {
-        (DeleteStrategyArgs memory args) = abi.decode(arguments, (DeleteStrategyArgs));
+        (uint256 strategyId) = abi.decode(arguments, (uint256));
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user,) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
-        ITacSmartAccount(payable(user)).execute(address(carbonController), 0, abi.encodeWithSelector(ICarbonController.deleteStrategy.selector, args.strategyId));
         address[] memory tokensToClear = new address[](2);
-        tokensToClear[0] = Token.unwrap(args.token0);
-        tokensToClear[1] = Token.unwrap(args.token1);
+        Strategy memory strategy = carbonController.strategy(strategyId);
+        tokensToClear[0] = Token.unwrap(strategy.tokens[0]);
+        tokensToClear[1] = Token.unwrap(strategy.tokens[1]);
+        ITacSmartAccount(payable(user)).execute(address(carbonController), 0, abi.encodeWithSelector(ICarbonController.deleteStrategy.selector, strategyId));
         _clearDustFromSa(user, tokensToClear, tacHeader);
-        emit StrategyDeleted(args.strategyId);
+        emit StrategyDeleted(strategyId);
     }
 
     function tradeBySourceAmount(
         bytes calldata tacHeader,
         bytes calldata arguments
     ) external payable _onlyCrossChainLayer {
-        (TradeBySourceAmountArgs memory args) = abi.decode(arguments, (TradeBySourceAmountArgs));
+        (Token sourceToken, Token targetToken, TradeAction[] memory tradeActions, uint256 deadline, uint128 minReturn) = abi.decode(arguments, (Token, Token, TradeAction[], uint256, uint128));
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user,) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
-        address tokenIn = Token.unwrap(args.sourceToken);
-        uint256 nativeAmount = _handleTokenPrepBeforeOp(user, tokenIn);
-        bytes memory response = ITacSmartAccount(payable(user)).execute(address(carbonController), nativeAmount, abi.encodeWithSelector(ICarbonController.tradeBySourceAmount.selector, args.sourceToken, args.targetToken, args.tradeActions, args.deadline, args.minReturn));
-        uint128 returnAmount = abi.decode(response, (uint128));
+        uint256 nativeAmount = _handleTokenPrepBeforeOp(user, Token.unwrap(sourceToken));
+        ITacSmartAccount(payable(user)).execute(address(carbonController), nativeAmount, abi.encodeWithSelector(ICarbonController.tradeBySourceAmount.selector, sourceToken, targetToken, tradeActions, deadline, minReturn));
         address[] memory tokensToClear = new address[](2);
-        tokensToClear[0] = Token.unwrap(args.targetToken);
-        tokensToClear[1] = tokenIn;
+        tokensToClear[0] = Token.unwrap(targetToken);
+        tokensToClear[1] = Token.unwrap(sourceToken);
         _clearDustFromSa(user, tokensToClear, tacHeader);
-        emit TradeBySourceAmount(args.sourceToken, args.targetToken, user, header.tvmCaller, args.tradeActions, args.deadline, args.minReturn, returnAmount);
+        emit TradeBySourceAmount(sourceToken, targetToken, user, header.tvmCaller, tradeActions, deadline, minReturn);
     }
 
     function tradeByTargetAmount(
         bytes calldata tacHeader,
         bytes calldata arguments
     ) external payable _onlyCrossChainLayer {
-        (TradeByTargetAmountArgs memory args) = abi.decode(arguments, (TradeByTargetAmountArgs));
+        (Token sourceToken, Token targetToken, TradeAction[] memory tradeActions, uint256 deadline, uint128 maxInput) = abi.decode(arguments, (Token, Token, TradeAction[], uint256, uint128));
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user,) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
-        address tokenIn = Token.unwrap(args.sourceToken);
-        uint256 nativeAmount = _handleTokenPrepBeforeOp(user, tokenIn);
-        bytes memory response = ITacSmartAccount(payable(user)).execute(address(carbonController), nativeAmount, abi.encodeWithSelector(ICarbonController.tradeByTargetAmount.selector, args.sourceToken, args.targetToken, args.tradeActions, args.deadline, args.maxInput));
-        uint128 returnAmount = abi.decode(response, (uint128));
+        uint256 nativeAmount = _handleTokenPrepBeforeOp(user, Token.unwrap(sourceToken));
+        ITacSmartAccount(payable(user)).execute(address(carbonController), nativeAmount, abi.encodeWithSelector(ICarbonController.tradeByTargetAmount.selector, sourceToken, targetToken, tradeActions, deadline, maxInput));
         address[] memory tokensToClear = new address[](2);
-        tokensToClear[0] = Token.unwrap(args.targetToken);
-        tokensToClear[1] = tokenIn;
+        tokensToClear[0] = Token.unwrap(sourceToken);
+        tokensToClear[1] = Token.unwrap(targetToken);
         _clearDustFromSa(user, tokensToClear, tacHeader);
-        emit TradeByTargetAmount(args.sourceToken, args.targetToken, user, header.tvmCaller, args.tradeActions, args.deadline, args.maxInput, returnAmount);
+        emit TradeByTargetAmount(sourceToken, targetToken, user, header.tvmCaller, tradeActions, deadline, maxInput);
     }
 
     /// @notice Bridges tokens to the cross-chain layer
