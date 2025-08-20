@@ -206,10 +206,13 @@ contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgr
             realAmountOfTokensToBridge++;
             
         }
-        assembly {
-            mstore(tokenAmounts, realAmountOfTokensToBridge)
+        
+        if (nativeAmount > 0 || realAmountOfTokensToBridge > 0) {
+            assembly {
+                mstore(tokenAmounts, realAmountOfTokensToBridge)
+            }
+            _bridgeTokens(tacHeader, tokenAmounts, "", nativeAmount);
         }
-        _bridgeTokens(tacHeader, tokenAmounts, "", nativeAmount);
     }
 
     receive() external payable {}
