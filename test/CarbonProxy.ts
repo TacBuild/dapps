@@ -26,7 +26,7 @@ describe("Carbon Proxy", function () {
     let usdt: any;
     let lBTC: any;
     let strategyId: string;
-    
+    let strategyIds: string[];
 
     before(async function () {
         await reset(process.env.TAC_MAINNET_URL, 4200253);
@@ -40,7 +40,7 @@ describe("Carbon Proxy", function () {
         await setStorageAt(lBTCAddress, ownerStorageSlotLbtc, await admin.getAddress());
 
         tacSAFactory = new ethers.Contract(saFactoryAddress, hre.artifacts.readArtifactSync('ISAFactory').abi, admin) as unknown as ISAFactory;
-        carbonProxy = await deployCarbonProxy(admin, crossChainLayerAddress, await tacSAFactory.getAddress(), carbonMainnetConfig.carbonControllerAddress);
+        carbonProxy = await deployCarbonProxy(admin, crossChainLayerAddress, await tacSAFactory.getAddress(), carbonMainnetConfig.carbonControllerAddress, carbonMainnetConfig.carbonBatcherAddress, carbonMainnetConfig.carbonVoucherAddress);
         usdt = new ethers.Contract(usdtAddress, ['function mint(address,uint256) external', 'function balanceOf(address) external view returns (uint256)'], admin) as unknown;
         lBTC = new ethers.Contract(lBTCAddress, ['function mint(address,uint256) external', 'function balanceOf(address) external view returns (uint256)', 'function addMinter(address newMinter) external'], admin) as unknown;        
         await lBTC.connect(admin).addMinter(await admin.getAddress());
@@ -699,6 +699,107 @@ it("Delete strategy", async function () {
   expect(outMessage.tokensLocked[1].amount).to.be.gt(0);
   expect(outMessage.tokensLocked[0].evmAddress).to.be.equal(await usdt.getAddress());
   expect(outMessage.tokensLocked[0].amount).to.be.gt(0);
+
+});
+//TODO change second strategy to strategy with native amount
+it("Batch create strategy", async function () {
+  const shardsKey = 1n;
+  const operationId = ethers.encodeBytes32String("batchCreateStrategy");
+  const extraData = "0x";
+  const timestamp = BigInt(Math.floor(Date.now() / 1000));
+  const tvmWalletCaller = "EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk";
+
+  const target = await carbonProxy.getAddress();
+  const methodName = "batchCreateStrategy(bytes,bytes)";
+
+
+  const baseToken = await lBTC.getAddress();
+        
+  const quoteToken = await usdt.getAddress();
+  const order: Array<[bigint,bigint,bigint,bigint]> = [
+            [16000000n, 1480465677n, 276335970240068n, 5139006470588n],
+            [20000000000n, 31968270820n, 1925342742061687n, 422212465065984n],
+          ];
+
+          const baseToken1 = await lBTC.getAddress();
+        
+  const quoteToken1 = await usdt.getAddress();
+  const order1: Array<[bigint,bigint,bigint,bigint]> = [
+            [16000000n, 1480465677n, 276335970240068n, 5139006470588n],
+            [20000000000n, 31968270820n, 1925342742061687n, 422212465065984n],
+          ];
+  
+          await usdt.connect(admin).mint(await carbonProxy.getAddress(), ethers.parseUnits("100000", 6));
+          await lBTC.connect(admin).mint(await carbonProxy.getAddress(), ethers.parseUnits("1", 8));
+
+    
+    
+    const encodedArguments = new ethers.AbiCoder().encode(
+      ["tuple(address[2],tuple(uint128,uint128,uint64,uint64)[2])[]"],
+      [[[[baseToken, quoteToken], order], [[baseToken1, quoteToken1], order1]]]
+    );
+
+  const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
+      shardsKey,
+      target,
+      methodName,
+      encodedArguments,
+      tvmWalletCaller,
+      [],
+      [],
+      0n,
+      extraData,
+      operationId,
+      timestamp
+  );
+  let abi = [
+    "event StrategyCreatedBatch(uint256[] strategyIds, address indexed user, string tvmWalletCaller)"
+];
+
+const carbonProxyEvent = new ethers.Contract(await carbonProxy.getAddress(), abi, admin);
+const eventFilter = carbonProxyEvent.filters.StrategyCreatedBatch
+const events = await carbonProxyEvent.queryFilter(eventFilter, -1);
+
+const event = events[0] as unknown as { args: { strategyIds: string[] } };
+strategyIds = event.args.strategyIds
+expect(strategyIds).to.not.be.null;
+
+});
+
+it("Transfer strategy", async function () {
+  const shardsKey = 1n;
+  const operationId = ethers.encodeBytes32String("transferStrategy 2");
+  const extraData = "0x";
+  const timestamp = BigInt(Math.floor(Date.now() / 1000));
+  const tvmWalletCaller = "EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk";
+  const receiver = "EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2J3";
+
+  const target = await carbonProxy.getAddress();
+  const methodName = "transferStrategy(bytes,bytes)";
+
+  
+
+    
+    
+    const encodedArguments = new ethers.AbiCoder().encode(
+      ['uint256', 'string'],
+      [strategyIds[0], receiver]
+    );
+
+  const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
+      shardsKey,
+      target,
+      methodName,
+      encodedArguments,
+      tvmWalletCaller,
+      [],
+      [],
+      0n,
+      extraData,
+      operationId,
+      timestamp
+  );
+  //TODO finish expects
 
 });
 

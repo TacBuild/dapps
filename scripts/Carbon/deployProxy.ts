@@ -15,6 +15,8 @@ export async function deployCarbonProxy(
     crossChainLayerAddress: string,
     tacSAFactoryAddress: string,
     carbonControllerAddress: string,
+    carbonBatcherAddress: string,
+    carbonVoucherAddress: string,
     owner?: string
 ): Promise<CarbonProxy> {
     const ownerAddress = owner ?? await deployer.getAddress();
@@ -22,7 +24,7 @@ export async function deployCarbonProxy(
     const carbonProxy = await deployUpgradable<CarbonProxy>(
         deployer,
         hre.artifacts.readArtifactSync('CarbonProxy'),
-        [carbonControllerAddress, tacSAFactoryAddress, crossChainLayerAddress, ownerAddress],
+        [carbonControllerAddress, carbonBatcherAddress, carbonVoucherAddress, tacSAFactoryAddress, crossChainLayerAddress, ownerAddress],
         proxyOptsUUPS,
         undefined,
         true
@@ -33,11 +35,11 @@ export async function deployCarbonProxy(
     return carbonProxy;
 }
 
-async function main() {
-    const [deployer] = await hre.ethers.getSigners();
-    const carbonProxy = await deployCarbonProxy(deployer, "0x4f3b05a601B7103CF8Fc0aBB56d042e04f222ceE", "0x5919D1D0D1b36F08018d7C9650BF914AEbC6BAd6", "0xe4816658ad10bF215053C533cceAe3f59e1f1087");
-    console.log("CarbonProxy deployed to:", carbonProxy.target);
-}
+// async function main() {
+//     const [deployer] = await hre.ethers.getSigners();
+//     const carbonProxy = await deployCarbonProxy(deployer, "0x4f3b05a601B7103CF8Fc0aBB56d042e04f222ceE", "0x5919D1D0D1b36F08018d7C9650BF914AEbC6BAd6", "0xe4816658ad10bF215053C533cceAe3f59e1f1087");
+//     console.log("CarbonProxy deployed to:", carbonProxy.target);
+// }
 
-main();
+// main();
 

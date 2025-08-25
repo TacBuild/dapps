@@ -10,20 +10,26 @@ import {ISAFactory} from "@tonappchain/evm-ccl/contracts/smart-account/interface
 import {ITacSmartAccount} from "@tonappchain/evm-ccl/contracts/smart-account/interfaces/ITacSmartAccount.sol";
 import {OutMessageV1, TokenAmount, TacHeaderV1, NFTAmount} from "@tonappchain/evm-ccl/contracts/core/Structs.sol";
 import {ICarbonController, Order, Token, TradeAction, Strategy} from "./interfaces/ICarbonController.sol";
+import {ICarbonBatcher, StrategyData} from "./interfaces/ICarbonBatcher.sol";
+import {ICarbonVoucher} from "./interfaces/ICarbonVoucher.sol";
+import "hardhat/console.sol";
 
 contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgradeable {
 
     ICarbonController public carbonController;
+    ICarbonBatcher public carbonBatcher;
+    ICarbonVoucher public carbonVoucher;
     ISAFactory public tacSAFactory;
     address constant NATIVE_ADDRESS = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
 
     event StrategyCreated(uint256 indexed strategyId, address indexed user, string indexed tvmWalletCaller);
+    event StrategyCreatedBatch(uint256[] strategyIds, address indexed user, string tvmWalletCaller);
     event StrategyUpdated(uint256 indexed strategyId);
     event StrategyDeleted(uint256 indexed strategyId);
     event TradeBySourceAmount(Token indexed sourceToken, Token indexed targetToken, address indexed user, string tvmWalletCaller, TradeAction[] tradeActions, uint256 deadline, uint128 minReturn);
     event TradeByTargetAmount(Token indexed sourceToken, Token indexed targetToken, address indexed user, string tvmWalletCaller, TradeAction[] tradeActions, uint256 deadline, uint128 maxInput);
-
+    event StrategyTransferred(uint256 indexed strategyId, string indexed oldOwner, string indexed receiver);
     error TransferFailed();
 
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
@@ -32,12 +38,14 @@ contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgr
         _disableInitializers();
     }
 
-    function initialize(address _carbonController, address _saFactory, address _crosschainLayerAddress, address _owner) external initializer {
+    function initialize(address _carbonController, address _carbonBatcher, address _carbonVoucher, address _saFactory, address _crosschainLayerAddress, address _owner) external initializer {
         __TacProxyV1Upgradeable_init(_crosschainLayerAddress);
         __Ownable_init(_owner == address(0) ? msg.sender : _owner);
         __Ownable2Step_init();
         __UUPSUpgradeable_init();
         carbonController = ICarbonController(_carbonController);
+        carbonBatcher = ICarbonBatcher(_carbonBatcher);
+        carbonVoucher = ICarbonVoucher(_carbonVoucher);
         tacSAFactory = ISAFactory(_saFactory);
     }
 
@@ -49,16 +57,42 @@ contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgr
         (Token token0, Token token1, Order[2] memory orders) = abi.decode(arguments, (Token, Token, Order[2]));
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user,) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
-        address[] memory tokensToClear = new address[](2);
-        tokensToClear[0] = Token.unwrap(token0);
-        tokensToClear[1] = Token.unwrap(token1);
-        uint256 nativeAmount = _handleTokenPrepBeforeOp(user, Token.unwrap(token0));
-        nativeAmount += _handleTokenPrepBeforeOp(user, Token.unwrap(token1));
+        
+        (uint256 nativeAmount, address[] memory tokensToClear) = _strategyCreationPreparation([token0, token1], user, false);
         bytes memory response = ITacSmartAccount(payable(user)).execute(address(carbonController), nativeAmount, abi.encodeWithSelector(ICarbonController.createStrategy.selector, token0, token1, orders));
         uint256 strategyId = abi.decode(response, (uint256));
-        
         _clearDustFromSa(user, tokensToClear, tacHeader);
         emit StrategyCreated(strategyId, user, header.tvmCaller);
+    }
+
+    function batchCreateStrategy(
+        bytes calldata tacHeader,
+        bytes calldata arguments
+    ) external payable _onlyCrossChainLayer {
+        (StrategyData[] memory strategyData) = abi.decode(arguments, (StrategyData[]));
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
+        (address user,) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
+        address[] memory tokensToClearOverall = new address[](0);
+        uint256 nativeAmountOverall = 0;
+        for (uint256 i = 0; i < strategyData.length; i++) {
+            (uint256 nativeAmount, address[] memory tokensToClear) = _strategyCreationPreparation(strategyData[i].tokens, user, true);
+            tokensToClearOverall = _concatenateAddressArrays(tokensToClearOverall, tokensToClear);
+            nativeAmountOverall += nativeAmount;
+        }
+        bytes memory response = ITacSmartAccount(payable(user)).execute(address(carbonBatcher), nativeAmountOverall, abi.encodeWithSelector(ICarbonBatcher.batchCreate.selector, strategyData));
+        uint256[] memory strategyIds = abi.decode(response, (uint256[]));
+        _clearDustFromSa(user, tokensToClearOverall, tacHeader);
+        emit StrategyCreatedBatch(strategyIds, user, header.tvmCaller);
+    }
+
+    function _strategyCreationPreparation(Token[2] memory tokens, address user, bool isViaBatcher) internal returns (uint256, address[] memory) {
+        address[] memory tokensToClear = new address[](tokens.length);
+        uint256 nativeAmount = 0;
+        for (uint256 i = 0; i < tokens.length; i++) {
+            tokensToClear[i] = Token.unwrap(tokens[i]);
+            nativeAmount += _handleTokenPrepBeforeOp(user, tokensToClear[i], isViaBatcher);
+        }
+        return (nativeAmount, tokensToClear);
     }
 
     function updateStrategy(
@@ -69,8 +103,8 @@ contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgr
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user,) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
         Strategy memory strategy = carbonController.strategy(strategyId);
-        uint256 nativeAmount = _handleTokenPrepBeforeOp(user, Token.unwrap(strategy.tokens[0]));
-        nativeAmount += _handleTokenPrepBeforeOp(user, Token.unwrap(strategy.tokens[1]));
+        uint256 nativeAmount = _handleTokenPrepBeforeOp(user, Token.unwrap(strategy.tokens[0]), false);
+        nativeAmount += _handleTokenPrepBeforeOp(user, Token.unwrap(strategy.tokens[1]), false);
         ITacSmartAccount(payable(user)).execute(address(carbonController), nativeAmount, abi.encodeWithSelector(ICarbonController.updateStrategy.selector, strategyId, currentOrders, newOrders));
         address[] memory tokensToClear = new address[](2);
         tokensToClear[0] = Token.unwrap(strategy.tokens[0]);
@@ -95,6 +129,18 @@ contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgr
         emit StrategyDeleted(strategyId);
     }
 
+    function transferStrategy(
+        bytes calldata tacHeader,
+        bytes calldata arguments
+    ) external _onlyCrossChainLayer {
+        (uint256 strategyId, string memory receiver) = abi.decode(arguments, (uint256, string));
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
+        (address user,) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
+        (address receiverAddress,) = tacSAFactory.getOrCreateSmartAccount(receiver);
+        ITacSmartAccount(payable(user)).execute(address(carbonVoucher), 0, abi.encodeWithSelector(ICarbonVoucher.safeTransferFrom.selector, user, receiverAddress, strategyId, ""));
+        emit StrategyTransferred(strategyId, header.tvmCaller, receiver);
+    }
+
     function tradeBySourceAmount(
         bytes calldata tacHeader,
         bytes calldata arguments
@@ -102,7 +148,7 @@ contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgr
         (Token sourceToken, Token targetToken, TradeAction[] memory tradeActions, uint256 deadline, uint128 minReturn) = abi.decode(arguments, (Token, Token, TradeAction[], uint256, uint128));
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user,) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
-        uint256 nativeAmount = _handleTokenPrepBeforeOp(user, Token.unwrap(sourceToken));
+        uint256 nativeAmount = _handleTokenPrepBeforeOp(user, Token.unwrap(sourceToken), false);
         ITacSmartAccount(payable(user)).execute(address(carbonController), nativeAmount, abi.encodeWithSelector(ICarbonController.tradeBySourceAmount.selector, sourceToken, targetToken, tradeActions, deadline, minReturn));
         address[] memory tokensToClear = new address[](2);
         tokensToClear[0] = Token.unwrap(targetToken);
@@ -118,7 +164,7 @@ contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgr
         (Token sourceToken, Token targetToken, TradeAction[] memory tradeActions, uint256 deadline, uint128 maxInput) = abi.decode(arguments, (Token, Token, TradeAction[], uint256, uint128));
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user,) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
-        uint256 nativeAmount = _handleTokenPrepBeforeOp(user, Token.unwrap(sourceToken));
+        uint256 nativeAmount = _handleTokenPrepBeforeOp(user, Token.unwrap(sourceToken), false);
         ITacSmartAccount(payable(user)).execute(address(carbonController), nativeAmount, abi.encodeWithSelector(ICarbonController.tradeByTargetAmount.selector, sourceToken, targetToken, tradeActions, deadline, maxInput));
         address[] memory tokensToClear = new address[](2);
         tokensToClear[0] = Token.unwrap(sourceToken);
@@ -160,7 +206,7 @@ contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgr
         _sendMessageV1(message, nativeAmount);
     }
 
-    function _handleTokenPrepBeforeOp(address user, address token) internal returns (uint256 nativeAmount) {
+    function _handleTokenPrepBeforeOp(address user, address token, bool isViaBatcher) internal returns (uint256 nativeAmount) {
         uint256 amount = 0;
         if (token == NATIVE_ADDRESS) {
             amount = address(this).balance;
@@ -169,7 +215,10 @@ contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgr
             return amount;
         } else {
             amount = IERC20(token).balanceOf(address(this));
-            ITacSmartAccount(payable(user)).approve(token, address(carbonController), amount);
+            if (amount == 0) {
+                return 0;
+            }
+            ITacSmartAccount(payable(user)).approve(token, isViaBatcher ? address(carbonBatcher) : address(carbonController), amount);
             SafeERC20.safeTransfer(IERC20(token), user, amount);
             return 0;
         }
@@ -213,6 +262,41 @@ contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgr
             }
             _bridgeTokens(tacHeader, tokenAmounts, "", nativeAmount);
         }
+    }
+
+    /// @notice Concatenates two address arrays using assembly for gas efficiency
+    /// @param array1 First address array
+    /// @param array2 Second address array
+    /// @return result Concatenated address array
+    function _concatenateAddressArrays(address[] memory array1, address[] memory array2) internal returns (address[] memory result) {
+        uint256 length1 = array1.length;
+        uint256 length2 = array2.length;
+        uint256 totalLength = length1 + length2;
+        
+        result = new address[](totalLength);
+        
+        assembly {
+            let resultPtr := add(result, 0x20)  // Skip length field
+            let array1Ptr := add(array1, 0x20)  // Skip length field
+            let array2Ptr := add(array2, 0x20)  // Skip length field
+            
+            // Copy first array (length1 * 32 bytes per address)
+            let bytesToCopy1 := mul(length1, 0x20)
+            if gt(bytesToCopy1, 0) {
+                // Use identity precompile for efficient memory copy
+                let success := call(gas(), 0x04, 0, array1Ptr, bytesToCopy1, resultPtr, bytesToCopy1)
+            }
+            
+            // Copy second array to position after first array
+            let bytesToCopy2 := mul(length2, 0x20)
+            if gt(bytesToCopy2, 0) {
+                let destPtr := add(resultPtr, bytesToCopy1)
+                // Use identity precompile for efficient memory copy
+                let success := call(gas(), 0x04, 0, array2Ptr, bytesToCopy2, destPtr, bytesToCopy2)
+            }
+        }
+        
+        return result;
     }
 
     receive() external payable {}
