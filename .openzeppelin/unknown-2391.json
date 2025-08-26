@@ -5,6 +5,11 @@
       "address": "0x6D66139b6D31b1B8fFdf27fB725415585DeaCc78",
       "txHash": "0x2ec59f70b2adb01650911ccd79e973d91f44e54dcf8da1ffaabf7593fa30dbd6",
       "kind": "uups"
+    },
+    {
+      "address": "0xfa60E12747D719baDBe3B67dEd3f128B20EDd058",
+      "txHash": "0xd92feeec41d13e3c667ccc6e130a4f5e77252cacce25873e05f9a370aabd111b",
+      "kind": "uups"
     }
   ],
   "impls": {
@@ -251,6 +256,181 @@
           },
           "t_contract(ICarbonController)4072": {
             "label": "contract ICarbonController",
+            "numberOfBytes": "20"
+          },
+          "t_contract(ISAFactory)2709": {
+            "label": "contract ISAFactory",
+            "numberOfBytes": "20"
+          }
+        },
+        "namespaces": {
+          "erc7201:openzeppelin.storage.Ownable2Step": [
+            {
+              "contract": "Ownable2StepUpgradeable",
+              "label": "_pendingOwner",
+              "type": "t_address",
+              "src": "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol:29",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Ownable": [
+            {
+              "contract": "OwnableUpgradeable",
+              "label": "_owner",
+              "type": "t_address",
+              "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:24",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:tac.storage.TacProxyV1Upgradeable": [
+            {
+              "contract": "TacProxyV1Upgradeable",
+              "label": "_crossChainLayer",
+              "type": "t_address",
+              "src": "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol:28",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Initializable": [
+            {
+              "contract": "Initializable",
+              "label": "_initialized",
+              "type": "t_uint64",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+              "offset": 0,
+              "slot": "0"
+            },
+            {
+              "contract": "Initializable",
+              "label": "_initializing",
+              "type": "t_bool",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+              "offset": 8,
+              "slot": "0"
+            }
+          ]
+        }
+      }
+    },
+    "538bcaa87719ee900936b24c5c93e578fb2df2eea1c02185ad3afe53d82445c4": {
+      "address": "0xb09fcA194C17782FeC577951FBA3693EB3876c26",
+      "txHash": "0xb123d384c8b6f9a4fd573dd1e1bc1be5815c7fcf350e26a49f0a28127662e026",
+      "layout": {
+        "solcVersion": "0.8.28",
+        "storage": [
+          {
+            "label": "carbonController",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_contract(ICarbonController)4464",
+            "contract": "CarbonProxy",
+            "src": "contracts/proxies/Carbon/CarbonProxy.sol:18"
+          },
+          {
+            "label": "carbonBatcher",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_contract(ICarbonBatcher)4348",
+            "contract": "CarbonProxy",
+            "src": "contracts/proxies/Carbon/CarbonProxy.sol:19"
+          },
+          {
+            "label": "carbonVoucher",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_contract(ICarbonVoucher)4476",
+            "contract": "CarbonProxy",
+            "src": "contracts/proxies/Carbon/CarbonProxy.sol:20"
+          },
+          {
+            "label": "tacSAFactory",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_contract(ISAFactory)2709",
+            "contract": "CarbonProxy",
+            "src": "contracts/proxies/Carbon/CarbonProxy.sol:21"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_struct(InitializableStorage)128_storage": {
+            "label": "struct Initializable.InitializableStorage",
+            "members": [
+              {
+                "label": "_initialized",
+                "type": "t_uint64",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_initializing",
+                "type": "t_bool",
+                "offset": 8,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(Ownable2StepStorage)13_storage": {
+            "label": "struct Ownable2StepUpgradeable.Ownable2StepStorage",
+            "members": [
+              {
+                "label": "_pendingOwner",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(OwnableStorage)68_storage": {
+            "label": "struct OwnableUpgradeable.OwnableStorage",
+            "members": [
+              {
+                "label": "_owner",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(TacProxyV1UpgradeableStorage)1208_storage": {
+            "label": "struct TacProxyV1Upgradeable.TacProxyV1UpgradeableStorage",
+            "members": [
+              {
+                "label": "_crossChainLayer",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_uint64": {
+            "label": "uint64",
+            "numberOfBytes": "8"
+          },
+          "t_contract(ICarbonBatcher)4348": {
+            "label": "contract ICarbonBatcher",
+            "numberOfBytes": "20"
+          },
+          "t_contract(ICarbonController)4464": {
+            "label": "contract ICarbonController",
+            "numberOfBytes": "20"
+          },
+          "t_contract(ICarbonVoucher)4476": {
+            "label": "contract ICarbonVoucher",
             "numberOfBytes": "20"
           },
           "t_contract(ISAFactory)2709": {

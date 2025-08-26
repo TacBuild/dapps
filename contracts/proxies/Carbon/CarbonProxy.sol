@@ -12,7 +12,6 @@ import {OutMessageV1, TokenAmount, TacHeaderV1, NFTAmount} from "@tonappchain/ev
 import {ICarbonController, Order, Token, TradeAction, Strategy} from "./interfaces/ICarbonController.sol";
 import {ICarbonBatcher, StrategyData} from "./interfaces/ICarbonBatcher.sol";
 import {ICarbonVoucher} from "./interfaces/ICarbonVoucher.sol";
-import "hardhat/console.sol";
 
 contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgradeable {
 
@@ -65,7 +64,7 @@ contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgr
         emit StrategyCreated(strategyId, user, header.tvmCaller);
     }
 
-    function batchCreateStrategy(
+    function batchCreate(
         bytes calldata tacHeader,
         bytes calldata arguments
     ) external payable _onlyCrossChainLayer {
@@ -234,6 +233,9 @@ contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgr
                 continue;
             }
             if (tokens[i] == NATIVE_ADDRESS) {
+                if (user.balance == 0) {
+                    continue;
+                }
                 nativeAmount = user.balance;
                 ITacSmartAccount(payable(user)).execute(address(this), nativeAmount, "");
                 continue;
