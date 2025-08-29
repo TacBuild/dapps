@@ -348,8 +348,8 @@ contract ZerolendPoolProxy is
             );
 
             _bridgeTokens(tacHeader, tokensToBridge, "", 0);
+            emit DustCleared(user, asset, balance);
         }
 
-        emit DustCleared(user, asset, balance);
     }
 }
