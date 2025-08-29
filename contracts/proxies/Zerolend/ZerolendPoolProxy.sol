@@ -58,13 +58,13 @@ contract ZerolendPoolProxy is
     }
 
 
-    function initialize(address deployer, address _appAddress, address _tacSAFactoryAddress, address _crossChainLayer) public initializer {
-        require(deployer != address(0), ZeroAddressValidation());
+    function initialize(address owner, address _appAddress, address _tacSAFactoryAddress, address _crossChainLayer) public initializer {
+        require(owner != address(0), ZeroAddressValidation());
         require(_appAddress != address(0), ZeroAddressValidation());
         require(_tacSAFactoryAddress != address(0), ZeroAddressValidation());
         require(_crossChainLayer != address(0), ZeroAddressValidation());
         __TacProxyV1Upgradeable_init(_crossChainLayer);
-        __Ownable_init(deployer);
+        __Ownable_init(owner);
         __Ownable2Step_init();
         __UUPSUpgradeable_init();
         tacSAFactoryAddress = _tacSAFactoryAddress;
