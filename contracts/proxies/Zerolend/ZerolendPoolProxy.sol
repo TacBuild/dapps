@@ -38,6 +38,8 @@ struct RepayArguments {
 
 error ZeroAddressValidation();
 
+event SmartAccountClaimed(address indexed user, address indexed asset, uint256 amount, string tvmWallet);
+
 /**
  * @title ZerolendPoolProxy
  * @dev Proxy contract for interacting with the Pool contract.
@@ -265,23 +267,27 @@ contract ZerolendPoolProxy is
 
         (address user, ) = ISAFactory(tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
 
+        uint256 balance = IERC20(asset).balanceOf(user);
+
         ITacSmartAccount(user).execute(
         asset,
         0,
         abi.encodeWithSelector(
             IERC20(asset).transfer.selector,
             address(this),
-            IERC20(asset).balanceOf(user)
+            balance
         )
         );
 
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(
             asset,
-            IERC20(asset).balanceOf(address(this))
+            balance
         );
 
         _bridgeTokens(tacHeader, tokensToBridge, "", 0);
+
+        emit SmartAccountClaimed(user, asset, balance, header.tvmCaller);
     }
 
     /// @notice Bridges tokens and NFTs to the cross-chain layer
