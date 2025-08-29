@@ -39,6 +39,7 @@ struct RepayArguments {
 error ZeroAddressValidation();
 
 event SmartAccountClaimed(address indexed user, address indexed asset, uint256 amount, string tvmWallet);
+event DustCleared(address indexed user, address indexed asset, uint256 amount);
 
 /**
  * @title ZerolendPoolProxy
@@ -92,7 +93,7 @@ contract ZerolendPoolProxy is
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
 
         (address user, ) = ISAFactory(tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
-        SafeERC20.safeTransfer(IERC20 (args.asset), user, args.amount);
+        SafeERC20.safeTransfer(IERC20(args.asset), user, args.amount);
         ITacSmartAccount(user).approve(args.asset, appAddress, args.amount);
         
         ITacSmartAccount(user).execute(
@@ -106,6 +107,8 @@ contract ZerolendPoolProxy is
                 args.referralCode
                 )
         );
+
+        _clearDust(args.asset, user, tacHeader);
     }
 
     /**
@@ -227,6 +230,8 @@ contract ZerolendPoolProxy is
                 user
             )
         );
+
+        _clearDust(args.asset, user, tacHeader);
     }
 
     /**
@@ -321,5 +326,30 @@ contract ZerolendPoolProxy is
         });
 
         _sendMessageV1(message, tacAmount);
+    }
+
+    function _clearDust(address asset, address user, bytes calldata tacHeader) private {
+        uint256 balance = IERC20(asset).balanceOf(user);
+        if (balance > 0) {
+            ITacSmartAccount(user).execute(
+                asset,
+                0,
+                abi.encodeWithSelector(
+                    IERC20(asset).transfer.selector,
+                    address(this),
+                    balance
+                )
+            );
+
+            TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
+            tokensToBridge[0] = TokenAmount(
+                asset,
+                balance
+            );
+
+            _bridgeTokens(tacHeader, tokensToBridge, "", 0);
+        }
+
+        emit DustCleared(user, asset, balance);
     }
 }

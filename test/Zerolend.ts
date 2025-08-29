@@ -8,12 +8,12 @@ import { deployTacSAFactory } from "../scripts/TacSmartAccountFactory/FactoryDep
 import { deployTacSmartAccount } from "../scripts/TacSmartAccountFactory/SABlueprintDeploy";
 
 import { TacLocalTestSdk, TokenMintInfo, TokenUnlockInfo } from "@tonappchain/evm-ccl";
-import {ISAFactory} from "@tonappchain/evm-ccl/contracts/smart-account/interfaces/ISAFactory.sol";
-import { ZerolendPoolProxy, MockZerolendPool, TestToken} from '../typechain-types';
+import { ZerolendPoolProxy, MockZerolendPool, TestToken, ISAFactory} from '../typechain-types';
 
 import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types"
 import { sttonTokenInfo, tacTokenInfo } from '../scripts/common/info/tokensInfo';
 import { token } from "../typechain-types/@openzeppelin/contracts";
+import { reset } from "@nomicfoundation/hardhat-network-helpers";
 
 describe("ZerolandPoolProxy", function () {
     const poolPresetParams = {
@@ -42,6 +42,7 @@ describe("ZerolandPoolProxy", function () {
     const tokenValue = 100000n
 
     before(async function () {
+        await reset(process.env.TAC_MAINNET_URL || "", 4749319);
         [admin] = await ethers.getSigners();
         testSdk = new TacLocalTestSdk();
         crossChainLayerAddress = await testSdk.create(ethers.provider);
