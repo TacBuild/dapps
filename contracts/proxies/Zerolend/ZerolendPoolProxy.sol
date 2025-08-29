@@ -274,25 +274,28 @@ contract ZerolendPoolProxy is
 
         uint256 balance = IERC20(asset).balanceOf(user);
 
-        ITacSmartAccount(user).execute(
-        asset,
-        0,
-        abi.encodeWithSelector(
-            IERC20(asset).transfer.selector,
-            address(this),
-            balance
-        )
-        );
+        if (balance > 0) {
 
-        TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
-        tokensToBridge[0] = TokenAmount(
+            ITacSmartAccount(user).execute(
             asset,
-            balance
-        );
+            0,
+            abi.encodeWithSelector(
+                IERC20(asset).transfer.selector,
+                address(this),
+                balance
+            )
+            );
 
-        _bridgeTokens(tacHeader, tokensToBridge, "", 0);
+            TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
+            tokensToBridge[0] = TokenAmount(
+                asset,
+                balance
+            );
 
-        emit SmartAccountClaimed(user, asset, balance, header.tvmCaller);
+            _bridgeTokens(tacHeader, tokensToBridge, "", 0);
+
+            emit SmartAccountClaimed(user, asset, balance, header.tvmCaller);
+        }
     }
 
     /// @notice Bridges tokens and NFTs to the cross-chain layer
