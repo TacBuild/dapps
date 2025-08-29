@@ -36,6 +36,8 @@ struct RepayArguments {
     uint256 interestRateMode;
 }
 
+error ZeroAddressValidation();
+
 /**
  * @title ZerolendPoolProxy
  * @dev Proxy contract for interacting with the Pool contract.
@@ -57,6 +59,10 @@ contract ZerolendPoolProxy is
 
 
     function initialize(address deployer, address _appAddress, address _tacSAFactoryAddress, address _crossChainLayer) public initializer {
+        require(deployer != address(0), ZeroAddressValidation());
+        require(_appAddress != address(0), ZeroAddressValidation());
+        require(_tacSAFactoryAddress != address(0), ZeroAddressValidation());
+        require(_crossChainLayer != address(0), ZeroAddressValidation());
         __TacProxyV1Upgradeable_init(_crossChainLayer);
         __Ownable_init(deployer);
         __Ownable2Step_init();
