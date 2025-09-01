@@ -36,6 +36,11 @@ struct RepayArguments {
     uint256 interestRateMode;
 }
 
+error ZeroAddressValidation();
+
+event SmartAccountClaimed(address indexed user, address indexed asset, uint256 amount, string tvmWallet);
+event DustCleared(address indexed user, address indexed asset, uint256 amount);
+
 /**
  * @title ZerolendPoolProxy
  * @dev Proxy contract for interacting with the Pool contract.
@@ -56,9 +61,13 @@ contract ZerolendPoolProxy is
     }
 
 
-    function initialize(address deployer, address _appAddress, address _tacSAFactoryAddress, address _crossChainLayer) public initializer {
+    function initialize(address owner, address _appAddress, address _tacSAFactoryAddress, address _crossChainLayer) public initializer {
+        require(owner != address(0), ZeroAddressValidation());
+        require(_appAddress != address(0), ZeroAddressValidation());
+        require(_tacSAFactoryAddress != address(0), ZeroAddressValidation());
+        require(_crossChainLayer != address(0), ZeroAddressValidation());
         __TacProxyV1Upgradeable_init(_crossChainLayer);
-        __Ownable_init(deployer);
+        __Ownable_init(owner);
         __Ownable2Step_init();
         __UUPSUpgradeable_init();
         tacSAFactoryAddress = _tacSAFactoryAddress;
@@ -84,7 +93,7 @@ contract ZerolendPoolProxy is
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
 
         (address user, ) = ISAFactory(tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
-        SafeERC20.safeTransfer(IERC20 (args.asset), user, args.amount);
+        SafeERC20.safeTransfer(IERC20(args.asset), user, args.amount);
         ITacSmartAccount(user).approve(args.asset, appAddress, args.amount);
         
         ITacSmartAccount(user).execute(
@@ -98,6 +107,8 @@ contract ZerolendPoolProxy is
                 args.referralCode
                 )
         );
+
+        _clearDust(args.asset, user, tacHeader);
     }
 
     /**
@@ -219,6 +230,8 @@ contract ZerolendPoolProxy is
                 user
             )
         );
+
+        _clearDust(args.asset, user, tacHeader);
     }
 
     /**
@@ -259,23 +272,30 @@ contract ZerolendPoolProxy is
 
         (address user, ) = ISAFactory(tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
 
-        ITacSmartAccount(user).execute(
-        asset,
-        0,
-        abi.encodeWithSelector(
-            IERC20(asset).transfer.selector,
-            address(this),
-            IERC20(asset).balanceOf(user)
-        )
-        );
+        uint256 balance = IERC20(asset).balanceOf(user);
 
-        TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
-        tokensToBridge[0] = TokenAmount(
+        if (balance > 0) {
+
+            ITacSmartAccount(user).execute(
             asset,
-            IERC20(asset).balanceOf(address(this))
-        );
+            0,
+            abi.encodeWithSelector(
+                IERC20(asset).transfer.selector,
+                address(this),
+                balance
+            )
+            );
 
-        _bridgeTokens(tacHeader, tokensToBridge, "", 0);
+            TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
+            tokensToBridge[0] = TokenAmount(
+                asset,
+                balance
+            );
+
+            _bridgeTokens(tacHeader, tokensToBridge, "", 0);
+
+            emit SmartAccountClaimed(user, asset, balance, header.tvmCaller);
+        }
     }
 
     /// @notice Bridges tokens and NFTs to the cross-chain layer
@@ -309,5 +329,30 @@ contract ZerolendPoolProxy is
         });
 
         _sendMessageV1(message, tacAmount);
+    }
+
+    function _clearDust(address asset, address user, bytes calldata tacHeader) private {
+        uint256 balance = IERC20(asset).balanceOf(user);
+        if (balance > 0) {
+            ITacSmartAccount(user).execute(
+                asset,
+                0,
+                abi.encodeWithSelector(
+                    IERC20(asset).transfer.selector,
+                    address(this),
+                    balance
+                )
+            );
+
+            TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
+            tokensToBridge[0] = TokenAmount(
+                asset,
+                balance
+            );
+
+            _bridgeTokens(tacHeader, tokensToBridge, "", 0);
+            emit DustCleared(user, asset, balance);
+        }
+
     }
 }
