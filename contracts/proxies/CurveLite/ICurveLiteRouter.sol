@@ -38,7 +38,8 @@ interface IRouter {
         address[11] calldata _route,
         uint256[4][5] calldata _swap_params,
         uint256 _amount,
-        uint256 _min_dy
+        uint256 _min_dy,
+        address _receiver
     ) external returns (uint256);
     /**
      *@notice Get amount of the final output token received in an exchange

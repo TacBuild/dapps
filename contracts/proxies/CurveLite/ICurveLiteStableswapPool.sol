@@ -14,7 +14,7 @@ interface IStableswapPool {
      * @return uint256 Amount of LP tokens received by the receiver
      */
     function add_liquidity(
-        uint256[2] calldata amounts,
+        uint256[] calldata amounts,
         uint256 min_mint_amount
     ) external returns (uint256);
 
@@ -26,8 +26,21 @@ interface IStableswapPool {
      */
     function remove_liquidity(
         uint256 burn_amount,
-        uint256[2] calldata min_amounts
-    ) external returns (uint256[2] memory);
+        uint256[] calldata min_amounts
+    ) external returns (uint256[] memory);
+
+    /** 
+    * @notice Withdraw a single coin from the pool
+    * @param burn_amount Amount of LP tokens to burn in the withdrawal
+    * @param i Index value of the coin to withdraw
+    * @param min_received Minimum amount of coin to receive
+    * @return Amount of coin received
+    */
+    function remove_liquidity_one_coin(
+        uint256 burn_amount,
+        int128 i,
+        uint256 min_received
+    ) external returns (uint256);
 
     /**
      * @notice Exchange tokens 
@@ -38,8 +51,8 @@ interface IStableswapPool {
      * @return uint256 Amount of tokens at index j received by the receiver
      */
     function exchange(
-        uint256 i,
-        uint256 j,
+        int128 i,
+        int128 j,
         uint256 dx,
         uint256 min_dy
     ) external returns (uint256);
@@ -52,4 +65,14 @@ interface IStableswapPool {
     function coins(
         uint256 arg0
     ) external view returns (address);
+
+    /**
+     * @notice Get num of coins
+     * @return uint256 num of coins
+     */
+    function N_COINS(
+    ) external view returns (uint256);
+
+
+    
 }
