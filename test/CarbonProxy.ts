@@ -30,7 +30,7 @@ describe("Carbon Proxy", function () {
     let voucher: any;
 
     before(async function () {
-        await reset(process.env.TAC_MAINNET_URL, 4580693);
+        await reset(process.env.TAC_MAINNET_URL, 5076670);
         
         
 
