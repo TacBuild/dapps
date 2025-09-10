@@ -5,6 +5,7 @@ import { expect } from "chai";
 import { deployCurveLiteTwocryptoswapProxy } from "../scripts/CurveLite/twocryptoswap/deployProxy";
 import { deployPoolTwocryptoswap } from "../scripts/CurveLite/twocryptoswap/deployPoolTwocryptoswap";
 import { CurveLiteTwocryptoswapTestnetConfig } from "../scripts/CurveLite/twocryptoswap/config/testnetConfig";
+import { CurveLiteTwocryptoswapMainnetConfig } from "../scripts/CurveLite/twocryptoswap/config/mainnetConfig";
 import { TacLocalTestSdk, TokenMintInfo, TokenUnlockInfo } from "@tonappchain/evm-ccl";
 import { deployTacSAFactory } from "../scripts/TacSmartAccountFactory/FactoryDeploy";
 import { deployTacSmartAccount } from "../scripts/TacSmartAccountFactory/SABlueprintDeploy";
@@ -51,7 +52,7 @@ describe("CurveLiteTwocryptoswapProxy", function () {
         console.log (crossChainLayerAddress)
 
         curveLiteTwocryptoswapProxy = await deployCurveLiteTwocryptoswapProxy(admin, await tacSAFactory.getAddress(), crossChainLayerAddress, NATIVE);
-        factoryContract = new ethers.Contract(CurveLiteTwocryptoswapTestnetConfig.CurveLiteTwocryptoswapFactory, factoryAbi, admin) as unknown as ICurveLiteTwocryptoFactory;
+        factoryContract = new ethers.Contract(CurveLiteTwocryptoswapMainnetConfig.CurveLiteTwocryptoswapFactory, factoryAbi, admin) as unknown as ICurveLiteTwocryptoFactory;
     });
 
     it("deploy tokens", async function () {
@@ -327,7 +328,7 @@ describe("CurveLiteTwocryptoswapProxy", function () {
         expect(outMessage.tokensLocked.length).to.be.equal(0);
     });
 
-     it ("CurveLiteTwocryptoswap test remove liquidity", async function () {
+    it ("CurveLiteTwocryptoswap test remove liquidity", async function () {
         const shardsKey = 1n;
         const operationId = ethers.encodeBytes32String("exchange");
         const extraData = "0x";
