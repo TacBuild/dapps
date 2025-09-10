@@ -1,15 +1,13 @@
 import hre, { ethers } from "hardhat";
-import { AddressLike, BytesLike, Signer } from "ethers";
+import { Signer } from "ethers";
 import { expect } from "chai";
 
 import { deployYieldProxy } from "../scripts/Yield/deployProxy";
-import { yiedTestnetConfig } from "../scripts/Yield/config/testnetConfig";
-import { TacLocalTestSdk, TokenMintInfo, NFTInfo, NFTMintInfo, NFTUnlockInfo, TokenUnlockInfo} from "@tonappchain/evm-ccl";
-import { sttonTokenInfo, tacTokenInfo } from '../scripts/common/info/tokensInfo';
-import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types";
-import { YieldManagerProxy, ISAFactory, ITacSmartAccount } from "../typechain-types";
+import { TacLocalTestSdk, TokenUnlockInfo} from "@tonappchain/evm-ccl";
+import { YieldManagerProxy, ISAFactory } from "../typechain-types";
 import { yiedMainnetConfig } from "../scripts/Yield/config/mainnetConfig";
-import { getStorageAt, setStorageAt, impersonateAccount} from "@nomicfoundation/hardhat-network-helpers"
+import { setStorageAt, impersonateAccount} from "@nomicfoundation/hardhat-network-helpers"
+import { reset } from "@nomicfoundation/hardhat-network-helpers"
 
 const USDT_MAINNET_ADDRESS = "0xAF988C3f7CB2AceAbB15f96b19388a259b6C438f"
 const orderExecutor = "0x944416e5dF03eE4c14EC44C01495005564e6b07E"
@@ -27,6 +25,7 @@ describe("YieldProxy", function () {
    
 
     before(async function () {
+        await reset(process.env.TAC_MAINNET_URL || "", 5409429);
         [admin] = await ethers.getSigners();
         testSdk = new TacLocalTestSdk();
         const crossChainLayerAddress = await testSdk.create(ethers.provider);
