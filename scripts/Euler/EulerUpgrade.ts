@@ -5,16 +5,17 @@ import hre from 'hardhat';
 import { eulerConfig } from "./EulerConfig";
 
 const proxyOptsUUPS: DeployProxyOptions = {
-    kind: "uups"
+    kind: "uups",
+    unsafeAllow: ["constructor"]
 };
 
 export async function upgradeEulerProxy(
-): Promise<EulerProxy> {
+) {
     const [signer] = await hre.ethers.getSigners();
     const factory = await hre.ethers.getContractFactory("EulerProxy", signer);
-    const eulerProxy = await hre.upgrades.upgradeProxy(eulerConfig.eulerProxyTestnetAddress, factory);
+    const eulerProxy = await hre.upgrades.upgradeProxy(eulerConfig.eulerProxyMainnetAddress, factory, proxyOptsUUPS);
     await eulerProxy.waitForDeployment();
-    return eulerProxy;
+    console.log("EulerProxy upgraded to:", eulerProxy.target);
 } 
 
 upgradeEulerProxy();

@@ -31,15 +31,11 @@ const config: HardhatUserConfig = {
   },
   networks: {
     hardhat: {
-      chainId: 2391,
+      chainId: 1337,
       accounts: {
         count: 50
       },
       allowBlocksWithSameTimestamp: true,
-      forking: {
-        url: TAC_TESTNET_URL,
-        blockNumber: 6482609,
-      },
     },
     localhost: {
 	    url:  "http://127.0.0.1:8545",
@@ -82,6 +78,14 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: process.env.SPB_API_URL || "",
           browserURL: "https://spb.explorer.tac.build"
+        }
+      },
+      {
+        network: "tac_mainnet",
+        chainId: 239,
+        urls: {
+          apiURL: "https://explorer.tac.build/api",
+          browserURL: "https://explorer.tac.build"
         }
       },
       {

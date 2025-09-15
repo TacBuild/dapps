@@ -4,7 +4,7 @@ import { deployUpgradable } from '@tonappchain/evm-ccl'
 import { DeployProxyOptions } from "@openzeppelin/hardhat-upgrades/dist/utils";
 import hre from 'hardhat';
 import { merklTestnetConfig, rEULTestnetConfig } from "./config/TestnetConfigTurinV3";
-import { merklMainnetConfig } from "./config/MainnetConfig";
+import { merklDeployments, merklMainnetConfig, rEULMainnetConfig } from "./config/MainnetConfig";
 import { deployTacSmartAccount } from "../TacSmartAccountFactory/SABlueprintDeploy";
 import { deployTacSAFactory } from "../TacSmartAccountFactory/FactoryDeploy";
 import { tacSAFactoryDeployments } from "../TacSmartAccountFactory/config/mainnetConfig";
@@ -72,14 +72,20 @@ export async function deployMerklProxyMainnet(
     return merklProxy;
 }
 
-async function main() {
-    const [deployer] = await hre.ethers.getSigners();
-    // const account = await deployTacSmartAccount(deployer);
-    // const saFactory = await deployTacSAFactory(deployer, await account.getAddress());
-    const merklProxy = await deployMerklProxyMainnet(deployer, merklMainnetConfig.crossChainLayerAddress, tacSAFactoryDeployments.proxyAddress)
-    console.log("MerklProxy deployed to:", merklProxy.target);
-    // const customMerklProxyEuler = await deployCustomMerklProxyEuler(deployer, await merklProxy.getAddress())
-    // await merklProxy.setCustomMerklLogic(rEULTestnetConfig.rEULAddress, await customMerklProxyEuler.getAddress())
-}
 
-main()
+export async function deployCustomMerklProxyEulerMainnet(
+    deployer: Signer,
+    mainMerklProxyAddress: string,
+): Promise<CustomMerklProxyEuler> {
+    const customMerklProxyEuler = await deployUpgradable<CustomMerklProxyEuler>(
+        deployer,
+        hre.artifacts.readArtifactSync('CustomMerklProxyEuler'),
+        [rEULMainnetConfig.EULAddress, rEULMainnetConfig.rEULAddress, mainMerklProxyAddress],
+        proxyOptsUUPS,
+        undefined,
+        true
+    );
+
+    await customMerklProxyEuler.waitForDeployment();
+    return customMerklProxyEuler;
+}

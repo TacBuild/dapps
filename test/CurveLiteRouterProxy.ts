@@ -2,23 +2,21 @@ import hre, { ethers } from "hardhat";
 import { AddressLike, BytesLike, Contract, Signer } from "ethers";
 import { expect } from "chai";
 
-import { deployCurveLiteTwocryptoswapProxy } from "../scripts/CurveLite/twocryptoswap/deployProxy";
 import { deployCurveLiteRouterProxy } from "../scripts/CurveLite/deployRouterProxy";
-import { deployPoolTwocryptoswap } from "../scripts/CurveLite/twocryptoswap/deployPoolTwocryptoswap";
-import { CurveLiteTwocryptoswapTestnetConfig } from "../scripts/CurveLite/twocryptoswap/config/testnetConfig";
-import { TacLocalTestSdk, TokenMintInfo, TokenUnlockInfo } from "@tonappchain/evm-ccl";
+import { TacLocalTestSdk, TokenMintInfo } from "@tonappchain/evm-ccl";
 
 import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types";
 import { CurveLiteTwocryptoswapProxy, CurveLiteRouterProxy, ICurveLiteTwocryptoFactory } from "../typechain-types";
-import { curveLiteTwocryptoProxySol } from "../typechain-types/factories/contracts/proxies/CurveLite";
+import { sttonTokenInfo, tacTokenInfo } from '../scripts/common/info/tokensInfo';
+import { CurveLiteRouterMainnetConfig } from "../scripts/CurveLite/router/mainnetConfig";
 import factoryAbi from "../scripts/CurveLite/twocryptoswap/factoryAbi.json"
 import implementationAbi from "../scripts/CurveLite/twocryptoswap/implementationAbi.json"
-import { erc20 } from "../typechain-types/factories/@openzeppelin/contracts/token";
-import { sttonTokenInfo, tacTokenInfo } from '../scripts/common/info/tokensInfo';
-import { token } from "../typechain-types/@openzeppelin/contracts";
-import addresses from "../addresses.json"
+import { deployCurveLiteTwocryptoswapProxy } from "../scripts/CurveLite/twocryptoswap/deployProxy";
 
-describe("CurveLiteTwocryptoswapProxy", function () {
+
+
+
+describe("CurveLiteRouterProxy", function () {
     const NULL_ADDRESS = "0x0000000000000000000000000000000000000000"
     const poolPresetParams = {
         implementation_id: 0,
@@ -45,10 +43,16 @@ describe("CurveLiteTwocryptoswapProxy", function () {
         [admin] = await ethers.getSigners();
         testSdk = new TacLocalTestSdk();
         const crossChainLayerAddress = await testSdk.create(ethers.provider);
+        const smartAccountFactoryAddress = testSdk.getSmartAccountFactoryAddress();
+
         
-        curveLiteTwocryptoswapProxy = await deployCurveLiteTwocryptoswapProxy(admin, crossChainLayerAddress);
-        curveLiteRouterProxy = await deployCurveLiteRouterProxy(admin, CurveLiteTwocryptoswapTestnetConfig.CurveLiteRouter, crossChainLayerAddress);
-        factoryContract = new ethers.Contract(CurveLiteTwocryptoswapTestnetConfig.CurveLiteTwocryptoswapFactory, factoryAbi, admin) as unknown as ICurveLiteTwocryptoFactory;
+        curveLiteRouterProxy = await deployCurveLiteRouterProxy(admin, CurveLiteRouterMainnetConfig.CurveLiteRouter, crossChainLayerAddress, smartAccountFactoryAddress);
+        factoryContract = new ethers.Contract(CurveLiteRouterMainnetConfig.CurveLiteTwocryptoswapFactory, factoryAbi, admin) as unknown as ICurveLiteTwocryptoFactory;
+        curveLiteTwocryptoswapProxy = await deployCurveLiteTwocryptoswapProxy(admin, smartAccountFactoryAddress, crossChainLayerAddress, testSdk.getWTACAddress());
+
+
+
+
     });
 
     it("deploy tokens", async function () {
@@ -224,7 +228,7 @@ describe("CurveLiteTwocryptoswapProxy", function () {
         }
 
         const encodedParameters = new ethers.AbiCoder().encode(
-            ['tuple(address[11], uint256[4][5], uint256, uint256)'],
+            ['tuple(address[11],uint256[4][5],uint256,uint256,address)'],
             [
                 [
                     [await sttonEVM.getAddress(), await pool.getAddress(), await tacEVM.getAddress(),
@@ -234,7 +238,8 @@ describe("CurveLiteTwocryptoswapProxy", function () {
                     ],
                     [[0, 1, 1, 20],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],
                     amount,
-                    0
+                    0,
+                    await tacEVM.getAddress()
                 ]
             ],
         );

@@ -3,8 +3,7 @@ import { AddressLike, BytesLike, Signer } from "ethers";
 import {time} from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { expect } from "chai";
 
-import { deployTacSAFactory } from "../scripts/TacSmartAccountFactory/FactoryDeploy";
-import { deployTacSmartAccount } from "../scripts/TacSmartAccountFactory/SABlueprintDeploy";
+
 import { TacLocalTestSdk, TokenMintInfo, TokenUnlockInfo} from "@tonappchain/evm-ccl";
 import { sttonTokenInfo, tacTokenInfo } from '../scripts/common/info/tokensInfo';
 import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types";
@@ -52,7 +51,9 @@ describe("MerklProxy", function () {
         const target = await merklProxy.getAddress();
         const methodName = "claim(bytes,bytes)";
         const amount = ethers.parseEther("50")
-        const proof = [process.env.MERKL_PROOF_FOR_TEST_1, process.env.MERKL_PROOF_FOR_TEST_2];
+        const proof = [ "0xe41ad7320b930742c351ebb868c87d1a7510eeb8ec01a822d6dde18b7b9ba9b5", "0x94a904f3e8977024e662a40eb21199bc58243c759e6d5360e05840947bf1fd07",
+            "0xe9bdd1d98a22626fd849f50474cb5fadae20e20e3c3e8957035be5b28d7dbc0f"
+          ]
         const userAddress = await tacSAFactory.predictSmartAccountAddress(tvmWalletCaller, await merklProxy.getAddress());
         console.log("userAddress", userAddress);
         const encodedArguments = new ethers.AbiCoder().encode(
@@ -97,7 +98,6 @@ describe("MerklProxy", function () {
         const methodName = "customFunctionCall(bytes,bytes)";
         const rEUL = await ethers.getContractAt(hre.artifacts.readArtifactSync('IREUL').abi, rEULAddress);
         const EUL = await ethers.getContractAt(hre.artifacts.readArtifactSync('contracts/faucet/interfaces/IERC20.sol:IERC20').abi, EULAddress);
-        const saAddress = await tacSAFactory.predictSmartAccountAddress(tvmWalletCaller, await merklProxy.getAddress());
         
         const account = await tacSAFactory.predictSmartAccountAddress(tvmWalletCaller, await merklProxy.getAddress());
         const lockTimestamp = (await rEUL.getLockedAmounts(account))[0][0];
