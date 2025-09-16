@@ -2,7 +2,13 @@ import hre from 'hardhat';
 import { MidasProxy } from '../../typechain-types/';
 import { Signer } from 'ethers';
 import { deployUpgradable } from '@tonappchain/evm-ccl'
-import { proxyOptsUUPS } from "../utils"
+import { DeployProxyOptions } from "@openzeppelin/hardhat-upgrades/dist/utils";
+
+const proxyOptsUUPS: DeployProxyOptions = {
+    kind: "uups",
+    unsafeAllow: ["constructor"]
+};
+
 
 export async function deployMidasProxy(deployer: Signer, tacSAFactoryAddress: string, depositVaultAddress: string, redemptionVaultAddress: string,  crossChainLayerAddress: string): Promise<MidasProxy> {
     // Proxy
@@ -17,4 +23,3 @@ export async function deployMidasProxy(deployer: Signer, tacSAFactoryAddress: st
     await midasProxy.waitForDeployment();
     return midasProxy;
 }
-

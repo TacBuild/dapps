@@ -5,15 +5,13 @@ import { Signer, Contract, BytesLike } from "ethers";
 import { TacLocalTestSdk, TokenMintInfo, TokenUnlockInfo } from "@tonappchain/evm-ccl";
 import { deployMidasProxy } from "../scripts/Midas/deployMidasProxy";
 import { sttonTokenInfo, tacTokenInfo } from '../scripts/common/info/tokensInfo';
-import { TacSAFactory, TacSmartAccount, IDepositVault, IRedemptionVault } from "../typechain-types";
+import { ISAFactory, IDepositVault, IRedemptionVault } from "../typechain-types";
 
 import { VaultMock, MidasProxy, TestToken } from "../typechain-types";
-import { deployTacSAFactory } from "../scripts/TacSmartAccountFactory/FactoryDeploy";
-import { deployTacSmartAccount } from "../scripts/TacSmartAccountFactory/SABlueprintDeploy";
 
 import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types";
 
-
+import { reset, getStorageAt, setStorageAt } from "@nomicfoundation/hardhat-network-helpers"
 
 
 describe("MidasProxy", function () {
@@ -21,8 +19,7 @@ describe("MidasProxy", function () {
     let testSdk: TacLocalTestSdk;
     let midasProxy: MidasProxy;
 
-    let tacSAFactory: TacSAFactory;
-    let tacSmartAccount: TacSmartAccount;
+    let tacSAFactory: ISAFactory;
 
     let stton: ERC20;
     let tac: ERC20;
@@ -30,6 +27,7 @@ describe("MidasProxy", function () {
     let mockVault: VaultMock;
 
     before(async function () {
+        await reset(process.env.TAC_TESTNET_URL, 4580693);
         
         admin = new ethers.Wallet(process.env.DEPLOYER_PRIVATE_KEY!, ethers.provider);
         testSdk = new TacLocalTestSdk();
@@ -40,8 +38,7 @@ describe("MidasProxy", function () {
         mToken = await testTokenFactory.deploy("mToken", "mToken");
         mockVault = await mockVaultFactory.deploy(await mToken.getAddress());
 
-        tacSmartAccount = await deployTacSmartAccount(admin);
-        tacSAFactory = await deployTacSAFactory(admin, await tacSmartAccount.getAddress());
+        tacSAFactory = await hre.ethers.getContractAt("ISAFactory", testSdk.getSmartAccountFactoryAddress()) as unknown as ISAFactory;
 
         midasProxy = await deployMidasProxy(admin, await tacSAFactory.getAddress(), await mockVault.getAddress(), await mockVault.getAddress(), crossChainLayerAddress);
 
