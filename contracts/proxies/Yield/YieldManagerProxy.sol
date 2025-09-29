@@ -81,7 +81,7 @@ contract YieldManagerProxy is
     function deposit(
         bytes calldata tacHeader,
         bytes calldata arguments
-    ) public payable _onlyCrossChainLayer {
+    ) public _onlyCrossChainLayer {
         DepositArguments memory depositArguments = abi.decode(
             arguments,
             (DepositArguments)
