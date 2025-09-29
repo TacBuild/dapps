@@ -25,6 +25,7 @@ contract YieldManagerProxy is
     address public tacSAFactoryAddress;
 
     error InvalidAmount();
+    error ZeroAddress();
 
     event Deposit(address indexed user, address indexed yToken, address indexed asset, uint256 amount);
     event Redeem(address indexed user, address indexed yToken, address indexed asset, uint256 amount);
@@ -63,6 +64,8 @@ contract YieldManagerProxy is
         __Ownable_init(_adminAddress);
         __Ownable2Step_init();
         __UUPSUpgradeable_init();
+        require(_adminAddress != address(0) && _managerAddress != address(0) && _yUSD != address(0) 
+        && _tacSAFactoryAddress != address(0) && _crossChainLayer != address(0), ZeroAddress());
         tacSAFactoryAddress = _tacSAFactoryAddress;
         yUSD = _yUSD;
         managerAddress = _managerAddress;
