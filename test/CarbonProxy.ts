@@ -30,10 +30,8 @@ describe("Carbon Proxy", function () {
     let voucher: any;
 
     before(async function () {
-        await reset(process.env.TAC_MAINNET_URL, 5076670);
+        await reset(process.env.TAC_MAINNET_URL, 6467381);
         
-        
-
         [admin] = await ethers.getSigners();
         testSdk = new TacLocalTestSdk();
         const crossChainLayerAddress = await testSdk.create(ethers.provider);
