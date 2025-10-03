@@ -119,14 +119,10 @@ contract YieldManagerProxy is
                     depositArguments.referralCode
                 )
             );
-        if (IERC20(depositArguments.asset).balanceOf(user) > 0) {
-            ITacSmartAccount(user).execute(
-                depositArguments.asset,
-                0,
-                abi.encodeWithSelector(IERC20.transfer.selector, address(this), IERC20(depositArguments.asset).balanceOf(user))
-            );
+        uint256 amount = IERC20(depositArguments.asset).balanceOf(address(this));
+        if (amount > 0) {
             TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
-            tokensToBridge[0] = TokenAmount(depositArguments.asset, IERC20(depositArguments.asset).balanceOf(user));
+            tokensToBridge[0] = TokenAmount(depositArguments.asset, amount);
             _bridgeTokens(tacHeader, tokensToBridge, "");
         }
         emit Deposit(user, depositArguments.yToken, depositArguments.asset, depositArguments.amount);
