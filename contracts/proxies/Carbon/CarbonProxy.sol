@@ -37,7 +37,10 @@ contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgr
     event StrategyTransferred(uint256 indexed strategyId, string indexed oldOwner, string indexed receiver);
     error TransferFailed();
     error TokensLengthIsGreaterThanMaxAvailableLength(uint256 tokensLength, uint256 maxLength);
-
+    error ZeroAddress();
+    error TokensAreTheSame();
+    error StrategyDataIsEmpty();
+    
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
     constructor() {
@@ -45,6 +48,11 @@ contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgr
     }
 
     function initialize(address _carbonController, address _carbonBatcher, address _carbonVoucher, address _saFactory, address _crosschainLayerAddress, address _owner) external initializer {
+        require(_carbonController != address(0), ZeroAddress());
+        require(_carbonBatcher != address(0), ZeroAddress());
+        require(_carbonVoucher != address(0), ZeroAddress());
+        require(_saFactory != address(0), ZeroAddress());
+        require(_crosschainLayerAddress != address(0), ZeroAddress());
         __TacProxyV1Upgradeable_init(_crosschainLayerAddress);
         __Ownable_init(_owner == address(0) ? msg.sender : _owner);
         __Ownable2Step_init();
@@ -65,6 +73,7 @@ contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgr
         bytes calldata arguments
     ) external payable _onlyCrossChainLayer {
         (Token token0, Token token1, Order[2] memory orders) = abi.decode(arguments, (Token, Token, Order[2]));
+        require(Token.unwrap(token0) != Token.unwrap(token1), TokensAreTheSame());
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user,) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
         
@@ -86,6 +95,7 @@ contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgr
         bytes calldata arguments
     ) external payable _onlyCrossChainLayer {
         (StrategyData[] memory strategyData) = abi.decode(arguments, (StrategyData[]));
+        require(strategyData.length > 0, StrategyDataIsEmpty());
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user,) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
         address[] memory tokensToClearOverall = new address[](0);
