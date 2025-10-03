@@ -211,6 +211,9 @@ contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgr
         uint256 amount = 0;
         if (token == NATIVE_ADDRESS) {
             amount = address(this).balance;
+            if (amount == 0) {
+                return 0;
+            }
             (bool success, )= payable(user).call{value: amount}("");
             require(success, TransferFailed());
             return amount;
