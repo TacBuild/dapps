@@ -20,6 +20,7 @@ contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgr
     ICarbonVoucher public carbonVoucher;
     ISAFactory public tacSAFactory;
     address constant NATIVE_ADDRESS = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+    uint256 constant MAX_TOKENS_LENGTH = 40;
 
 
     event StrategyCreated(uint256 indexed strategyId, address indexed user, string indexed tvmWalletCaller);
@@ -30,6 +31,7 @@ contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgr
     event TradeByTargetAmount(Token indexed sourceToken, Token indexed targetToken, address indexed user, string tvmWalletCaller, TradeAction[] tradeActions, uint256 deadline, uint128 maxInput);
     event StrategyTransferred(uint256 indexed strategyId, string indexed oldOwner, string indexed receiver);
     error TransferFailed();
+    error TokensLengthIsGreaterThanMaxAvailableLength(uint256 tokensLength, uint256 maxLength);
 
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
@@ -226,6 +228,7 @@ contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgr
     function _clearDustFromSa(address user, address[] memory tokens,  bytes calldata tacHeader) internal {
         uint256 nativeAmount = 0;
         uint256 tokensLength = tokens.length;
+        require(tokensLength < MAX_TOKENS_LENGTH, TokensLengthIsGreaterThanMaxAvailableLength(tokensLength, MAX_TOKENS_LENGTH));
         uint256 realAmountOfTokensToBridge = 0;
         TokenAmount[] memory tokenAmounts = new TokenAmount[](tokensLength);
         for (uint256 i = 0; i < tokensLength; i++) {
