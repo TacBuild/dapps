@@ -13,8 +13,7 @@ import {ISAFactory} from "@tonappchain/evm-ccl/contracts/smart-account/interface
 import {ITacSmartAccount} from "@tonappchain/evm-ccl/contracts/smart-account/interfaces/ITacSmartAccount.sol";
 import {OutMessageV1, TokenAmount, TacHeaderV1, NFTAmount} from "@tonappchain/evm-ccl/contracts/core/Structs.sol";
 import {IWTAC} from "@tonappchain/evm-ccl/contracts/interfaces/IWTAC.sol";
-
-
+import "hardhat/console.sol";
 
 contract OpenOceanProxy is
     TacProxyV1Upgradeable,
@@ -29,7 +28,8 @@ contract OpenOceanProxy is
 
     struct CallArguments {
         bytes data;
-        address[] tokensToClear;
+        address tokenToApprove;
+        address tokenToBridge;
     }
 
     event CallRouter(bytes indexed result, address indexed user, string tvmCaller);
@@ -66,15 +66,17 @@ contract OpenOceanProxy is
         bytes calldata tacHeader,
         bytes calldata arguments
     ) external payable _onlyCrossChainLayer {
-        (IHooks.SaHooks memory hooks, CallArguments memory callArguments) = abi.decode(arguments, (IHooks.SaHooks, CallArguments));
+        (CallArguments memory callArguments) = abi.decode(arguments, (CallArguments));
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user,) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
-        SaHelper.executePreHooks(user, hooks);
+        uint256 amount = IERC20(callArguments.tokenToApprove).balanceOf(address(this));
+        ITacSmartAccount(payable(user)).approve(callArguments.tokenToApprove, OPEN_OCEAN_ROUTER, amount);
+        SafeERC20.safeTransfer(IERC20(callArguments.tokenToApprove), user, amount);
         bytes memory result = ITacSmartAccount(payable(user)).execute(OPEN_OCEAN_ROUTER, msg.value, callArguments.data);
-        SaHelper.executePostHooks(user, hooks);
-        if (callArguments.tokensToClear.length > 0) {
-            _bridgeLogic(callArguments.tokensToClear, user, tacHeader);
-        }
+        address[] memory tokens = new address[](2);
+        tokens[0] = callArguments.tokenToApprove;
+        tokens[1] = callArguments.tokenToBridge;
+        _bridgeLogic(tokens, user, tacHeader);
         emit CallRouter(result, user, header.tvmCaller);
     }
 
