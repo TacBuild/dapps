@@ -2,6 +2,7 @@ import { Signer } from "ethers";
 import { OpenOceanProxy } from "../../typechain-types";
 import { deployUpgradable } from '@tonappchain/evm-ccl'
 import { DeployProxyOptions } from "@openzeppelin/hardhat-upgrades/dist/utils";
+import { mainnetConfig } from "../config/mainnetConfig";
 import hre from 'hardhat';
 
 const proxyOptsUUPS: DeployProxyOptions = {

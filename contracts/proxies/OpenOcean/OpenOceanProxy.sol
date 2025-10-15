@@ -13,7 +13,6 @@ import {ISAFactory} from "@tonappchain/evm-ccl/contracts/smart-account/interface
 import {ITacSmartAccount} from "@tonappchain/evm-ccl/contracts/smart-account/interfaces/ITacSmartAccount.sol";
 import {OutMessageV1, TokenAmount, TacHeaderV1, NFTAmount} from "@tonappchain/evm-ccl/contracts/core/Structs.sol";
 import {IWTAC} from "@tonappchain/evm-ccl/contracts/interfaces/IWTAC.sol";
-import "hardhat/console.sol";
 
 contract OpenOceanProxy is
     TacProxyV1Upgradeable,
