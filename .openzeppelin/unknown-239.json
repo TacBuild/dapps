@@ -89,6 +89,16 @@
       "address": "0x1B2460181a9BfA50e022785e98aeD2f795752Db5",
       "txHash": "0x374671498ab62a41832a02a6dde8fe794e5f1aef056756fc9923cc61421915ff",
       "kind": "uups"
+    },
+    {
+      "address": "0xDF1938aa15605314796faeeAEBFB16De0E560685",
+      "txHash": "0xc2f9b21129eb861a758a38dbf241d62dc6691ca9a006cd871dd4df4aed65f544",
+      "kind": "uups"
+    },
+    {
+      "address": "0xdfd63288f24243Be05C38B30DE01986A1843714B",
+      "txHash": "0x0fcc6f99a8c5cb30f3f0432dd9c9a117f2990fa6ea6417425fa93d446b111828",
+      "kind": "uups"
     }
   ],
   "impls": {
@@ -3311,7 +3321,7 @@
             "label": "carbonController",
             "offset": 0,
             "slot": "0",
-            "type": "t_contract(ICarbonController)4464",
+            "type": "t_contract(ICarbonController)4813",
             "contract": "CarbonProxy",
             "src": "contracts/proxies/Carbon/CarbonProxy.sol:18"
           },
@@ -3319,7 +3329,7 @@
             "label": "carbonBatcher",
             "offset": 0,
             "slot": "1",
-            "type": "t_contract(ICarbonBatcher)4348",
+            "type": "t_contract(ICarbonBatcher)4697",
             "contract": "CarbonProxy",
             "src": "contracts/proxies/Carbon/CarbonProxy.sol:19"
           },
@@ -3327,7 +3337,7 @@
             "label": "carbonVoucher",
             "offset": 0,
             "slot": "2",
-            "type": "t_contract(ICarbonVoucher)4476",
+            "type": "t_contract(ICarbonVoucher)4825",
             "contract": "CarbonProxy",
             "src": "contracts/proxies/Carbon/CarbonProxy.sol:20"
           },
@@ -3335,7 +3345,7 @@
             "label": "tacSAFactory",
             "offset": 0,
             "slot": "3",
-            "type": "t_contract(ISAFactory)2709",
+            "type": "t_contract(ISAFactory)2779",
             "contract": "CarbonProxy",
             "src": "contracts/proxies/Carbon/CarbonProxy.sol:21"
           }
@@ -3391,7 +3401,7 @@
             ],
             "numberOfBytes": "32"
           },
-          "t_struct(TacProxyV1UpgradeableStorage)1208_storage": {
+          "t_struct(TacProxyV1UpgradeableStorage)1227_storage": {
             "label": "struct TacProxyV1Upgradeable.TacProxyV1UpgradeableStorage",
             "members": [
               {
@@ -3407,19 +3417,19 @@
             "label": "uint64",
             "numberOfBytes": "8"
           },
-          "t_contract(ICarbonBatcher)4348": {
+          "t_contract(ICarbonBatcher)4697": {
             "label": "contract ICarbonBatcher",
             "numberOfBytes": "20"
           },
-          "t_contract(ICarbonController)4464": {
+          "t_contract(ICarbonController)4813": {
             "label": "contract ICarbonController",
             "numberOfBytes": "20"
           },
-          "t_contract(ICarbonVoucher)4476": {
+          "t_contract(ICarbonVoucher)4825": {
             "label": "contract ICarbonVoucher",
             "numberOfBytes": "20"
           },
-          "t_contract(ISAFactory)2709": {
+          "t_contract(ISAFactory)2779": {
             "label": "contract ISAFactory",
             "numberOfBytes": "20"
           }
@@ -3790,7 +3800,7 @@
             "slot": "0",
             "type": "t_address",
             "contract": "YieldManagerProxy",
-            "src": "contracts/proxies/Yield/YieldManagerProxy.sol:24"
+            "src": "contracts/proxies/Yield/YieldManagerProxy.sol:23"
           },
           {
             "label": "yUSD",
@@ -3798,7 +3808,7 @@
             "slot": "1",
             "type": "t_address",
             "contract": "YieldManagerProxy",
-            "src": "contracts/proxies/Yield/YieldManagerProxy.sol:25"
+            "src": "contracts/proxies/Yield/YieldManagerProxy.sol:24"
           },
           {
             "label": "tacSAFactoryAddress",
@@ -3806,7 +3816,627 @@
             "slot": "2",
             "type": "t_address",
             "contract": "YieldManagerProxy",
-            "src": "contracts/proxies/Yield/YieldManagerProxy.sol:26"
+            "src": "contracts/proxies/Yield/YieldManagerProxy.sol:25"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_struct(InitializableStorage)128_storage": {
+            "label": "struct Initializable.InitializableStorage",
+            "members": [
+              {
+                "label": "_initialized",
+                "type": "t_uint64",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_initializing",
+                "type": "t_bool",
+                "offset": 8,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(Ownable2StepStorage)13_storage": {
+            "label": "struct Ownable2StepUpgradeable.Ownable2StepStorage",
+            "members": [
+              {
+                "label": "_pendingOwner",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(OwnableStorage)68_storage": {
+            "label": "struct OwnableUpgradeable.OwnableStorage",
+            "members": [
+              {
+                "label": "_owner",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(TacProxyV1UpgradeableStorage)1227_storage": {
+            "label": "struct TacProxyV1Upgradeable.TacProxyV1UpgradeableStorage",
+            "members": [
+              {
+                "label": "_crossChainLayer",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_uint64": {
+            "label": "uint64",
+            "numberOfBytes": "8"
+          }
+        },
+        "namespaces": {
+          "erc7201:openzeppelin.storage.Ownable2Step": [
+            {
+              "contract": "Ownable2StepUpgradeable",
+              "label": "_pendingOwner",
+              "type": "t_address",
+              "src": "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol:29",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Ownable": [
+            {
+              "contract": "OwnableUpgradeable",
+              "label": "_owner",
+              "type": "t_address",
+              "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:24",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:tac.storage.TacProxyV1Upgradeable": [
+            {
+              "contract": "TacProxyV1Upgradeable",
+              "label": "_crossChainLayer",
+              "type": "t_address",
+              "src": "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol:28",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Initializable": [
+            {
+              "contract": "Initializable",
+              "label": "_initialized",
+              "type": "t_uint64",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+              "offset": 0,
+              "slot": "0"
+            },
+            {
+              "contract": "Initializable",
+              "label": "_initializing",
+              "type": "t_bool",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+              "offset": 8,
+              "slot": "0"
+            }
+          ]
+        }
+      }
+    },
+    "ecbbf0d0c3d554300899ba5b0c35b4f085f58a96a8499e57ac4d9195767f72aa": {
+      "address": "0x8904Cbc7e78b077d330A34068937BB0626f89e4F",
+      "txHash": "0xcc4b779621715c2e22ab59775c6b29f996a72061e2ea0f671391f860b53b2b67",
+      "layout": {
+        "solcVersion": "0.8.28",
+        "storage": [
+          {
+            "label": "appAddress",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_address",
+            "contract": "ZerolendPoolProxy",
+            "src": "contracts/proxies/Zerolend/ZerolendPoolProxy.sol:55"
+          },
+          {
+            "label": "tacSAFactoryAddress",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_address",
+            "contract": "ZerolendPoolProxy",
+            "src": "contracts/proxies/Zerolend/ZerolendPoolProxy.sol:56"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_struct(InitializableStorage)128_storage": {
+            "label": "struct Initializable.InitializableStorage",
+            "members": [
+              {
+                "label": "_initialized",
+                "type": "t_uint64",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_initializing",
+                "type": "t_bool",
+                "offset": 8,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(Ownable2StepStorage)13_storage": {
+            "label": "struct Ownable2StepUpgradeable.Ownable2StepStorage",
+            "members": [
+              {
+                "label": "_pendingOwner",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(OwnableStorage)68_storage": {
+            "label": "struct OwnableUpgradeable.OwnableStorage",
+            "members": [
+              {
+                "label": "_owner",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(TacProxyV1UpgradeableStorage)1329_storage": {
+            "label": "struct TacProxyV1Upgradeable.TacProxyV1UpgradeableStorage",
+            "members": [
+              {
+                "label": "_crossChainLayer",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_uint64": {
+            "label": "uint64",
+            "numberOfBytes": "8"
+          }
+        },
+        "namespaces": {
+          "erc7201:openzeppelin.storage.Ownable2Step": [
+            {
+              "contract": "Ownable2StepUpgradeable",
+              "label": "_pendingOwner",
+              "type": "t_address",
+              "src": "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol:29",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Ownable": [
+            {
+              "contract": "OwnableUpgradeable",
+              "label": "_owner",
+              "type": "t_address",
+              "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:24",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:tac.storage.TacProxyV1Upgradeable": [
+            {
+              "contract": "TacProxyV1Upgradeable",
+              "label": "_crossChainLayer",
+              "type": "t_address",
+              "src": "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol:28",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Initializable": [
+            {
+              "contract": "Initializable",
+              "label": "_initialized",
+              "type": "t_uint64",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+              "offset": 0,
+              "slot": "0"
+            },
+            {
+              "contract": "Initializable",
+              "label": "_initializing",
+              "type": "t_bool",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+              "offset": 8,
+              "slot": "0"
+            }
+          ]
+        }
+      }
+    },
+    "37893eba01c739fa560027d1ff7030d7e14f7cc189cf2109079697eb9dab2dc8": {
+      "address": "0xC5982203D984ed8E1A39cdB1dB391feD951B139d",
+      "txHash": "0x785ccedc8ac9db70fce6a8fb7ab5fb33c906ed4a0bd364c58a098db26efc9bd7",
+      "layout": {
+        "solcVersion": "0.8.28",
+        "storage": [
+          {
+            "label": "tacSAFactory",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_contract(ISAFactory)2779",
+            "contract": "OpenOceanProxy",
+            "src": "contracts/proxies/OpenOcean/OpenOceanProxy.sol:25"
+          },
+          {
+            "label": "WTAC",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_contract(IWTAC)2538",
+            "contract": "OpenOceanProxy",
+            "src": "contracts/proxies/OpenOcean/OpenOceanProxy.sol:26"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_struct(InitializableStorage)128_storage": {
+            "label": "struct Initializable.InitializableStorage",
+            "members": [
+              {
+                "label": "_initialized",
+                "type": "t_uint64",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_initializing",
+                "type": "t_bool",
+                "offset": 8,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(Ownable2StepStorage)13_storage": {
+            "label": "struct Ownable2StepUpgradeable.Ownable2StepStorage",
+            "members": [
+              {
+                "label": "_pendingOwner",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(OwnableStorage)68_storage": {
+            "label": "struct OwnableUpgradeable.OwnableStorage",
+            "members": [
+              {
+                "label": "_owner",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(TacProxyV1UpgradeableStorage)1227_storage": {
+            "label": "struct TacProxyV1Upgradeable.TacProxyV1UpgradeableStorage",
+            "members": [
+              {
+                "label": "_crossChainLayer",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_uint64": {
+            "label": "uint64",
+            "numberOfBytes": "8"
+          },
+          "t_contract(ISAFactory)2779": {
+            "label": "contract ISAFactory",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IWTAC)2538": {
+            "label": "contract IWTAC",
+            "numberOfBytes": "20"
+          }
+        },
+        "namespaces": {
+          "erc7201:openzeppelin.storage.Ownable2Step": [
+            {
+              "contract": "Ownable2StepUpgradeable",
+              "label": "_pendingOwner",
+              "type": "t_address",
+              "src": "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol:29",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Ownable": [
+            {
+              "contract": "OwnableUpgradeable",
+              "label": "_owner",
+              "type": "t_address",
+              "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:24",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:tac.storage.TacProxyV1Upgradeable": [
+            {
+              "contract": "TacProxyV1Upgradeable",
+              "label": "_crossChainLayer",
+              "type": "t_address",
+              "src": "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol:28",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Initializable": [
+            {
+              "contract": "Initializable",
+              "label": "_initialized",
+              "type": "t_uint64",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+              "offset": 0,
+              "slot": "0"
+            },
+            {
+              "contract": "Initializable",
+              "label": "_initializing",
+              "type": "t_bool",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+              "offset": 8,
+              "slot": "0"
+            }
+          ]
+        }
+      }
+    },
+    "8f3d468d3df3a841f31c307e602a24feb94c086063d226e8fb8fbb7abdaa815c": {
+      "address": "0xa0BF1Cd1Df884806EeEfFCA3eDa9D9604f447764",
+      "txHash": "0x3dec3869c257b50414ba3fc5a0bad4781f98943e41afcd2f361a3cef7c42848f",
+      "layout": {
+        "solcVersion": "0.8.28",
+        "storage": [
+          {
+            "label": "carbonController",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_contract(ICarbonController)4934",
+            "contract": "CarbonProxy",
+            "src": "contracts/proxies/Carbon/CarbonProxy.sol:23"
+          },
+          {
+            "label": "carbonBatcher",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_contract(ICarbonBatcher)4818",
+            "contract": "CarbonProxy",
+            "src": "contracts/proxies/Carbon/CarbonProxy.sol:24"
+          },
+          {
+            "label": "carbonVoucher",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_contract(ICarbonVoucher)4946",
+            "contract": "CarbonProxy",
+            "src": "contracts/proxies/Carbon/CarbonProxy.sol:25"
+          },
+          {
+            "label": "tacSAFactory",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_contract(ISAFactory)2779",
+            "contract": "CarbonProxy",
+            "src": "contracts/proxies/Carbon/CarbonProxy.sol:26"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_struct(InitializableStorage)128_storage": {
+            "label": "struct Initializable.InitializableStorage",
+            "members": [
+              {
+                "label": "_initialized",
+                "type": "t_uint64",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_initializing",
+                "type": "t_bool",
+                "offset": 8,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(Ownable2StepStorage)13_storage": {
+            "label": "struct Ownable2StepUpgradeable.Ownable2StepStorage",
+            "members": [
+              {
+                "label": "_pendingOwner",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(OwnableStorage)68_storage": {
+            "label": "struct OwnableUpgradeable.OwnableStorage",
+            "members": [
+              {
+                "label": "_owner",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(TacProxyV1UpgradeableStorage)1227_storage": {
+            "label": "struct TacProxyV1Upgradeable.TacProxyV1UpgradeableStorage",
+            "members": [
+              {
+                "label": "_crossChainLayer",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_uint64": {
+            "label": "uint64",
+            "numberOfBytes": "8"
+          },
+          "t_contract(ICarbonBatcher)4818": {
+            "label": "contract ICarbonBatcher",
+            "numberOfBytes": "20"
+          },
+          "t_contract(ICarbonController)4934": {
+            "label": "contract ICarbonController",
+            "numberOfBytes": "20"
+          },
+          "t_contract(ICarbonVoucher)4946": {
+            "label": "contract ICarbonVoucher",
+            "numberOfBytes": "20"
+          },
+          "t_contract(ISAFactory)2779": {
+            "label": "contract ISAFactory",
+            "numberOfBytes": "20"
+          }
+        },
+        "namespaces": {
+          "erc7201:openzeppelin.storage.Ownable2Step": [
+            {
+              "contract": "Ownable2StepUpgradeable",
+              "label": "_pendingOwner",
+              "type": "t_address",
+              "src": "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol:29",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Ownable": [
+            {
+              "contract": "OwnableUpgradeable",
+              "label": "_owner",
+              "type": "t_address",
+              "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:24",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:tac.storage.TacProxyV1Upgradeable": [
+            {
+              "contract": "TacProxyV1Upgradeable",
+              "label": "_crossChainLayer",
+              "type": "t_address",
+              "src": "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol:28",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Initializable": [
+            {
+              "contract": "Initializable",
+              "label": "_initialized",
+              "type": "t_uint64",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+              "offset": 0,
+              "slot": "0"
+            },
+            {
+              "contract": "Initializable",
+              "label": "_initializing",
+              "type": "t_bool",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+              "offset": 8,
+              "slot": "0"
+            }
+          ]
+        }
+      }
+    },
+    "d8c7b86d1377a89ae3a16ab9d7f5bcea63b871745a67a1bc260f24cd993e264d": {
+      "address": "0xe243E0163Ed0F12d5A1320B53718eC8eB1Ab4497",
+      "txHash": "0xc5c7e571d806c85fb818e84ea71d886ac448614dc50689e69a9e76be8c796ca0",
+      "layout": {
+        "solcVersion": "0.8.28",
+        "storage": [
+          {
+            "label": "managerAddress",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_address",
+            "contract": "YieldManagerProxy",
+            "src": "contracts/proxies/Yield/YieldManagerProxy.sol:23"
+          },
+          {
+            "label": "yUSD",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_address",
+            "contract": "YieldManagerProxy",
+            "src": "contracts/proxies/Yield/YieldManagerProxy.sol:24"
+          },
+          {
+            "label": "tacSAFactoryAddress",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_address",
+            "contract": "YieldManagerProxy",
+            "src": "contracts/proxies/Yield/YieldManagerProxy.sol:25"
           }
         ],
         "types": {

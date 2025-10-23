@@ -13,6 +13,11 @@ import {ICarbonController, Order, Token, TradeAction, Strategy} from "./interfac
 import {ICarbonBatcher, StrategyData} from "./interfaces/ICarbonBatcher.sol";
 import {ICarbonVoucher} from "./interfaces/ICarbonVoucher.sol";
 
+/// @title CarbonProxy
+/// @notice A proxy contract that interfaces with Carbon protocol for creating, updating, deleting, and transferring strategies
+/// and trading operations
+/// @dev Strategies here is Uni V3 style NFTs for liquidity providers
+/// @dev Implements TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgradeable
 contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgradeable {
 
     ICarbonController public carbonController;
@@ -20,6 +25,7 @@ contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgr
     ICarbonVoucher public carbonVoucher;
     ISAFactory public tacSAFactory;
     address constant NATIVE_ADDRESS = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+    uint256 constant MAX_TOKENS_LENGTH = 40;
 
 
     event StrategyCreated(uint256 indexed strategyId, address indexed user, string indexed tvmWalletCaller);
@@ -30,7 +36,11 @@ contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgr
     event TradeByTargetAmount(Token indexed sourceToken, Token indexed targetToken, address indexed user, string tvmWalletCaller, TradeAction[] tradeActions, uint256 deadline, uint128 maxInput);
     event StrategyTransferred(uint256 indexed strategyId, string indexed oldOwner, string indexed receiver);
     error TransferFailed();
-
+    error TokensLengthIsGreaterThanMaxAvailableLength(uint256 tokensLength, uint256 maxLength);
+    error ZeroAddress();
+    error TokensAreTheSame();
+    error StrategyDataIsEmpty();
+    
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
     constructor() {
@@ -38,6 +48,11 @@ contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgr
     }
 
     function initialize(address _carbonController, address _carbonBatcher, address _carbonVoucher, address _saFactory, address _crosschainLayerAddress, address _owner) external initializer {
+        require(_carbonController != address(0), ZeroAddress());
+        require(_carbonBatcher != address(0), ZeroAddress());
+        require(_carbonVoucher != address(0), ZeroAddress());
+        require(_saFactory != address(0), ZeroAddress());
+        require(_crosschainLayerAddress != address(0), ZeroAddress());
         __TacProxyV1Upgradeable_init(_crosschainLayerAddress);
         __Ownable_init(_owner == address(0) ? msg.sender : _owner);
         __Ownable2Step_init();
@@ -48,12 +63,17 @@ contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgr
         tacSAFactory = ISAFactory(_saFactory);
     }
 
-
+    /// @notice Creates a new strategy
+    /// @param tacHeader TAC header data
+    /// @param arguments Arguments for creating a strategy
+    /// @dev Creates a new strategy and emits a StrategyCreated event
+    /// @dev Voucher will be stored on the smart account
     function createStrategy(
         bytes calldata tacHeader,
         bytes calldata arguments
     ) external payable _onlyCrossChainLayer {
         (Token token0, Token token1, Order[2] memory orders) = abi.decode(arguments, (Token, Token, Order[2]));
+        require(Token.unwrap(token0) != Token.unwrap(token1), TokensAreTheSame());
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user,) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
         
@@ -64,11 +84,18 @@ contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgr
         emit StrategyCreated(strategyId, user, header.tvmCaller);
     }
 
+    /// @notice Creates a batch of strategies
+    /// @param tacHeader TAC header data
+    /// @param arguments Arguments for creating a batch of strategies
+    /// @dev Creates a batch of strategies and emits a StrategyCreatedBatch event
+    /// @dev Vouchers will be stored on the smart account
+    /// @dev Since tokens is always length of 2, max number of strategies per transaction is MAX_TOKENS_LENGTH / 2 = 20
     function batchCreate(
         bytes calldata tacHeader,
         bytes calldata arguments
     ) external payable _onlyCrossChainLayer {
         (StrategyData[] memory strategyData) = abi.decode(arguments, (StrategyData[]));
+        require(strategyData.length > 0, StrategyDataIsEmpty());
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user,) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
         address[] memory tokensToClearOverall = new address[](0);
@@ -84,6 +111,12 @@ contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgr
         emit StrategyCreatedBatch(strategyIds, user, header.tvmCaller);
     }
 
+    /// @notice Prepares tokens for strategy creation
+    /// @param tokens Array of tokens to prepare
+    /// @param user Address of the user
+    /// @param isViaBatcher Whether the tokens are being prepared for a batcher
+    /// @return nativeAmount Total native amount of tokens to prepare
+    /// @return tokensToClear Array of tokens to clear
     function _strategyCreationPreparation(Token[2] memory tokens, address user, bool isViaBatcher) internal returns (uint256, address[] memory) {
         address[] memory tokensToClear = new address[](tokens.length);
         uint256 nativeAmount = 0;
@@ -94,6 +127,11 @@ contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgr
         return (nativeAmount, tokensToClear);
     }
 
+    /// @notice Updates a strategy
+    /// @param tacHeader TAC header data
+    /// @param arguments Arguments for updating a strategy
+    /// @dev Updates a strategy and emits a StrategyUpdated event
+    /// @dev Voucher will be stored on the smart account
     function updateStrategy(
         bytes calldata tacHeader,
         bytes calldata arguments
@@ -112,6 +150,10 @@ contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgr
         emit StrategyUpdated(strategyId);
     }
 
+    /// @notice Deletes a strategy
+    /// @param tacHeader TAC header data
+    /// @param arguments Arguments for deleting a strategy
+    /// @dev Deletes a strategy and emits a StrategyDeleted event
     function deleteStrategy(
         bytes calldata tacHeader,
         bytes calldata arguments
@@ -128,6 +170,15 @@ contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgr
         emit StrategyDeleted(strategyId);
     }
 
+    /// @notice Transfers a strategy
+    /// @param tacHeader TAC header data
+    /// @param arguments Arguments for transferring a strategy
+    /// @dev Transfers a strategy and emits a StrategyTransferred event
+    /// @dev Voucher will be stored on the smart account
+    /// @dev The strategy is transferred to the receiver's smart account
+    /// @dev The receiver should be provided as a TVM wallet address in EQ format, wrong encoding here can lead to loss of funds
+    /// @dev Strategy should be always within smart accounts, otherwise, evm account that holds strategy will not be able to communicate 
+    /// with this proxy contract
     function transferStrategy(
         bytes calldata tacHeader,
         bytes calldata arguments
@@ -140,6 +191,12 @@ contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgr
         emit StrategyTransferred(strategyId, header.tvmCaller, receiver);
     }
 
+    /// @notice Trades by source amount
+    /// @param tacHeader TAC header data
+    /// @param arguments Arguments for trading by source amount
+    /// @dev Trades by source amount and emits a TradeBySourceAmount event
+    /// @dev The trade is executed on the carbon controller
+    /// @dev The source token is the token that is being traded
     function tradeBySourceAmount(
         bytes calldata tacHeader,
         bytes calldata arguments
@@ -156,6 +213,12 @@ contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgr
         emit TradeBySourceAmount(sourceToken, targetToken, user, header.tvmCaller, tradeActions, deadline, minReturn);
     }
 
+    /// @notice Trades by target amount
+    /// @param tacHeader TAC header data
+    /// @param arguments Arguments for trading by target amount
+    /// @dev Trades by target amount and emits a TradeByTargetAmount event
+    /// @dev The trade is executed on the carbon controller
+    /// @dev The source token is the token that is being traded
     function tradeByTargetAmount(
         bytes calldata tacHeader,
         bytes calldata arguments
@@ -176,6 +239,7 @@ contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgr
     /// @param tacHeader TAC header data
     /// @param tokens Array of token amounts to bridge
     /// @param payload Additional payload data
+    /// @param nativeAmount Native amount of tokens to bridge
     function _bridgeTokens(
         bytes calldata tacHeader,
         TokenAmount[] memory tokens,
@@ -205,10 +269,23 @@ contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgr
         _sendMessageV1(message, nativeAmount);
     }
 
+    /// @notice Handles token preparation before operation
+    /// @param user Address of the user
+    /// @param token Address of the token
+    /// @param isViaBatcher Whether the token is being prepared for a batcher
+    /// @return nativeAmount Native amount of tokens to prepare
+    /// @dev This function is used to prepare tokens before operations are executed on the smart account
+    /// @dev It transfers tokens to the smart account, approves them for the operation, and returns the native amount of tokens
+    /// @dev If the token is the native token, it transfers the balance of the contract to the smart account
+    /// @dev If the token is not the native token, it transfers the balance of the contract to the smart account
+    /// @dev It returns the native amount of tokens to prepare
     function _handleTokenPrepBeforeOp(address user, address token, bool isViaBatcher) internal returns (uint256 nativeAmount) {
         uint256 amount = 0;
         if (token == NATIVE_ADDRESS) {
             amount = address(this).balance;
+            if (amount == 0) {
+                return 0;
+            }
             (bool success, )= payable(user).call{value: amount}("");
             require(success, TransferFailed());
             return amount;
@@ -223,9 +300,16 @@ contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgr
         }
     }
 
+    /// @notice Clears dust from the smart account
+    /// @param user Address of the user
+    /// @param tokens Array of tokens to clear
+    /// @param tacHeader TAC header data
+    /// @dev Clears dust from the smart account
+    /// @dev It bridges the tokens to the cross-chain layer
     function _clearDustFromSa(address user, address[] memory tokens,  bytes calldata tacHeader) internal {
         uint256 nativeAmount = 0;
         uint256 tokensLength = tokens.length;
+        require(tokensLength < MAX_TOKENS_LENGTH, TokensLengthIsGreaterThanMaxAvailableLength(tokensLength, MAX_TOKENS_LENGTH));
         uint256 realAmountOfTokensToBridge = 0;
         TokenAmount[] memory tokenAmounts = new TokenAmount[](tokensLength);
         for (uint256 i = 0; i < tokensLength; i++) {
@@ -302,8 +386,6 @@ contract CarbonProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgr
     }
 
     receive() external payable {}
-
-
 }
 
 

@@ -13,7 +13,7 @@ export async function upgradeCarbonProxy(
 ) {
     const [signer] = await hre.ethers.getSigners();
     const factory = await hre.ethers.getContractFactory("CarbonProxy", signer);
-    const carbonProxy = await hre.upgrades.upgradeProxy("0xd68eFC6C132315123634777F5BA52aAD6B0292C1", factory, proxyOptsUUPS);
+    const carbonProxy = await hre.upgrades.upgradeProxy("0x188F6e49FC62c0D73173b11e7BD39C36cD3d730f", factory, proxyOptsUUPS);
     await carbonProxy.waitForDeployment();
     console.log("CarbonProxy upgraded to:", carbonProxy.target);
 } 
