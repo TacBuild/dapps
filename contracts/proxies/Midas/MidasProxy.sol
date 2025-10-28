@@ -1,14 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { Ownable2StepUpgradeable } from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {TacProxyV1Upgradeable} from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
 import {OutMessageV1, TokenAmount, TacHeaderV1, NFTAmount} from "@tonappchain/evm-ccl/contracts/core/Structs.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { IDepositVault } from "contracts/proxies/Midas/interface/IDepositVault.sol";
 import { IRedemptionVault } from "contracts/proxies/Midas/interface/IRedemptionVault.sol";
 import { IManageableVault } from "contracts/proxies/Midas/interface/IManageableVault.sol";
@@ -20,10 +18,12 @@ import {ISAFactory} from "@tonappchain/evm-ccl/contracts/smart-account/interface
  * @dev Proxy contract for Midas
  */
 contract MidasProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgradeable {
+
     address internal tacSAFactoryAddress;
     address internal depositVaultAddress;
     address internal redemptionVaultAddress;
 
+    error ZeroAddress();
 
     constructor() {
         _disableInitializers();
@@ -34,9 +34,10 @@ contract MidasProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgra
      */
     function initialize(address adminAddress, address _tacSAFactoryAddress, address _depositVaultAddress, address _redemptionVaultAddress, address crossChainLayer) public initializer {
         __TacProxyV1Upgradeable_init(crossChainLayer);
-        __Ownable_init(adminAddress);
+        __Ownable_init(adminAddress == address(0) ? msg.sender : adminAddress);
         __UUPSUpgradeable_init();
         __Ownable2Step_init();
+        require(_tacSAFactoryAddress != address(0) && _depositVaultAddress != address(0) && _redemptionVaultAddress != address(0) && crossChainLayer != address(0), ZeroAddress());
         tacSAFactoryAddress = _tacSAFactoryAddress;
         depositVaultAddress = _depositVaultAddress;
         redemptionVaultAddress = _redemptionVaultAddress;
@@ -63,19 +64,11 @@ contract MidasProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgra
 
         // grant token approvals
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
-        (address user, bool isNewAccount) = ISAFactory(tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
+        (address user,) = ISAFactory(tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
 
         SafeERC20.safeTransfer(IERC20(tokenIn), user, amountToken);
 
-        ITacSmartAccount(user).execute(
-            tokenIn,
-            0,
-            abi.encodeWithSelector(
-                IERC20(tokenIn).approve.selector,
-                depositVaultAddress,
-                amountToken
-            )
-        );
+        ITacSmartAccount(user).approve(tokenIn, depositVaultAddress, amountToken);
 
         ITacSmartAccount(user).execute(
             depositVaultAddress,
@@ -106,7 +99,7 @@ contract MidasProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgra
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(mToken, amount);
 
-        _bridgeTokens(tacHeader, tokensToBridge, new NFTAmount[](0), "");
+        _bridgeTokens(tacHeader, tokensToBridge, "");
     }
 
     /**
@@ -124,25 +117,12 @@ contract MidasProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgra
 
 
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
-        (address user, bool isNewAccount) = ISAFactory(tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
-
-        require(tokenIn != address(0), "Invalid token address");
-        require(amountToken > 0, "Invalid amount");
-        require(IERC20(tokenIn).balanceOf(address(this)) >= amountToken, "Insufficient balance for transfer");
-
+        (address user,) = ISAFactory(tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
 
         // grant token approvals
         SafeERC20.safeTransfer(IERC20(tokenIn), user, amountToken);
 
-        ITacSmartAccount(user).execute(
-            tokenIn,
-            0,
-            abi.encodeWithSelector(
-                IERC20(tokenIn).approve.selector,
-                depositVaultAddress,
-                amountToken
-            )
-        );
+        ITacSmartAccount(user).approve(tokenIn, depositVaultAddress, amountToken);
 
         ITacSmartAccount(user).execute(
             depositVaultAddress,
@@ -171,20 +151,12 @@ contract MidasProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgra
         uint256 minReceiveAmount) = abi.decode(arguments, (address, uint256, uint256));
         address mToken = IManageableVault(redemptionVaultAddress).mToken();
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
-        (address user, bool isNewAccount) = ISAFactory(tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
+        (address user,) = ISAFactory(tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
 
       
         SafeERC20.safeTransfer(IERC20(mToken), user, amountMTokenIn);
 
-        ITacSmartAccount(user).execute(
-            mToken,
-            0,
-            abi.encodeWithSelector(
-                IERC20(mToken).approve.selector,
-                redemptionVaultAddress,
-                amountMTokenIn
-            )
-        );
+        ITacSmartAccount(user).approve(mToken, redemptionVaultAddress, amountMTokenIn);
 
         ITacSmartAccount(user).execute(
             redemptionVaultAddress,
@@ -213,7 +185,7 @@ contract MidasProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgra
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(tokenOut, amount);
 
-        _bridgeTokens(tacHeader, tokensToBridge, new NFTAmount[](0), "");
+        _bridgeTokens(tacHeader, tokensToBridge, "");
     }
 
      /**
@@ -232,20 +204,12 @@ contract MidasProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgra
 
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
 
-        (address user, bool isNewAccount) = ISAFactory(tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
+        (address user,) = ISAFactory(tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
 
         // grant token approvals
         SafeERC20.safeTransfer(IERC20(mToken), user, amountMTokenIn);
 
-        ITacSmartAccount(user).execute(
-            mToken,
-            0,
-            abi.encodeWithSelector(
-                IERC20(mToken).approve.selector,
-                redemptionVaultAddress,
-                amountMTokenIn
-            )
-        );
+        ITacSmartAccount(user).approve(mToken, redemptionVaultAddress, amountMTokenIn);
 
         ITacSmartAccount(user).execute(
             redemptionVaultAddress,
@@ -260,14 +224,14 @@ contract MidasProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgra
     }
 
     function claimSA(
-    bytes calldata tacHeader,
-    bytes calldata arguments
-) public _onlyCrossChainLayer {
+        bytes calldata tacHeader,
+        bytes calldata arguments
+    ) public _onlyCrossChainLayer {
     (address asset) = abi.decode(arguments, (address));
 
     TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
 
-    (address user, bool isNewAccount) = ISAFactory(tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
+    (address user,) = ISAFactory(tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
 
     ITacSmartAccount(user).execute(
         asset,
@@ -285,7 +249,7 @@ contract MidasProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgra
             IERC20(asset).balanceOf(address(this))
         );
 
-        _bridgeTokens(tacHeader, tokensToBridge, new NFTAmount[](0), "");
+        _bridgeTokens(tacHeader, tokensToBridge, "");
 }
 
 
@@ -293,12 +257,10 @@ contract MidasProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgra
     /// @notice Bridges tokens and NFTs to the cross-chain layer
     /// @param tacHeader TAC header data
     /// @param tokens Array of token amounts to bridge
-    /// @param nfts Array of NFT amounts to bridge
     /// @param payload Additional payload data
     function _bridgeTokens(
         bytes calldata tacHeader,
         TokenAmount[] memory tokens,
-        NFTAmount[] memory nfts,
         string memory payload
     ) private {
         for (uint256 i = 0; i < tokens.length; i++) {
@@ -309,9 +271,6 @@ contract MidasProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgra
             );
         }
 
-        for (uint256 i = 0; i < nfts.length; i++) {
-            IERC721(nfts[i].evmAddress).approve(_getCrossChainLayerAddress(), nfts[i].tokenId);
-        }
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         OutMessageV1 memory message = OutMessageV1({
             shardsKey: header.shardsKey,
@@ -321,7 +280,7 @@ contract MidasProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgra
             tvmExecutorFee: 0,
             tvmValidExecutors: new string[](0),
             toBridge: tokens,
-            toBridgeNFT: nfts
+            toBridgeNFT: new NFTAmount[](0)
         });
         _sendMessageV1(message, address(this).balance);
     }
