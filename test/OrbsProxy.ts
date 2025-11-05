@@ -4,9 +4,10 @@ import { expect } from "chai";
 
 import { TacLocalTestSdk, TokenUnlockInfo} from "@tonappchain/evm-ccl";
 import { OrbsProxy, ISAFactory } from "../typechain-types";
-import { setStorageAt, impersonateAccount} from "@nomicfoundation/hardhat-network-helpers"
+import { setStorageAt, impersonateAccount, time, mine} from "@nomicfoundation/hardhat-network-helpers"
 import { reset } from "@nomicfoundation/hardhat-network-helpers"
 import { deployOrbsProxy } from "../scripts/Orbs/deployProxy";
+import { orbsMainnetConfig } from "../scripts/Orbs/config/config";
 
 const USDT_MAINNET_ADDRESS = "0xAF988C3f7CB2AceAbB15f96b19388a259b6C438f"
 
@@ -16,17 +17,20 @@ describe("OrbsProxy", function () {
     let orbsProxy: OrbsProxy;
     let tacSAFactory: ISAFactory;
     let usdt: any;
+    let accountAddress: string;
+    let multiAccount: any;
    
 
     before(async function () {
-        await reset(process.env.TAC_MAINNET_URL || "", 6467381);
+        await reset(process.env.TAC_MAINNET_URL || "", 8509601);
         [admin] = await ethers.getSigners();
         testSdk = new TacLocalTestSdk();
         const crossChainLayerAddress = await testSdk.create(ethers.provider);
         tacSAFactory = await hre.ethers.getContractAt("ISAFactory", testSdk.getSmartAccountFactoryAddress()) as unknown as ISAFactory;
         orbsProxy = await deployOrbsProxy(admin, crossChainLayerAddress, await tacSAFactory.getAddress());
-        // usdt = new ethers.Contract(USDT_MAINNET_ADDRESS, ['function mint(address,uint256) external', 'function balanceOf(address) external view returns (uint256)'], admin) as unknown;
-        // await setStorageAt(USDT_MAINNET_ADDRESS,2,await admin.getAddress());
+        usdt = new ethers.Contract(USDT_MAINNET_ADDRESS, ['function mint(address,uint256) external', 'function balanceOf(address) external view returns (uint256)'], admin) as unknown;
+        await setStorageAt(USDT_MAINNET_ADDRESS,2,await admin.getAddress());
+        multiAccount = new ethers.Contract(orbsMainnetConfig.multiAccountAddress, ['function accounts(address,uint256) external view returns(address,string)'], admin) as unknown;
     });
 
     it("add account", async function () {
@@ -38,6 +42,7 @@ describe("OrbsProxy", function () {
 
         const target = await orbsProxy.getAddress();
         const methodName = "addAccount(bytes,bytes)";
+        const account = await tacSAFactory.getSmartAccountForApplication(tvmWalletCaller, await orbsProxy.getAddress());
 
         const name = "test";
             const encodedArguments = new ethers.AbiCoder().encode(
@@ -57,6 +62,9 @@ describe("OrbsProxy", function () {
             operationId,
             timestamp
         )
+        accountAddress = await multiAccount.accounts(account, 0);
+        expect(accountAddress[0]).to.be.not.equal(ethers.ZeroAddress);
+        expect(accountAddress[1]).to.be.equal(name);
     });
     
     it("edit account name", async function () {
@@ -69,7 +77,6 @@ describe("OrbsProxy", function () {
         const target = await orbsProxy.getAddress();
         const methodName = "editAccountName(bytes,bytes)";
 
-        //TODO account? 
         const account = await tacSAFactory.getSmartAccountForApplication(tvmWalletCaller, await orbsProxy.getAddress());
         const name = "test2";
         const encodedArguments = new ethers.AbiCoder().encode(
@@ -89,6 +96,9 @@ describe("OrbsProxy", function () {
             operationId,
             timestamp
         )
+        accountAddress = await multiAccount.accounts(account, 0);
+        expect(accountAddress[0]).to.be.not.equal(ethers.ZeroAddress);
+        expect(accountAddress[1]).to.be.equal(name);
     })
 
     it("deposit and allocate for account", async function () {
@@ -100,14 +110,13 @@ describe("OrbsProxy", function () {
 
         const target = await orbsProxy.getAddress();
         const methodName = "depositAndAllocateForAccount(bytes,bytes)";
-        // TODO account? 
+        await usdt.connect(admin).mint(await orbsProxy.getAddress(), ethers.parseUnits("100", 6));
         const account = await tacSAFactory.getSmartAccountForApplication(tvmWalletCaller, await orbsProxy.getAddress());
         const amount = ethers.parseUnits("100", 6);
         const encodedArguments = new ethers.AbiCoder().encode(
             ['address', 'uint256'],
-            [account, amount]
+            [accountAddress[0], amount]
         );
-        // TODO mint usdt for a proxy to immitate bridge
         await testSdk.sendMessage(
             shardsKey,
             target,
@@ -131,16 +140,13 @@ describe("OrbsProxy", function () {
 
         const target = await orbsProxy.getAddress();
         const methodName = "delegateAccesses(bytes,bytes)";
-        // TODO correct selectors, state, target and account
         const account = await tacSAFactory.getSmartAccountForApplication(tvmWalletCaller, await orbsProxy.getAddress());
-        const amount = ethers.parseUnits("100", 6);
-        const selectors = [0x12345678, 0x87654321];
+        const selectors = ["0x12345678", "0x87654321"];
         const state = true;
         const encodedArguments = new ethers.AbiCoder().encode(
             ['address', 'address', 'bytes4[]', 'bool'],
-            [account, target, selectors, state]
+            [accountAddress[0], target, selectors, state]
         );
-        // TODO mint usdt for a proxy to immitate bridge
         await testSdk.sendMessage(
             shardsKey,
             target,
@@ -164,12 +170,12 @@ describe("OrbsProxy", function () {
 
         const target = await orbsProxy.getAddress();
         const methodName = "withdrawFromAccount(bytes,bytes)";
-        // TODO account? 
-        const account = await tacSAFactory.getSmartAccountForApplication(tvmWalletCaller, await orbsProxy.getAddress());
         const amount = ethers.parseUnits("100", 6);
+        await time.increase(12 * 60 * 60 * 24);
+        await mine(10000)
         const encodedArguments = new ethers.AbiCoder().encode(
             ['address', 'uint256'],
-            [account, amount]
+            [accountAddress[0], amount]
         );
         await testSdk.sendMessage(
             shardsKey,

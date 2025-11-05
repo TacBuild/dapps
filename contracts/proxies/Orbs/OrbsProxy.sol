@@ -10,6 +10,7 @@ import {ITacSmartAccount} from "@tonappchain/evm-ccl/contracts/smart-account/int
 import {ISAFactory} from "@tonappchain/evm-ccl/contracts/smart-account/interfaces/ISAFactory.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IMultiAccount} from "./interface/IMultiAccount.sol";
+import "hardhat/console.sol";
 
 contract OrbsProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgradeable {
 
@@ -61,8 +62,7 @@ contract OrbsProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgrad
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user, ) = ISAFactory(tacSAFactory).getOrCreateSmartAccount(header.tvmCaller);
         SafeERC20.safeTransfer(IERC20(collateralToken), user, amount);
-        uint256 allowance = IERC20(collateralToken).allowance(address(user), address(multiAccount));
-        ITacSmartAccount(user).approve(collateralToken, address(multiAccount), amount + allowance);
+        ITacSmartAccount(user).approve(collateralToken, address(multiAccount), amount);
         ITacSmartAccount(user).execute(address(multiAccount), 0, abi.encodeWithSelector(IMultiAccount.depositAndAllocateForAccount.selector, account, amount));
         emit DepositAndAllocatedForAccount(account, amount, header.tvmCaller);
     }
@@ -80,7 +80,9 @@ contract OrbsProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgrad
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user, ) = ISAFactory(tacSAFactory).getOrCreateSmartAccount(header.tvmCaller);
         //TODO think about decreasing allowance
-        ITacSmartAccount(user).execute(address(multiAccount), 0, abi.encodeWithSelector(IMultiAccount.withdrawFromAccount.selector, account, amount));
+        (bool suc, bytes memory data) = ITacSmartAccount(user).executeUnsafe(address(multiAccount), 0, abi.encodeWithSelector(IMultiAccount.withdrawFromAccount.selector, account, amount));
+        console.log("suc", suc);
+        console.logBytes(data);
         ITacSmartAccount(user).execute(collateralToken, 0, abi.encodeWithSelector(IERC20.transfer.selector, address(this), amount));
         TokenAmount[] memory tokens = new TokenAmount[](1);
         tokens[0] = TokenAmount(collateralToken, amount);
