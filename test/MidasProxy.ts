@@ -4,48 +4,41 @@ import { Signer, Contract, BytesLike } from "ethers";
 
 import { TacLocalTestSdk, TokenMintInfo, TokenUnlockInfo } from "@tonappchain/evm-ccl";
 import { deployMidasProxy } from "../scripts/Midas/deployMidasProxy";
-import { sttonTokenInfo, tacTokenInfo } from '../scripts/common/info/tokensInfo';
-import { ISAFactory, IDepositVault, IRedemptionVault } from "../typechain-types";
-
-import { VaultMock, MidasProxy, TestToken } from "../typechain-types";
+import { ISAFactory } from "../typechain-types";
+import { midasTestnetConfig } from "../scripts/Midas/config/testnetConfig";
+import { MidasProxy } from "../typechain-types";
 
 import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types";
 
 import { reset, getStorageAt, setStorageAt } from "@nomicfoundation/hardhat-network-helpers"
 
 
+const TON_TOKEN_ADDRESS = "0xb76d91340F5CE3577f0a056D29f6e3Eb4E88B140"
+
+
 describe("MidasProxy", function () {
     let admin: Signer;
     let testSdk: TacLocalTestSdk;
     let midasProxy: MidasProxy;
-
+    let tonToken: any;
+    let depositVault: any;
+    let redemptionVault: any;
     let tacSAFactory: ISAFactory;
-
-    let stton: ERC20;
-    let tac: ERC20;
-    let mToken: TestToken;
-    let mockVault: VaultMock;
+    let mTokenAmount: bigint;
+    let mTokenAddress: string;
 
     before(async function () {
-        await reset(process.env.TAC_TESTNET_URL, 4580693);
-        
-        admin = new ethers.Wallet(process.env.DEPLOYER_PRIVATE_KEY!, ethers.provider);
+        await reset(process.env.TAC_MAINNET_URL, 8629415);
+        [admin] = await ethers.getSigners();
         testSdk = new TacLocalTestSdk();
-        const crossChainLayerAddress = await testSdk.create(ethers.provider);
-        const testTokenFactory = await ethers.getContractFactory("TestToken", admin);
-        const mockVaultFactory = await ethers.getContractFactory("VaultMock", admin);
+        const crossChainLayerAddress = await testSdk.create(ethers.provider);     
         
-        mToken = await testTokenFactory.deploy("mToken", "mToken");
-        mockVault = await mockVaultFactory.deploy(await mToken.getAddress());
-
+        await setStorageAt(TON_TOKEN_ADDRESS, 2, await admin.getAddress());
+        tonToken = new ethers.Contract(TON_TOKEN_ADDRESS, ['function mint(address,uint256) external', 'function balanceOf(address) external view returns (uint256)'], admin) as unknown;
         tacSAFactory = await hre.ethers.getContractAt("ISAFactory", testSdk.getSmartAccountFactoryAddress()) as unknown as ISAFactory;
-
-        midasProxy = await deployMidasProxy(admin, await tacSAFactory.getAddress(), await mockVault.getAddress(), await mockVault.getAddress(), crossChainLayerAddress);
-
-        const sttonEVMAddress = testSdk.getEVMJettonAddress(sttonTokenInfo.tvmAddress);
-        const tacEVMAddress = testSdk.getEVMJettonAddress(tacTokenInfo.tvmAddress);
-        stton = new ethers.Contract(sttonEVMAddress, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;
-        tac = new ethers.Contract(tacEVMAddress, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;
+        depositVault = new ethers.Contract(midasTestnetConfig.depositVaultAddress, ['function currentRequestId() external view returns (uint256)'], admin) as unknown;
+        redemptionVault = new ethers.Contract(midasTestnetConfig.redemptionVaultAddress, ['function currentRequestId() external view returns (uint256)'], admin) as unknown;
+        midasProxy = await deployMidasProxy(admin, await tacSAFactory.getAddress(), midasTestnetConfig.depositVaultAddress, midasTestnetConfig.redemptionVaultAddress, crossChainLayerAddress);
         
     });
 
@@ -60,35 +53,27 @@ describe("MidasProxy", function () {
         const target = await midasProxy.getAddress();
         const methodName = "depositInstant(bytes,bytes)";
 
-        const amount = ethers.parseEther("0.0001")
+        const amount = ethers.parseUnits("1000", 9n)
+        await tonToken.mint(await midasProxy.getAddress(), amount);
 
         const encodedArguments = new ethers.AbiCoder().encode(
-            ['tuple(address, uint256, uint256, bytes32)'],
-            [[
-                await stton.getAddress(),
-                amount,
-                0,
-                ethers.ZeroHash
-            ]]
+            ['address', 'uint256', 'uint256', 'bytes32'],
+            [
+                TON_TOKEN_ADDRESS, // tokenIn
+                amount, // amountToken
+                0n, // minReceiveAmount
+                ethers.encodeBytes32String("0x") // referrerId
+            ]
         );
-
-
-
-        const mintTokens: TokenMintInfo[] = [
-        {
-            info: sttonTokenInfo,
-            amount: amount
-        }];
-
         
-        
-        await testSdk.sendMessage(
+
+        const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
             shardsKey,
             target,
             methodName,
             encodedArguments,
             tvmWalletCaller,
-            mintTokens,
+            [],
             [],
             0n,
             extraData,
@@ -96,7 +81,13 @@ describe("MidasProxy", function () {
             timestamp
         );
 
-        expect(await mToken.balanceOf(testSdk.getCrossChainLayerAddress())).to.equal(amount);
+        const outMessage = outMessages[0];
+        expect(outMessage.tokensLocked.length).to.be.equal(1);
+        expect(outMessage.tokensLocked[0].evmAddress).to.be.equal(midasTestnetConfig.mToken);
+        expect(outMessage.tokensLocked[0].amount).to.be.gt(0);
+        mTokenAmount = BigInt(outMessage.tokensLocked[0].amount);
+        mTokenAddress = String(outMessage.tokensLocked[0].evmAddress);
+        
     });
 
     it("midas deposit request", async function () {
@@ -109,27 +100,20 @@ describe("MidasProxy", function () {
         const target = await midasProxy.getAddress();
         const methodName = "depositRequest(bytes,bytes)";
 
-        const amount = ethers.parseEther("0.0001")
+        const amount = ethers.parseUnits("1000", 9n)
+        await tonToken.mint(await midasProxy.getAddress(), amount);
 
         const encodedArguments = new ethers.AbiCoder().encode(
-            ['tuple(address, uint256, bytes32)'],
-            [[
-                await stton.getAddress(),
-                amount,
-                ethers.ZeroHash
-            ]]
+            ['address', 'uint256', 'bytes32'],
+            [
+                TON_TOKEN_ADDRESS, // tokenIn
+                amount, // amountToken
+                ethers.encodeBytes32String("0x") // referrerId
+            ]
         );
 
+        const currentRequestId = await depositVault.currentRequestId();
 
-
-        const mintTokens: TokenMintInfo[] = [
-        {
-            info: sttonTokenInfo,
-            amount: amount
-        }];
-
-
-        expect(await mockVault.requestCount()).to.equal(0);
 
         await testSdk.sendMessage(
             shardsKey,
@@ -137,21 +121,19 @@ describe("MidasProxy", function () {
             methodName,
             encodedArguments,
             tvmWalletCaller,
-            mintTokens,
+            [],
             [],
             0n,
             extraData,
             operationId,
             timestamp
         );
-
-        expect(await mockVault.requestCount()).to.equal(1);
-        
-        expect(await stton.balanceOf(await mockVault.getAddress())).to.equal(amount*2n);
+        const currentRequestIdAfter = await depositVault.currentRequestId();
+        expect(currentRequestIdAfter).to.be.equal(currentRequestId + 1n);
 
     });
 
-    it("midas redeem instant", async function () {
+    it("midas redeem instant via bridge", async function () {
         const shardsKey = 1n;
         const operationId = ethers.encodeBytes32String("redeem instant");
         const extraData = "0x";
@@ -161,27 +143,26 @@ describe("MidasProxy", function () {
         const target = await midasProxy.getAddress();
         const methodName = "redeemInstant(bytes,bytes)";
 
-        const amount = ethers.parseEther("0.00005")
+        const amount = mTokenAmount / 4n
 
         const encodedArguments = new ethers.AbiCoder().encode(
-            ['tuple(address, uint256, uint256)'],
-            [[
-                await stton.getAddress(),
-                amount,
-                0
-            ]]
+            ['address', 'uint256', 'uint256', "bool"],
+            [
+                TON_TOKEN_ADDRESS, // tokenOut
+                amount, // amountMTokenIn
+                0n, // minReceiveAmount
+                false // fromSmartAccount: true if redeeming from smart account balance, false if redeeming from bridge
+            ]
         );
 
 
 
         const unlockTokens: TokenUnlockInfo[] = [{
-            evmAddress: await mToken.getAddress(),
+            evmAddress: mTokenAddress,
             amount: amount,
         }]
 
-        const mTokenCCLBefore = await mToken.balanceOf(testSdk.getCrossChainLayerAddress())
-        const sttonVaultBefore = await stton.balanceOf(await mockVault.getAddress())
-        await testSdk.sendMessage(
+        const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
             shardsKey,
             target,
             methodName,
@@ -194,8 +175,10 @@ describe("MidasProxy", function () {
             operationId,
             timestamp
         );
-        expect(await mToken.balanceOf(testSdk.getCrossChainLayerAddress())).to.equal(mTokenCCLBefore-amount);
-        expect(await stton.balanceOf(await mockVault.getAddress())).to.equal(sttonVaultBefore-amount);
+        const outMessage = outMessages[0];
+        expect(outMessage.tokensLocked.length).to.be.equal(1);
+        expect(outMessage.tokensLocked[0].evmAddress).to.be.equal(TON_TOKEN_ADDRESS);
+        expect(outMessage.tokensLocked[0].amount).to.be.gt(0);
     });
 
 
@@ -209,25 +192,26 @@ describe("MidasProxy", function () {
         const target = await midasProxy.getAddress();
         const methodName = "redeemRequest(bytes,bytes)";
 
-        const amount = ethers.parseEther("0.00005")
+        const amount = (mTokenAmount / 2n) - 1n
 
         const encodedArguments = new ethers.AbiCoder().encode(
-            ['tuple(address, uint256)'],
-            [[
-                await stton.getAddress(),
-                amount,
-            ]]
+            ['address', 'uint256', "bool"],
+            [
+                TON_TOKEN_ADDRESS, // tokenOut
+                amount, // amountMTokenIn
+                false // fromSmartAccount: true if redeeming from smart account balance, false if redeeming from bridge
+            ]
         );
 
 
 
         const unlockTokens: TokenUnlockInfo[] = [{
-            evmAddress: await mToken.getAddress(),
+            evmAddress: mTokenAddress,
             amount: amount,
         }]
 
-        const mTokenCCLBefore = await mToken.balanceOf(testSdk.getCrossChainLayerAddress())
-        const sttonVaultBefore = await stton.balanceOf(await mockVault.getAddress())
+        const currentRequestId = await redemptionVault.currentRequestId();
+
         await testSdk.sendMessage(
             shardsKey,
             target,
@@ -241,9 +225,50 @@ describe("MidasProxy", function () {
             operationId,
             timestamp
         );
-        expect(await mockVault.requestCount()).to.equal(2);
-        expect(await mToken.balanceOf(testSdk.getCrossChainLayerAddress())).to.equal(mTokenCCLBefore-amount);
-        expect(await stton.balanceOf(await mockVault.getAddress())).to.equal(sttonVaultBefore);
+        const currentRequestIdAfter = await redemptionVault.currentRequestId();
+        expect(currentRequestIdAfter).to.be.equal(currentRequestId + 1n);
+    });
+
+    it("claim sa", async function () {
+        const shardsKey = 1n;
+        const operationId = ethers.encodeBytes32String("claim sa");
+        const extraData = "0x";
+        const timestamp = BigInt(Math.floor(Date.now() / 1000));
+        const tvmWalletCaller = "EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk";
+
+        const target = await midasProxy.getAddress();
+        const methodName = "claimSA(bytes,bytes)";
+
+        const saAddress = await tacSAFactory.getSmartAccountForApplication(tvmWalletCaller, await midasProxy.getAddress());
+
+        await tonToken.connect(admin).mint(saAddress, ethers.parseUnits("1000", 9n))
+        
+        const encodedArguments = new ethers.AbiCoder().encode(
+            ['address'],
+            [
+                TON_TOKEN_ADDRESS,// token to claim, can be underlying token, mToken or any other token
+            ]
+        );
+
+
+        const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
+            shardsKey,
+            target,
+            methodName,
+            encodedArguments,
+            tvmWalletCaller,
+            [],
+            [],
+            0n,
+            extraData,
+            operationId,
+            timestamp
+        );
+
+        const outMessage = outMessages[0];
+        expect(outMessage.tokensLocked.length).to.be.equal(1);
+        expect(outMessage.tokensLocked[0].evmAddress).to.be.equal(TON_TOKEN_ADDRESS);
+        expect(outMessage.tokensLocked[0].amount).to.be.gt(0);
     });
 
 
