@@ -7,4 +7,5 @@ interface IMultiAccount {
     function depositAndAllocateForAccount(address account, uint256 amount) external;
     function delegateAccesses(address account, address target, bytes4[] memory selector, bool state) external;
     function withdrawFromAccount(address account, uint256 amount) external;
+    function depositForAccount(address account, uint256 amount) external;
 }

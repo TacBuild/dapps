@@ -25,3 +25,12 @@ export async function deployOrbsProxy(deployer: Signer, crossChainLayerAddress: 
     
 }
 
+
+async function main() {
+    const [deployer] = await ethers.getSigners();
+    const orbsProxy = await deployOrbsProxy(deployer,"0x9fee01e948353E0897968A3ea955815aaA49f58d" , "0x070820Ed658860f77138d71f74EfbE173775895b");
+    await orbsProxy.waitForDeployment();
+    console.log("OrbsProxy deployed to:", await orbsProxy.getAddress());
+}
+
+main();

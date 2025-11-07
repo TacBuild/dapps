@@ -161,6 +161,37 @@ describe("OrbsProxy", function () {
             timestamp
         )
     })
+
+    it("deposit for account", async function () {
+        const shardsKey = 1n;
+        const operationId = ethers.encodeBytes32String("Deposit for account");
+        const extraData = "0x";
+        const timestamp = BigInt(Math.floor(Date.now() / 1000));
+        const tvmWalletCaller = "EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk";
+
+        const target = await orbsProxy.getAddress();
+        const methodName = "depositForAccount(bytes,bytes)";
+        await usdt.connect(admin).mint(await orbsProxy.getAddress(), ethers.parseUnits("100", 6));
+        const account = await tacSAFactory.getSmartAccountForApplication(tvmWalletCaller, await orbsProxy.getAddress());
+        const amount = ethers.parseUnits("100", 6);
+        const encodedArguments = new ethers.AbiCoder().encode(
+            ['address', 'uint256'],
+            [accountAddress[0], amount]
+        );
+        await testSdk.sendMessage(
+            shardsKey,
+            target,
+            methodName,
+            encodedArguments,
+            tvmWalletCaller,
+            [],
+            [],
+            0n,
+            extraData,
+            operationId,
+            timestamp
+        )
+    })
     it("withdraw from account", async function () {
         const shardsKey = 1n;
         const operationId = ethers.encodeBytes32String("Deposit to Vault");

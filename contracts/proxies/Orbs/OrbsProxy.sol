@@ -10,7 +10,6 @@ import {ITacSmartAccount} from "@tonappchain/evm-ccl/contracts/smart-account/int
 import {ISAFactory} from "@tonappchain/evm-ccl/contracts/smart-account/interfaces/ISAFactory.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IMultiAccount} from "./interface/IMultiAccount.sol";
-import "hardhat/console.sol";
 
 contract OrbsProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgradeable {
 
@@ -67,6 +66,15 @@ contract OrbsProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgrad
         emit DepositAndAllocatedForAccount(account, amount, header.tvmCaller);
     }
 
+    function depositForAccount(bytes calldata tacHeader, bytes calldata arguments) external _onlyCrossChainLayer {
+        (address account, uint256 amount) = abi.decode(arguments, (address, uint256));
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
+        (address user, ) = ISAFactory(tacSAFactory).getOrCreateSmartAccount(header.tvmCaller);
+        SafeERC20.safeTransfer(IERC20(collateralToken), user, amount);
+        ITacSmartAccount(user).approve(collateralToken, address(multiAccount), amount);
+        ITacSmartAccount(user).execute(address(multiAccount), 0, abi.encodeWithSelector(IMultiAccount.depositForAccount.selector, account, amount));
+    }
+
     function delegateAccesses(bytes calldata tacHeader, bytes calldata arguments) external _onlyCrossChainLayer {
         (address account, address target, bytes4[] memory selector, bool state) = abi.decode(arguments, (address, address, bytes4[], bool));
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
@@ -79,10 +87,7 @@ contract OrbsProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgrad
         (address account, uint256 amount) = abi.decode(arguments, (address, uint256));
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user, ) = ISAFactory(tacSAFactory).getOrCreateSmartAccount(header.tvmCaller);
-        //TODO think about decreasing allowance
-        (bool suc, bytes memory data) = ITacSmartAccount(user).executeUnsafe(address(multiAccount), 0, abi.encodeWithSelector(IMultiAccount.withdrawFromAccount.selector, account, amount));
-        console.log("suc", suc);
-        console.logBytes(data);
+        ITacSmartAccount(user).execute(address(multiAccount), 0, abi.encodeWithSelector(IMultiAccount.withdrawFromAccount.selector, account, amount));
         ITacSmartAccount(user).execute(collateralToken, 0, abi.encodeWithSelector(IERC20.transfer.selector, address(this), amount));
         TokenAmount[] memory tokens = new TokenAmount[](1);
         tokens[0] = TokenAmount(collateralToken, amount);
