@@ -22,6 +22,8 @@ contract OrbsProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgrad
     event DepositAndAllocatedForAccount(address indexed account, uint256 amount, string tvmCaller);
     event DelegatedAccesses(address indexed account, address indexed target, bytes4[] selector, bool state, string tvmCaller);
     event WithdrawnFromAccount(address indexed account, uint256 amount, string tvmCaller);
+    event AccountAddedWithReferral(address indexed account, string name, string tvmCaller);
+    event AccountAddedWithReferralAndDepositAndAllocate(address indexed account, string name, string tvmCaller);
 
     constructor() {
         _disableInitializers();
@@ -47,11 +49,28 @@ contract OrbsProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgrad
         emit AccountAdded(user, name, header.tvmCaller);
     }
 
+    function addAccountWithReferral(bytes calldata tacHeader, bytes calldata arguments) external _onlyCrossChainLayer {
+        (string memory name, address referrer) = abi.decode(arguments, (string, address));
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
+        (address user, ) = ISAFactory(tacSAFactory).getOrCreateSmartAccount(header.tvmCaller);
+        ITacSmartAccount(user).execute(address(multiAccount), 0, abi.encodeWithSelector(IMultiAccount.addAccountWithReferral.selector, name, referrer));
+        emit AccountAddedWithReferral(user, name, header.tvmCaller);
+    }
+
+    function addAccountWithReferralAndDepositAndAllocate(bytes calldata tacHeader, bytes calldata arguments) external _onlyCrossChainLayer {
+        (string memory name, address referrer, uint256 amount) = abi.decode(arguments, (string, address, uint256));
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
+        (address user, ) = ISAFactory(tacSAFactory).getOrCreateSmartAccount(header.tvmCaller);
+        SafeERC20.safeTransfer(IERC20(collateralToken), user, amount);
+        ITacSmartAccount(user).approve(collateralToken, address(multiAccount), amount);
+        ITacSmartAccount(user).execute(address(multiAccount), 0, abi.encodeWithSelector(IMultiAccount.addAccountWithReferralAndDepositAndAllocate.selector, name, referrer, amount));
+        emit AccountAddedWithReferralAndDepositAndAllocate(user, name, header.tvmCaller);
+    }
+
     function editAccountName(bytes calldata tacHeader, bytes calldata arguments) external _onlyCrossChainLayer {
         (address account, string memory newName) = abi.decode(arguments, (address, string));
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
-        (address user, ) = ISAFactory(tacSAFactory)
-        .getOrCreateSmartAccount(header.tvmCaller);
+        (address user, ) = ISAFactory(tacSAFactory).getOrCreateSmartAccount(header.tvmCaller);
         ITacSmartAccount(user).execute(address(multiAccount), 0, abi.encodeWithSelector(IMultiAccount.editAccountName.selector, account, newName));
         emit AccountNameEdited(account, newName, header.tvmCaller);
     }

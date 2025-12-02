@@ -33,4 +33,4 @@ async function main() {
     console.log("OrbsProxy deployed to:", await orbsProxy.getAddress());
 }
 
-main();
+// main();

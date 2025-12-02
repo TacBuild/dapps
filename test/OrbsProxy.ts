@@ -8,7 +8,7 @@ import { setStorageAt, impersonateAccount, time, mine} from "@nomicfoundation/ha
 import { reset } from "@nomicfoundation/hardhat-network-helpers"
 import { deployOrbsProxy } from "../scripts/Orbs/deployProxy";
 import { orbsMainnetConfig } from "../scripts/Orbs/config/config";
-
+import IMultiAccountAbi from "../artifacts/contracts/proxies/Orbs/interface/IMultiAccount.sol/IMultiAccount.json";
 const USDT_MAINNET_ADDRESS = "0xAF988C3f7CB2AceAbB15f96b19388a259b6C438f"
 
 describe("OrbsProxy", function () {
@@ -22,7 +22,8 @@ describe("OrbsProxy", function () {
    
 
     before(async function () {
-        await reset(process.env.TAC_MAINNET_URL || "", 8509601);
+        //9992809
+        await reset(process.env.TAC_MAINNET_URL || "", 9997707);
         [admin] = await ethers.getSigners();
         testSdk = new TacLocalTestSdk();
         const crossChainLayerAddress = await testSdk.create(ethers.provider);
@@ -30,7 +31,7 @@ describe("OrbsProxy", function () {
         orbsProxy = await deployOrbsProxy(admin, crossChainLayerAddress, await tacSAFactory.getAddress());
         usdt = new ethers.Contract(USDT_MAINNET_ADDRESS, ['function mint(address,uint256) external', 'function balanceOf(address) external view returns (uint256)'], admin) as unknown;
         await setStorageAt(USDT_MAINNET_ADDRESS,2,await admin.getAddress());
-        multiAccount = new ethers.Contract(orbsMainnetConfig.multiAccountAddress, ['function accounts(address,uint256) external view returns(address,string)'], admin) as unknown;
+        multiAccount = new ethers.Contract(orbsMainnetConfig.multiAccountAddress, ['function accounts(address,uint256) external view returns(address,string)', 'function referrals(address) external view returns(address)'], admin) as unknown;
     });
 
     it("add account", async function () {
@@ -66,6 +67,94 @@ describe("OrbsProxy", function () {
         expect(accountAddress[0]).to.be.not.equal(ethers.ZeroAddress);
         expect(accountAddress[1]).to.be.equal(name);
     });
+
+    it("add account with referral", async function () {
+        const shardsKey = 1n;
+        const operationId = ethers.encodeBytes32String("Add account with referral");
+        const extraData = "0x";
+        const timestamp = BigInt(Math.floor(Date.now() / 1000));
+        const tvmWalletCaller = "EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk";
+
+        const target = await orbsProxy.getAddress();
+        const methodName = "addAccountWithReferral(bytes,bytes)";
+        const account = await tacSAFactory.getSmartAccountForApplication(tvmWalletCaller, await orbsProxy.getAddress());
+
+        const name = "New";
+        const referrer = "0x342A092906e3d48e11f0477e322340C462a3CE2f";
+            const encodedArguments = new ethers.AbiCoder().encode(
+                ['string', 'address'],
+                [name, referrer]
+            );
+        await testSdk.sendMessage(
+            shardsKey,
+            target,
+            methodName,
+            encodedArguments,
+            tvmWalletCaller,
+            [],
+            [],
+            0n,
+            extraData,
+            operationId,
+            timestamp
+        )
+        expect(await multiAccount.referrals(account)).to.be.equal(referrer);
+        // const multiAccountContract = new ethers.Contract(await multiAccount.getAddress(), IMultiAccountAbi.abi, admin);
+        // const eventFilter = multiAccountContract.filters.AddAccount
+        // const events = await multiAccount.queryFilter(eventFilter, -1);
+        // const event = events[0] as unknown as { args: { user: string, account: string, name: string } };
+        const accAddr2 = await multiAccount.accounts(account, 1);
+        expect(accAddr2[0]).to.be.not.equal(ethers.ZeroAddress);
+        expect(accAddr2[1]).to.be.equal(name);
+    });
+
+
+    it("add account with referral and deposit and allocate", async function () {
+        const shardsKey = 1n;
+        const operationId = ethers.encodeBytes32String("Op2");
+        const extraData = "0x";
+        const timestamp = BigInt(Math.floor(Date.now() / 1000));
+        const tvmWalletCaller = "EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP8BmKn59TGly2Jk";
+
+        const target = await orbsProxy.getAddress();
+        const methodName = "addAccountWithReferralAndDepositAndAllocate(bytes,bytes)";
+        await usdt.connect(admin).mint(await orbsProxy.getAddress(), ethers.parseUnits("100", 6));
+        const account = await tacSAFactory.getSmartAccountForApplication(tvmWalletCaller, await orbsProxy.getAddress());
+        const amount = ethers.parseUnits("100", 6);
+        const name = "New3";
+        const referrer = "0x543737D90160b64FC27f92A9B359297EB2B0d974";
+        const encodedArguments = new ethers.AbiCoder().encode(
+            ['string', 'address', 'uint256'],
+            [name, referrer, amount]
+        );
+        await testSdk.sendMessage(
+            shardsKey,
+            target,
+            methodName,
+            encodedArguments,
+            tvmWalletCaller,
+            [],
+            [],
+            0n,
+            extraData,
+            operationId,
+            timestamp
+        )
+        const multiAccountContract = new ethers.Contract(await multiAccount.getAddress(), IMultiAccountAbi.abi, admin);
+        const eventFilter = multiAccountContract.filters.DepositForAccount
+        const events = await multiAccount.queryFilter(eventFilter, -1);
+        const event = events[0] as unknown as { args: { user: string, account: string, amount: string } };
+        expect(event.args.user).to.be.equal(account);
+        expect(event.args.amount).to.be.equal(amount);
+        
+        const eventFilter2 = multiAccountContract.filters.AllocateForAccount
+        const events2 = await multiAccount.queryFilter(eventFilter, -1);
+        const event2 = events[0] as unknown as { args: { user: string, account: string, amount: string } };
+        expect(event2.args.user).to.be.equal(account);
+        expect(event2.args.amount).to.be.equal(amount);
+    })
+
+
     
     it("edit account name", async function () {
         const shardsKey = 1n;
