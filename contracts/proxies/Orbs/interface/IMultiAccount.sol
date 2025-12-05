@@ -10,6 +10,7 @@ interface IMultiAccount {
     function delegateAccesses(address account, address target, bytes4[] memory selector, bool state) external;
     function withdrawFromAccount(address account, uint256 amount) external;
     function depositForAccount(address account, uint256 amount) external;
+    function linkReferral(address referrer) external;
     event AddAccount(address user, address account, string name);
     event DepositForAccount(address user, address account, uint256 amount);
     event AllocateForAccount(address user, address account, uint256 amount);

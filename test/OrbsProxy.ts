@@ -23,7 +23,7 @@ describe("OrbsProxy", function () {
 
     before(async function () {
         //9992809
-        await reset(process.env.TAC_MAINNET_URL || "", 9997707);
+        await reset(process.env.TAC_MAINNET_URL || "", 10156990);
         [admin] = await ethers.getSigners();
         testSdk = new TacLocalTestSdk();
         const crossChainLayerAddress = await testSdk.create(ethers.provider);
@@ -66,6 +66,40 @@ describe("OrbsProxy", function () {
         accountAddress = await multiAccount.accounts(account, 0);
         expect(accountAddress[0]).to.be.not.equal(ethers.ZeroAddress);
         expect(accountAddress[1]).to.be.equal(name);
+    });
+
+    it("link referral", async function () {
+        const shardsKey = 1n;
+        const operationId = ethers.encodeBytes32String("Link referral");
+        const extraData = "0x";
+        const timestamp = BigInt(Math.floor(Date.now() / 1000));
+        const tvmWalletCaller = "EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP7BmKn59TGly2Jk";
+
+        const target = await orbsProxy.getAddress();
+        const methodName = "linkReferral(bytes,bytes)";
+        const account = await tacSAFactory.getSmartAccountForApplication(tvmWalletCaller, await orbsProxy.getAddress());
+        const referrer = "0x8d2Aef12605F5611bd763476E68343f53b42C816"
+
+            const encodedArguments = new ethers.AbiCoder().encode(
+                ['address'],
+                [referrer]
+            );
+        expect(await multiAccount.referrals(account)).to.be.equal(ethers.ZeroAddress);
+        await testSdk.sendMessage(
+            shardsKey,
+            target,
+            methodName,
+            encodedArguments,
+            tvmWalletCaller,
+            [],
+            [],
+            0n,
+            extraData,
+            operationId,
+            timestamp
+        )
+        expect(await multiAccount.referrals(account)).to.be.equal(referrer);
+        
     });
 
     it("add account with referral", async function () {
@@ -153,6 +187,8 @@ describe("OrbsProxy", function () {
         expect(event2.args.user).to.be.equal(account);
         expect(event2.args.amount).to.be.equal(amount);
     })
+
+
 
 
     

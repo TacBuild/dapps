@@ -1,5 +1,3 @@
-import { Signer } from "ethers";
-import { MerklProxy } from "../../typechain-types";
 import { DeployProxyOptions } from "@openzeppelin/hardhat-upgrades/dist/utils";
 import hre from 'hardhat';
 

@@ -24,7 +24,7 @@ contract OrbsProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgrad
     event WithdrawnFromAccount(address indexed account, uint256 amount, string tvmCaller);
     event AccountAddedWithReferral(address indexed account, string name, string tvmCaller);
     event AccountAddedWithReferralAndDepositAndAllocate(address indexed account, string name, string tvmCaller);
-
+    event LinkReferral(address indexed account, address referrer, string tvmCaller);
     constructor() {
         _disableInitializers();
     }
@@ -65,6 +65,14 @@ contract OrbsProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgrad
         ITacSmartAccount(user).approve(collateralToken, address(multiAccount), amount);
         ITacSmartAccount(user).execute(address(multiAccount), 0, abi.encodeWithSelector(IMultiAccount.addAccountWithReferralAndDepositAndAllocate.selector, name, referrer, amount));
         emit AccountAddedWithReferralAndDepositAndAllocate(user, name, header.tvmCaller);
+    }
+
+    function linkReferral(bytes calldata tacHeader, bytes calldata arguments) external _onlyCrossChainLayer {
+        (address referrer) = abi.decode(arguments, (address));
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
+        (address user, ) = ISAFactory(tacSAFactory).getOrCreateSmartAccount(header.tvmCaller);
+        ITacSmartAccount(user).execute(address(multiAccount), 0, abi.encodeWithSelector(IMultiAccount.linkReferral.selector, referrer));
+        emit LinkReferral(user, referrer, header.tvmCaller);
     }
 
     function editAccountName(bytes calldata tacHeader, bytes calldata arguments) external _onlyCrossChainLayer {
