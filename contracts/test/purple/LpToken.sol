@@ -5,14 +5,14 @@ import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-
+/**
+ * @notice Not for production use. Only for testing purposes and internal use.
+ */
 contract LpToken is Initializable, ERC20Upgradeable, OwnableUpgradeable {
 
     uint8 private _decimals;
     
     constructor() {}
-    
-
 
     function initialize(string memory name, uint8 _parentDec) public initializer {
         _decimals = _parentDec;

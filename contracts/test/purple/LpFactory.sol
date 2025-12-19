@@ -6,7 +6,9 @@ import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {BeaconProxy} from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
-
+/**
+ * @notice Not for production use. Only for testing purposes and internal use.
+ */
 contract LpFactory {
 
     UpgradeableBeacon public beacon;

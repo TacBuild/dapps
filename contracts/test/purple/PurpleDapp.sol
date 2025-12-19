@@ -6,6 +6,9 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
+/**
+ * @notice Not for production use. Only for testing purposes and internal use.
+ */
 contract PurpleDapp is Ownable {
     using SafeERC20 for IERC20;
 
@@ -13,7 +16,6 @@ contract PurpleDapp is Ownable {
     address public constant NATIVE_TOKEN = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
     constructor() Ownable(msg.sender) {}
-
 
     function addLiquidity(address token, uint256 amount, string memory tvmAddress) public payable {
         if (token == NATIVE_TOKEN) {
@@ -25,8 +27,6 @@ contract PurpleDapp is Ownable {
         require(lpToken != address(0), "LP token not created");
         lpFactory.mintTo(token, msg.sender, amount);
     }
-
-
 
     function removeLiquidity(address token, uint256 amount, string memory tvmAddress) public {
         address lpToken = lpFactory.createOrGetLpToken(tvmAddress, token);
