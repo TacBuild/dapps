@@ -25,7 +25,7 @@ describe("YieldProxy", function () {
    
 
     before(async function () {
-        await reset(process.env.TAC_MAINNET_URL || "", 6467381);
+        await reset(process.env.TAC_MAINNET_URL || "", 10995030);
         [admin] = await ethers.getSigners();
         testSdk = new TacLocalTestSdk();
         const crossChainLayerAddress = await testSdk.create(ethers.provider);

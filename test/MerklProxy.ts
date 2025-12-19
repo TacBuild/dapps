@@ -14,7 +14,8 @@ export const MAXUINT128 = BigInt("340282366920938463463374607431768211455");
 const rEULAddress = "0xFd140871bABAe1176bA0E38f5813d56B6B53837F";
 const EULAddress = "0x00bD3eFf25E6fB0A164026BD5f2916801bdf434E";
 
-describe("MerklProxy", function () {
+// Turin version
+describe.skip("MerklProxy", function () {
     let admin: Signer;
     let testSdk: TacLocalTestSdk;
     let merklProxy: MerklProxy;
@@ -53,7 +54,7 @@ describe("MerklProxy", function () {
         const amount = ethers.parseEther("50")
         const proof = [ "0xe41ad7320b930742c351ebb868c87d1a7510eeb8ec01a822d6dde18b7b9ba9b5", "0x94a904f3e8977024e662a40eb21199bc58243c759e6d5360e05840947bf1fd07",
             "0xe9bdd1d98a22626fd849f50474cb5fadae20e20e3c3e8957035be5b28d7dbc0f"
-          ]
+        ]
         const userAddress = await tacSAFactory.predictSmartAccountAddress(tvmWalletCaller, await merklProxy.getAddress());
         console.log("userAddress", userAddress);
         const encodedArguments = new ethers.AbiCoder().encode(

@@ -7,7 +7,7 @@ import { JettonInfo, TacLocalTestSdk, TokenMintInfo, TokenUnlockInfo, } from "@t
 import { sttonTokenInfo, tacTokenInfo } from '../scripts/common/info/tokensInfo';
 import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types";
 import { PurpleDapp, LpFactory } from "../typechain-types";
-import { deployPurpleDapp } from "../scripts/Purple/deploy";
+import { deployPurpleDapp } from "../scripts/Purple/deployPurpleDapp";
 import { TacSdk, Network, AgnosticProxySDK, AgnosticStructs } from "@tonappchain/sdk";
 
 export const MAXUINT128 = BigInt("340282366920938463463374607431768211455");

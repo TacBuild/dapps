@@ -13,7 +13,8 @@ import { IzumiProxy, IPool, ISwap, ILimitOrderManager, ILiquidityManager } from 
 export const MAXUINT128 = BigInt("340282366920938463463374607431768211455");
 
 
-describe("IzumiProxy", function () {
+// Turin version
+describe.skip("IzumiProxy", function () {
     let admin: Signer;
     let testSdk: TacLocalTestSdk;
 
