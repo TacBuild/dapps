@@ -9,7 +9,6 @@ import {OutMessageV1, TokenAmount, TacHeaderV1, NFTAmount} from "@tonappchain/ev
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IDepositVault } from "contracts/proxies/Midas/interface/IDepositVault.sol";
 import { IRedemptionVault } from "contracts/proxies/Midas/interface/IRedemptionVault.sol";
-import { IManageableVault } from "contracts/proxies/Midas/interface/IManageableVault.sol";
 import {ITacSmartAccount} from "@tonappchain/evm-ccl/contracts/smart-account/interfaces/ITacSmartAccount.sol";
 import {ISAFactory} from "@tonappchain/evm-ccl/contracts/smart-account/interfaces/ISAFactory.sol";
 
@@ -82,7 +81,7 @@ contract MidasProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgra
         );
 
 
-        address mToken = IManageableVault(depositVaultAddress).mToken();
+        address mToken = IDepositVault(depositVaultAddress).mToken();
 
         uint256 amount = IERC20(mToken).balanceOf(user);
 
@@ -152,7 +151,7 @@ contract MidasProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgra
         (address tokenOut,
         uint256 amountMTokenIn,
         uint256 minReceiveAmount, bool fromSmartAccount) = abi.decode(arguments, (address, uint256, uint256, bool));
-        address mToken = IManageableVault(redemptionVaultAddress).mToken();
+        address mToken = IRedemptionVault(redemptionVaultAddress).mToken();
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user,) = ISAFactory(tacSAFactoryAddress).getOrCreateSmartAccount(header.tvmCaller);
 
@@ -204,7 +203,7 @@ contract MidasProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgra
         (address tokenOut,
         uint256 amountMTokenIn, bool fromSmartAccount) = abi.decode(arguments, (address, uint256, bool));
 
-        address mToken = IManageableVault(redemptionVaultAddress).mToken();
+        address mToken = IRedemptionVault(redemptionVaultAddress).mToken();
 
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
 
@@ -246,18 +245,18 @@ contract MidasProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgra
             abi.encodeWithSelector(
                 IERC20(asset).transfer.selector,
                 address(this),
-                IERC20(asset).balanceOf(user)
+                amount
             )
         );
 
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
             tokensToBridge[0] = TokenAmount(
                 asset,
-                IERC20(asset).balanceOf(address(this))
+                amount
             );
 
-            _bridgeTokens(tacHeader, tokensToBridge, "");
-            emit ClaimSA(user, asset, amount, header.tvmCaller);
+        _bridgeTokens(tacHeader, tokensToBridge, "");
+        emit ClaimSA(user, asset, amount, header.tvmCaller);
     }
 }
 
@@ -291,7 +290,7 @@ contract MidasProxy is TacProxyV1Upgradeable, Ownable2StepUpgradeable, UUPSUpgra
             toBridge: tokens,
             toBridgeNFT: new NFTAmount[](0)
         });
-        _sendMessageV1(message, address(this).balance);
+        _sendMessageV1(message, 0);
     }
 }
 
