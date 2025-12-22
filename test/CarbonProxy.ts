@@ -1,12 +1,12 @@
 import hre, { ethers } from "hardhat";
 import { Signer } from "ethers";
 import { expect } from "chai";
-import { reset, getStorageAt, setStorageAt } from "@nomicfoundation/hardhat-network-helpers"
-import { TacLocalTestSdk, TokenMintInfo, TokenUnlockInfo} from "@tonappchain/evm-ccl";
-import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types";
+import { reset, setStorageAt } from "@nomicfoundation/hardhat-network-helpers"
+import { TacLocalTestSdk } from "@tonappchain/evm-ccl";
 import { deployCarbonProxy } from "../scripts/Carbon/deployProxy";
 import { carbonMainnetConfig } from "../scripts/Carbon/config/mainnetConfig"
 import { CarbonProxy, ISAFactory  } from "../typechain-types";
+import {TAC_MAINNET_URL} from "../hardhat.config";
 
 export const MAXUINT128 = BigInt("340282366920938463463374607431768211455");
 const usdtAddress = "0xAF988C3f7CB2AceAbB15f96b19388a259b6C438f"
@@ -14,9 +14,7 @@ const ownerStorageSlotUsdt = BigInt("2")
 const lBTCAddress = "0xecAc9C5F704e954931349Da37F60E39f515c11c1"
 const ownerStorageSlotLbtc = BigInt("65173360639460082030725920392146925864023520599682862633725751242436743107328")
 const saFactoryAddress = "0x070820Ed658860f77138d71f74EfbE173775895b"
-
 const NATIVE_ADDRESS = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
-
 
 describe("Carbon Proxy", function () {
     let admin: Signer;
@@ -30,7 +28,7 @@ describe("Carbon Proxy", function () {
     let voucher: any;
 
     before(async function () {
-        await reset(process.env.TAC_MAINNET_URL);
+        await reset(TAC_MAINNET_URL);
         
         [admin] = await ethers.getSigners();
         testSdk = new TacLocalTestSdk();

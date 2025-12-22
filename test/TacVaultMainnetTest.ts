@@ -8,6 +8,8 @@ import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types";
 import { TacBoringVaultProxy, ITellerWithMultiAssetSupport, IBoringOnChainQueue, IBoringVault, ISAFactory } from "../typechain-types";
 import { deployTacVaultMainnet } from "../scripts/TacVault/TacVaultDeploy";
 import { tacVaultMainnetConfig } from "../scripts/TacVault/config/TacVaultMainnetConfig";
+import {TAC_MAINNET_URL} from "../hardhat.config";
+
 describe("TacVaultProxyMainnet", function () {
     let admin: Signer;
     let testSdk: TacLocalTestSdk;
@@ -18,7 +20,7 @@ describe("TacVaultProxyMainnet", function () {
     let boringVault: IBoringVault;
     let ton: ERC20;
     before(async function () {
-        await reset(process.env.TAC_MAINNET_URL, 10995030);
+        await reset(TAC_MAINNET_URL, 10995030);
         [admin] = await ethers.getSigners();
         testSdk = new TacLocalTestSdk();
         const crossChainLayerAddress = await testSdk.create(ethers.provider);

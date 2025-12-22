@@ -9,6 +9,8 @@ import { TacBoringVaultProxy, ITellerWithMultiAssetSupport, IBoringOnChainQueue,
 import { deployTacVault } from "../scripts/TacVault/TacVaultDeploy";
 import { tacVaultTestnetConfig } from "../scripts/TacVault/config/TacVaultTestnetConfig";
 import { reset, time } from "@nomicfoundation/hardhat-network-helpers";
+import {TAC_TESTNET_SPB_URL} from "../hardhat.config";
+
 describe("TacVaultProxy", function () {
     let admin: Signer;
     let testSdk: TacLocalTestSdk;
@@ -19,7 +21,7 @@ describe("TacVaultProxy", function () {
     let boringVault: IBoringVault;
     let ton: ERC20;
     before(async function () {
-        await reset(process.env.TAC_TESTNET_SPB_URL, 10955211);
+        await reset(TAC_TESTNET_SPB_URL, 10955211);
         [admin] = await ethers.getSigners();
         testSdk = new TacLocalTestSdk();
         const crossChainLayerAddress = await testSdk.create(ethers.provider);

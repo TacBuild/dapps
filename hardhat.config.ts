@@ -10,8 +10,13 @@ dotenv.config();
 // const TAC_TESTNET_URL = process.env.TAC_TESTNET_URL || "http://127.0.0.1:8545";
 // const DEPLOYER_PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY || ethers.Wallet.createRandom().privateKey;
 
-const TAC_TESTNET_SPB_URL = process.env.TAC_TESTNET_SPB_URL || "https://spb.rpc.tac.build";
-const TAC_MAINNET_URL = process.env.TAC_MAINNET_URL || "https://rpc.tac.build";
+export const TAC_TESTNET_SPB_URL = process.env.TAC_TESTNET_SPB_URL || "https://spb.rpc.tac.build";
+export const TAC_MAINNET_URL = process.env.TAC_MAINNET_URL || "https://rpc.tac.build";
+
+const DEPLOYER_PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY;
+if (!DEPLOYER_PRIVATE_KEY) {
+  throw new Error("DEPLOYER_PRIVATE_KEY is not defined");
+}
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -50,12 +55,12 @@ const config: HardhatUserConfig = {
     tac_testnet_spb: {
       chainId: 2391,
       url: TAC_TESTNET_SPB_URL,
-      accounts: [process.env.DEPLOYER_PRIVATE_KEY || ""]
+      accounts: [DEPLOYER_PRIVATE_KEY]
     },
     tac_mainnet: {
       chainId: 239,
       url: TAC_MAINNET_URL,
-      accounts: [process.env.DEPLOYER_PRIVATE_KEY || ""]
+      accounts: [DEPLOYER_PRIVATE_KEY]
     }
   },
   etherscan: {

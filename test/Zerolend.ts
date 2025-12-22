@@ -10,6 +10,7 @@ import { ZerolendPoolProxy, MockZerolendPool, TestToken, ISAFactory} from '../ty
 import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types"
 import { sttonTokenInfo, tacTokenInfo } from '../scripts/common/info/tokensInfo';
 import { reset } from "@nomicfoundation/hardhat-network-helpers";
+import {TAC_MAINNET_URL} from "../hardhat.config";
 
 describe("ZerolandPoolProxy", function () {
     const poolPresetParams = {
@@ -38,7 +39,7 @@ describe("ZerolandPoolProxy", function () {
     const tokenValue = 100000n
 
     before(async function () {
-        await reset(process.env.TAC_MAINNET_URL || "", 10995030);
+        await reset(TAC_MAINNET_URL, 10995030);
         [admin] = await ethers.getSigners();
         testSdk = new TacLocalTestSdk();
         crossChainLayerAddress = await testSdk.create(ethers.provider);

@@ -1,5 +1,5 @@
 import hre, { ethers } from "hardhat";
-import { AddressLike, BytesLike, Contract, Signer } from "ethers";
+import { Contract, Signer } from "ethers";
 import { expect } from "chai";
 
 import { deployCurveLiteTwocryptoswapProxy } from "../scripts/CurveLite/twocryptoswap/deployProxy";

@@ -1,14 +1,15 @@
 import hre, { ethers } from "hardhat";
 import { Signer } from "ethers";
 import { expect } from "chai";
-import {time, reset, getStorageAt, setStorageAt, setBalance} from "@nomicfoundation/hardhat-network-helpers"
+import {reset, setStorageAt, setBalance} from "@nomicfoundation/hardhat-network-helpers"
 
 import { JettonInfo, TacLocalTestSdk, TokenMintInfo, TokenUnlockInfo, } from "@tonappchain/evm-ccl";
-import { sttonTokenInfo, tacTokenInfo } from '../scripts/common/info/tokensInfo';
+import { tacTokenInfo } from '../scripts/common/info/tokensInfo';
 import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types";
 import { PurpleDapp, LpFactory } from "../typechain-types";
 import { deployPurpleDapp } from "../scripts/Purple/deployPurpleDapp";
 import { TacSdk, Network, AgnosticProxySDK, AgnosticStructs } from "@tonappchain/sdk";
+import {TAC_TESTNET_SPB_URL} from "../hardhat.config";
 
 export const MAXUINT128 = BigInt("340282366920938463463374607431768211455");
 export const AGNOSTIC_PROXY_ADDRESS = "0x0000000000000000000000000000000000000000";
@@ -28,7 +29,7 @@ describe("PurpleDapp", function () {
     let JFK_TOKEN_INFO: JettonInfo;
     let stton: ERC20;
     before(async function () {
-        await reset(process.env.TAC_TESTNET_SPB_URL || "", 10456198);
+        await reset(TAC_TESTNET_SPB_URL, 10456198);
         [admin] = await ethers.getSigners();
         testSdk = new TacLocalTestSdk();
         

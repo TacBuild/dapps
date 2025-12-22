@@ -1,5 +1,5 @@
 import hre, { ethers } from "hardhat";
-import { AddressLike, BytesLike, Contract, Signer } from "ethers";
+import { Contract, Signer } from "ethers";
 import { expect } from "chai";
 
 import { deployCurveLiteRouterProxy } from "../scripts/CurveLite/deployRouterProxy";
@@ -12,9 +12,6 @@ import { CurveLiteRouterMainnetConfig } from "../scripts/CurveLite/router/mainne
 import factoryAbi from "../scripts/CurveLite/twocryptoswap/factoryAbi.json"
 import implementationAbi from "../scripts/CurveLite/twocryptoswap/implementationAbi.json"
 import { deployCurveLiteTwocryptoswapProxy } from "../scripts/CurveLite/twocryptoswap/deployProxy";
-
-
-
 
 describe("CurveLiteRouterProxy", function () {
     const NULL_ADDRESS = "0x0000000000000000000000000000000000000000"
@@ -45,7 +42,6 @@ describe("CurveLiteRouterProxy", function () {
         const crossChainLayerAddress = await testSdk.create(ethers.provider);
         const smartAccountFactoryAddress = testSdk.getSmartAccountFactoryAddress();
 
-        
         curveLiteRouterProxy = await deployCurveLiteRouterProxy(admin, CurveLiteRouterMainnetConfig.CurveLiteRouter, crossChainLayerAddress, smartAccountFactoryAddress);
         factoryContract = new ethers.Contract(CurveLiteRouterMainnetConfig.CurveLiteTwocryptoswapFactory, factoryAbi, admin) as unknown as ICurveLiteTwocryptoFactory;
         curveLiteTwocryptoswapProxy = await deployCurveLiteTwocryptoswapProxy(admin, smartAccountFactoryAddress, crossChainLayerAddress, testSdk.getWTACAddress());
