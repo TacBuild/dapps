@@ -1,16 +1,15 @@
 import hre, { ethers } from "hardhat";
 import { expect } from "chai";
-import { Signer, Contract, BytesLike } from "ethers";
+import { Signer } from "ethers";
 
-import { TacLocalTestSdk, TokenMintInfo, TokenUnlockInfo } from "@tonappchain/evm-ccl";
+import { TacLocalTestSdk, TokenUnlockInfo } from "@tonappchain/evm-ccl";
 import { deployMidasProxy } from "../scripts/Midas/deployMidasProxy";
 import { ISAFactory } from "../typechain-types";
 import { midasTestnetConfig } from "../scripts/Midas/config/testnetConfig";
 import { MidasProxy } from "../typechain-types";
 
-import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types";
 
-import { reset, getStorageAt, setStorageAt } from "@nomicfoundation/hardhat-network-helpers"
+import { reset, setStorageAt } from "@nomicfoundation/hardhat-network-helpers"
 
 
 const TON_TOKEN_ADDRESS = "0xb76d91340F5CE3577f0a056D29f6e3Eb4E88B140"
