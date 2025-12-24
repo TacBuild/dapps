@@ -6,10 +6,6 @@ import "@openzeppelin/hardhat-upgrades";
 import { HardhatUserConfig } from "hardhat/config";
 dotenv.config();
 
-// Turin, deprecated
-// const TAC_TESTNET_URL = process.env.TAC_TESTNET_URL || "http://127.0.0.1:8545";
-// const DEPLOYER_PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY || ethers.Wallet.createRandom().privateKey;
-
 export const TAC_TESTNET_SPB_URL = process.env.TAC_TESTNET_SPB_URL || "https://spb.rpc.tac.build";
 export const TAC_MAINNET_URL = process.env.TAC_MAINNET_URL || "https://rpc.tac.build";
 
