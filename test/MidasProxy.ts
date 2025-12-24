@@ -4,16 +4,13 @@ import { Signer } from "ethers";
 
 import { TacLocalTestSdk, TokenUnlockInfo } from "@tonappchain/evm-ccl";
 import { deployMidasProxy } from "../scripts/Midas/deployMidasProxy";
-import { ISAFactory } from "../typechain-types";
+import { ISAFactory, MidasProxy } from "../typechain-types";
 import { midasTestnetConfig } from "../scripts/Midas/config/testnetConfig";
-import { MidasProxy } from "../typechain-types";
-
-
 import { reset, setStorageAt } from "@nomicfoundation/hardhat-network-helpers"
+import {TAC_MAINNET_URL} from "../hardhat.config";
 
 
 const TON_TOKEN_ADDRESS = "0xb76d91340F5CE3577f0a056D29f6e3Eb4E88B140"
-
 
 describe("MidasProxy", function () {
     let admin: Signer;
@@ -27,7 +24,7 @@ describe("MidasProxy", function () {
     let mTokenAddress: string;
 
     before(async function () {
-        await reset(process.env.TAC_MAINNET_URL, 8629415);
+        await reset(TAC_MAINNET_URL, 8629415);
         [admin] = await ethers.getSigners();
         testSdk = new TacLocalTestSdk();
         const crossChainLayerAddress = await testSdk.create(ethers.provider);     

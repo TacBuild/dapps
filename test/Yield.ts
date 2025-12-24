@@ -8,6 +8,7 @@ import { YieldManagerProxy, ISAFactory } from "../typechain-types";
 import { yiedMainnetConfig } from "../scripts/Yield/config/mainnetConfig";
 import { setStorageAt, impersonateAccount} from "@nomicfoundation/hardhat-network-helpers"
 import { reset } from "@nomicfoundation/hardhat-network-helpers"
+import {TAC_MAINNET_URL} from "../hardhat.config";
 
 const USDT_MAINNET_ADDRESS = "0xAF988C3f7CB2AceAbB15f96b19388a259b6C438f"
 const orderExecutor = "0x944416e5dF03eE4c14EC44C01495005564e6b07E"
@@ -25,7 +26,7 @@ describe("YieldProxy", function () {
    
 
     before(async function () {
-        await reset(process.env.TAC_MAINNET_URL || "", 6467381);
+        await reset(TAC_MAINNET_URL, 10995030);
         [admin] = await ethers.getSigners();
         testSdk = new TacLocalTestSdk();
         const crossChainLayerAddress = await testSdk.create(ethers.provider);

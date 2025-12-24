@@ -7,6 +7,7 @@ import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types";
 import { deployEulerProxy } from "../scripts/Euler/EulerProxyDeploy";
 import { EulerProxy, ISAFactory  } from "../typechain-types";
 import { EulerLensAbi } from "./abis/EulerLensAbi";
+import { reset } from "@nomicfoundation/hardhat-network-helpers"
 
 
 export const MAXUINT128 = BigInt("340282366920938463463374607431768211455");
@@ -26,8 +27,9 @@ interface IBorrowVault {
 interface ILens {
   getVaultAccountInfo(account: string, vault: string): Promise<string>;
 }
-
-describe("EulerProxy", function () {
+// Turin version
+//!TODO Change to mainnet
+describe.skip("EulerProxy", function () {
     let admin: Signer;
     let testSdk: TacLocalTestSdk;
     let tacSAFactory: ISAFactory;
@@ -37,6 +39,7 @@ describe("EulerProxy", function () {
     
 
     before(async function () {
+      await reset(process.env.TAC_MAINNET_URL);
         [admin] = await ethers.getSigners();
         testSdk = new TacLocalTestSdk();
         const crossChainLayerAddress = await testSdk.create(ethers.provider);

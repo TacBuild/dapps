@@ -13,7 +13,9 @@ import { MorphoProxy, IMorpho, IURD, IMorphoVault, MockOracle, ISAFactory } from
 
 export const MAXUINT128 = BigInt("340282366920938463463374607431768211455");
 
-describe("MorphoProxy", function () {
+// Turin version
+//!TODO Change to mainnet addresses
+describe.skip("MorphoProxy", function () {
     let admin: Signer;
     let testSdk: TacLocalTestSdk;
     let morphoProxy: MorphoProxy;

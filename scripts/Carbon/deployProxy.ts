@@ -38,12 +38,3 @@ export async function deployCarbonProxy(
     await carbonProxy.waitForDeployment();
     return carbonProxy;
 }
-
-async function main() {
-    const [deployer] = await hre.ethers.getSigners();
-    const carbonProxy = await deployCarbonProxy(deployer, testnetConfig.crosschainLayerAddress, testnetConfig.tacSAFactoryAddress, carbonTestnetConfig.carbonControllerAddress, carbonTestnetConfig.carbonBatcherAddress, carbonTestnetConfig.carbonVoucherAddress);
-    console.log("CarbonProxy deployed to:", carbonProxy.target);
-}
-
-main();
-

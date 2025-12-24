@@ -3,14 +3,16 @@ import * as dotenv from "dotenv";
 import "@nomicfoundation/hardhat-chai-matchers";
 import "@nomicfoundation/hardhat-toolbox";
 import "@openzeppelin/hardhat-upgrades";
-import { ethers } from "ethers";
 import { HardhatUserConfig } from "hardhat/config";
 dotenv.config();
 
-const TAC_TESTNET_URL = process.env.TAC_TESTNET_URL || "http://127.0.0.1:8545";
-const TAC_TESTNET_SPB_URL = process.env.TAC_TESTNET_SPB_URL || "http://127.0.0.1:8545";
-const TAC_MAINNET_URL = process.env.TAC_MAINNET_URL || "https://rpc.tac.build";
-const DEPLOYER_PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY || ethers.Wallet.createRandom().privateKey;
+export const TAC_TESTNET_SPB_URL = process.env.TAC_TESTNET_SPB_URL || "https://spb.rpc.tac.build";
+export const TAC_MAINNET_URL = process.env.TAC_MAINNET_URL || "https://rpc.tac.build";
+
+const DEPLOYER_PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY;
+if (!DEPLOYER_PRIVATE_KEY) {
+  throw new Error("DEPLOYER_PRIVATE_KEY is not defined");
+}
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -41,20 +43,15 @@ const config: HardhatUserConfig = {
 	    url:  "http://127.0.0.1:8545",
       timeout: 3600000
     },
-    tac_testnet: {
-      chainId: 2390,
-      url: TAC_TESTNET_URL,
-      accounts: [DEPLOYER_PRIVATE_KEY]
-    },
     tac_testnet_spb: {
       chainId: 2391,
       url: TAC_TESTNET_SPB_URL,
-      accounts: [process.env.DEPLOYER_PRIVATE_KEY || ""]
+      accounts: [DEPLOYER_PRIVATE_KEY]
     },
     tac_mainnet: {
       chainId: 239,
       url: TAC_MAINNET_URL,
-      accounts: [process.env.DEPLOYER_PRIVATE_KEY || ""]
+      accounts: [DEPLOYER_PRIVATE_KEY]
     }
   },
   etherscan: {
@@ -65,18 +62,10 @@ const config: HardhatUserConfig = {
     },
     customChains: [
       {
-        network: "tac_testnet",
-        chainId: 2390,
-        urls: {
-          apiURL: process.env.TURIN_API_URL || "",
-          browserURL: "https://turin.explorer.tac.build"
-        }
-      },
-      {
         network: "tac_testnet_spb",
         chainId: 2391,
         urls: {
-          apiURL: process.env.SPB_API_URL || "",
+          apiURL: "https://spb.explorer.tac.build/api",
           browserURL: "https://spb.explorer.tac.build"
         }
       },
@@ -88,14 +77,6 @@ const config: HardhatUserConfig = {
           browserURL: "https://explorer.tac.build"
         }
       },
-      {
-        network: "tac_mainnet",
-        chainId: 239,
-        urls: {
-          apiURL: "https://explorer.tac.build/api",
-          browserURL: "https://explorer.tac.build"
-        }
-      }
     ]
   },
 

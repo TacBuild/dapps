@@ -7,7 +7,7 @@ import { deployCurveLiteStableswapProxy } from "../scripts/CurveLite/stableswap/
 import { TacLocalTestSdk, TokenMintInfo, TokenUnlockInfo } from "@tonappchain/evm-ccl";
 
 
-import { ERC20, IWTAC } from "@tonappchain/evm-ccl/dist/typechain-types";
+import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types";
 import { CurveLiteStableswapProxy, ISAFactory } from "../typechain-types";
 import { factoryAbi } from "../scripts/CurveLite/stableswap/factoryAbi"
 import { implementationAbi } from "../scripts/CurveLite/stableswap/implementationAbi"
