@@ -47,11 +47,6 @@ const config: HardhatUserConfig = {
 	    url:  "http://127.0.0.1:8545",
       timeout: 3600000
     },
-    // tac_testnet: {
-    //   chainId: 2390,
-    //   url: TAC_TESTNET_URL,
-    //   accounts: [DEPLOYER_PRIVATE_KEY]
-    // },
     tac_testnet_spb: {
       chainId: 2391,
       url: TAC_TESTNET_SPB_URL,
@@ -70,14 +65,6 @@ const config: HardhatUserConfig = {
       tac_mainnet: 'empty'
     },
     customChains: [
-      // {
-      //   network: "tac_testnet",
-      //   chainId: 2390,
-      //   urls: {
-      //     apiURL: process.env.TURIN_API_URL || "",
-      //     browserURL: "https://turin.explorer.tac.build"
-      //   }
-      // },
       {
         network: "tac_testnet_spb",
         chainId: 2391,
