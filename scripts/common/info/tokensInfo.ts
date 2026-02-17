@@ -7,6 +7,13 @@ export const sttonTokenInfo: JettonInfo = {
     decimals: 9n
 };
 
+export const fakeUSDC: JettonInfo = {
+    tvmAddress: "EQAtEktb61ZIBVbMbGRacaO9Nd0i0Zw7bI6Sqv4K-e06SwIw",
+    name: "FakeUSDC",
+    symbol: "fUSDC",
+    decimals: 18n
+};
+
 export const tacTokenInfo: JettonInfo  = {
     tvmAddress: "EQC7-W1nM4DwUnI4_vGnQcLjgwYSw6hQixCdBF1XD_rmZAYZ",
     name: "TAC",

@@ -241,6 +241,10 @@ contract MorphoProxy is
     /// @notice Address of the MetaMorpho V1.1 contract
     IMetaMorphoV1_1Factory public metaMorphoFactoryV1_1;
 
+    error Slippage();
+
+    error InvalidAmount();
+
     constructor() {
         _disableInitializers();
     }
@@ -306,7 +310,7 @@ contract MorphoProxy is
         SafeERC20.safeTransfer(
             IERC20(IMorphoVault(args.vault).asset()),
             user,
-            IERC20(IMorphoVault(args.vault).asset()).balanceOf(address(this))
+            args.assets
         );
         bytes memory returnData = ITacSmartAccount(user).execute(
             args.vault,
@@ -317,12 +321,12 @@ contract MorphoProxy is
         ITacSmartAccount(user).execute(
             args.vault,
             0,
-            abi.encodeWithSelector(IERC20.transfer.selector, address(this), IERC20(args.vault).balanceOf(user))
+            abi.encodeWithSelector(IERC20.transfer.selector, address(this), shares)
         );
-        require(args.assets.rDivUp(shares) <= args.maxSharePriceE27, "Slippage");
+        require(args.assets.rDivUp(shares) <= args.maxSharePriceE27, Slippage());
         emit Deposit(args.vault, args.assets);
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
-        tokensToBridge[0] = TokenAmount(args.vault, IERC20(args.vault).balanceOf(address(this)));
+        tokensToBridge[0] = TokenAmount(args.vault, shares);
         _bridgeTokens(tacHeader, tokensToBridge, "");
     }
 
@@ -341,34 +345,42 @@ contract MorphoProxy is
         if (isNewAccount) {
             _setAutorization(user);
         }
+        uint256 amount = IERC20(IMorphoVault(args.vault).asset()).balanceOf(address(this));
         ITacSmartAccount(user).approve(
             IMorphoVault(args.vault).asset(),
             args.vault,
-            assets
+            amount
         );
         SafeERC20.safeTransfer(
             IERC20(IMorphoVault(args.vault).asset()),
             user,
-            IERC20(IMorphoVault(args.vault).asset()).balanceOf(address(this))
+            amount
         );
         bytes memory returnData = ITacSmartAccount(user).execute(
             address(IMorphoVault(args.vault)),
             0,
-            abi.encodeWithSelector(IMorphoVault.mint.selector, args.shares, address(this))
+            abi.encodeWithSelector(IMorphoVault.mint.selector, args.shares, user)
         );
         uint256 shares = abi.decode(returnData, (uint256));
-        require(assets.rDivUp(shares) <= args.maxSharePriceE27, "Slippage");
+        
+        require(assets.rDivUp(shares) <= args.maxSharePriceE27, Slippage());
+        ITacSmartAccount(user).execute(
+            args.vault,
+            0,
+            abi.encodeWithSelector(IERC20.transfer.selector, address(this), shares)
+        );
         emit Mint(args.vault, shares, args.shares);
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(
             args.vault,
-            IERC20(args.vault).balanceOf(address(this))
+            shares
         );
-        if (IERC20(IMorphoVault(args.vault).asset()).balanceOf(user) > 0) {
+        uint256 dust = IERC20(IMorphoVault(args.vault).asset()).balanceOf(user);
+        if (dust > 0) {
             ITacSmartAccount(user).execute(
                 IMorphoVault(args.vault).asset(),
                 0,
-                abi.encodeWithSelector(IERC20.transfer.selector, address(this), IERC20(IMorphoVault(args.vault).asset()).balanceOf(user))
+                abi.encodeWithSelector(IERC20.transfer.selector, address(this), dust)
             );
 
             ITacSmartAccount(user).approve(
@@ -410,12 +422,14 @@ contract MorphoProxy is
             abi.encodeWithSelector(IMorphoVault.withdraw.selector, args.assets, address(this), address(user))
         );
         uint256 sharesBurned = abi.decode(returnData, (uint256));
-        require(args.assets.rDivDown(sharesBurned) >= args.maxSharePriceE27, "Slippage");
+        require(args.assets.rDivDown(sharesBurned) >= args.maxSharePriceE27, Slippage());
         emit Withdraw(args.vault, args.assets, sharesBurned);
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
+        uint256 balance = IERC20(IMorphoVault(args.vault).asset()).balanceOf(address(this));
+        require(balance > 0, InvalidAmount());
         tokensToBridge[0] = TokenAmount(
             IMorphoVault(args.vault).asset(),
-            IERC20(IMorphoVault(args.vault).asset()).balanceOf(address(this))
+            balance
         );
         if (IERC20(args.vault).balanceOf(user) > 0) {
             ITacSmartAccount(user).execute(
@@ -453,12 +467,14 @@ contract MorphoProxy is
             abi.encodeWithSelector(IMorphoVault.redeem.selector, args.shares, address(this), address(user))
         );
         uint256 assetsRedeemed = abi.decode(returnData, (uint256));
-        require(assetsRedeemed.rDivDown(args.shares) >= args.maxSharePriceE27, "Slippage");
+        require(assetsRedeemed.rDivDown(args.shares) >= args.maxSharePriceE27, Slippage());
         emit Redeem(args.vault, args.shares, assetsRedeemed);
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
+        uint256 balance = IERC20(IMorphoVault(args.vault).asset()).balanceOf(address(this));
+        require(balance > 0, InvalidAmount());
         tokensToBridge[0] = TokenAmount(
             IMorphoVault(args.vault).asset(),
-            IERC20(IMorphoVault(args.vault).asset()).balanceOf(address(this))
+            balance
         );
         _bridgeTokens(tacHeader, tokensToBridge, "");
     }
@@ -571,7 +587,7 @@ contract MorphoProxy is
             _setAutorization(user);
         }
         (uint256 actualAssets, uint256 actualShares) = morpho.borrow(args.marketParams, args.assets, args.shares, user, address(this));
-        require(actualAssets.rDivDown(actualShares) >= args.minSharePriceE27, "Slippage");
+        require(actualAssets.rDivDown(actualShares) >= args.minSharePriceE27, Slippage());
         emit Borrow(args.marketParams.id(), actualAssets, actualShares, args.assets, args.shares);
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(
