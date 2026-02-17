@@ -1,6 +1,6 @@
 import hre, { ethers } from "hardhat";
 import { AddressLike, BytesLike, Signer } from "ethers";
-import {time} from "@nomicfoundation/hardhat-toolbox/network-helpers"
+import {setStorageAt, getStorageAt} from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { expect } from "chai";
 
 
@@ -42,7 +42,7 @@ describe.skip("MerklProxy", function () {
         
     });
 
-    it("Merkl regular claim", async function () {
+    it("Merkl Claim rEUL", async function () {
         const shardsKey = 1n;
         const operationId = ethers.encodeBytes32String("Claim");
         const extraData = "0x";
@@ -87,6 +87,52 @@ describe.skip("MerklProxy", function () {
         
     });
 
+    it("Merkl claim WTAC", async function () {
+        const shardsKey = 1n;
+        const operationId = ethers.encodeBytes32String("Claim");
+        const extraData = "0x";
+        const timestamp = BigInt(Math.floor(Date.now() / 1000));
+        const tvmWalletCaller = "EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk";
+
+        const target = await merklProxy.getAddress();
+        const methodName = "claim(bytes,bytes)";
+        const amount = ethers.parseEther("2")
+        const proof = ["0xe41ad7320b930742c351ebb868c87d1a7510eeb8ec01a822d6dde18b7b9ba9b5", "0x660bdd9d305ec8efb57ef505648352d43803f40be0412a4f2cf1f922ae6043f5",
+"0xe0af51a1a8e0ccaab16e82992f4a2a154f49a78b1cc286c82ef8236cf5b9a680", "0xd387fee0d25979b4efcc57d16f384bf0a012cbb66412a8fa5ff74b53be5191a5",  "0xfc472b9c6a9513886be1c11dd5c82b538612f88b3c22dbf6f6141fa4e889b696"]
+        const userAddress = await tacSAFactory.predictSmartAccountAddress(tvmWalletCaller, await merklProxy.getAddress());
+        console.log("userAddress", userAddress);
+        const wtacAddress = "0xf6408c39E150fB5CF065f64C08826Ea6ea0046E2"
+        const encodedArguments = new ethers.AbiCoder().encode(
+            ['tuple(address[],uint256[],bytes32[][],bool)'],
+            [[
+                [wtacAddress],
+                [amount],
+                [proof],
+                true
+            ]]
+        );
+
+        const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
+            shardsKey,
+            target,
+            methodName,
+            encodedArguments,
+            tvmWalletCaller,
+            [],
+            [],
+            0n,
+            extraData,
+            operationId,
+            timestamp
+        );
+
+        const outMessage = outMessages[0];
+        expect(outMessage.tokensLocked.length).to.be.equal(1);
+        expect(outMessage.tokensLocked[0].evmAddress).to.be.equal("0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE");
+        expect(outMessage.tokensLocked[0].amount).to.be.eq(amount);
+        
+    });
+
 
     it("Merkl withdrawToByLockTimestamp rEUL case", async function () {
         const shardsKey = 1n;
@@ -96,13 +142,15 @@ describe.skip("MerklProxy", function () {
         const tvmWalletCaller = "EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk";
 
         const target = await merklProxy.getAddress();
+        const functionSelector = customMerklProxyEuler.withdrawToByLockTimestamp.fragment.selector;
+        console.log("functionSelector", functionSelector);
         const methodName = "customFunctionCall(bytes,bytes)";
         const rEUL = await ethers.getContractAt(hre.artifacts.readArtifactSync('IREUL').abi, rEULAddress);
         const EUL = await ethers.getContractAt(hre.artifacts.readArtifactSync('contracts/faucet/interfaces/IERC20.sol:IERC20').abi, EULAddress);
         
         const account = await tacSAFactory.predictSmartAccountAddress(tvmWalletCaller, await merklProxy.getAddress());
         const lockTimestamp = (await rEUL.getLockedAmounts(account))[0][0];
-        const functionSelector = customMerklProxyEuler.withdrawToByLockTimestamp.fragment.selector;
+        
         const withdrawToByLockTimestampData = new ethers.AbiCoder().encode(
             ['tuple(uint256,bool)'],
             [[lockTimestamp, true]]
