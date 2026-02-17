@@ -1,15 +1,15 @@
 import hre, { ethers } from "hardhat";
-import { AddressLike, BytesLike, Signer } from "ethers";
+import { Signer } from "ethers";
 import { expect } from "chai";
-import {time} from "@nomicfoundation/hardhat-network-helpers"
-import { deployTacSAFactory } from "../scripts/TacSmartAccountFactory/FactoryDeploy";
-import { deployTacSmartAccount } from "../scripts/TacSmartAccountFactory/SABlueprintDeploy";
-import { TacLocalTestSdk, TokenMintInfo, TokenUnlockInfo, JettonInfo} from "@tonappchain/evm-ccl";
-import { sttonTokenInfo, tacTokenInfo, TONTokenInfo } from '../scripts/common/info/tokensInfo';
+import {time, reset} from "@nomicfoundation/hardhat-network-helpers"
+import { TacLocalTestSdk, TokenMintInfo} from "@tonappchain/evm-ccl";
+import { TONTokenInfo } from '../scripts/common/info/tokensInfo';
 import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types";
 import { TacBoringVaultProxy, ITellerWithMultiAssetSupport, IBoringOnChainQueue, IBoringVault, ISAFactory } from "../typechain-types";
 import { deployTacVaultMainnet } from "../scripts/TacVault/TacVaultDeploy";
 import { tacVaultMainnetConfig } from "../scripts/TacVault/config/TacVaultMainnetConfig";
+import {TAC_MAINNET_URL} from "../hardhat.config";
+
 describe("TacVaultProxyMainnet", function () {
     let admin: Signer;
     let testSdk: TacLocalTestSdk;
@@ -20,6 +20,7 @@ describe("TacVaultProxyMainnet", function () {
     let boringVault: IBoringVault;
     let ton: ERC20;
     before(async function () {
+        await reset(TAC_MAINNET_URL, 10995030);
         [admin] = await ethers.getSigners();
         testSdk = new TacLocalTestSdk();
         const crossChainLayerAddress = await testSdk.create(ethers.provider);

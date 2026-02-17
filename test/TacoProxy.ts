@@ -12,7 +12,8 @@ import { TacoProxy, IDODOV2Proxy01, IDODOFeeRouteProxy, IDVMFactory, IDODOApprov
 
 const dvmPoolAbi = hre.artifacts.readArtifactSync('IDVM').abi;
 
-describe("TacoProxy", function () {
+// Turin version
+describe.skip("TacoProxy", function () {
     let admin: Signer;
 
     let testSdk: TacLocalTestSdk;

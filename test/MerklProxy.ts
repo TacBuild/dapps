@@ -3,8 +3,7 @@ import { AddressLike, BytesLike, Signer } from "ethers";
 import {setStorageAt, getStorageAt} from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { expect } from "chai";
 
-import { deployTacSAFactory } from "../scripts/TacSmartAccountFactory/FactoryDeploy";
-import { deployTacSmartAccount } from "../scripts/TacSmartAccountFactory/SABlueprintDeploy";
+
 import { TacLocalTestSdk, TokenMintInfo, TokenUnlockInfo} from "@tonappchain/evm-ccl";
 import { sttonTokenInfo, tacTokenInfo } from '../scripts/common/info/tokensInfo';
 import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types";
@@ -15,7 +14,8 @@ export const MAXUINT128 = BigInt("340282366920938463463374607431768211455");
 const rEULAddress = "0xFd140871bABAe1176bA0E38f5813d56B6B53837F";
 const EULAddress = "0x00bD3eFf25E6fB0A164026BD5f2916801bdf434E";
 
-describe("MerklProxy", function () {
+// Turin version
+describe.skip("MerklProxy", function () {
     let admin: Signer;
     let testSdk: TacLocalTestSdk;
     let merklProxy: MerklProxy;
@@ -51,8 +51,10 @@ describe("MerklProxy", function () {
 
         const target = await merklProxy.getAddress();
         const methodName = "claim(bytes,bytes)";
-        const amount = ethers.parseEther("100")
-        const proof = [ "0x2caabac2efd7e4a0decb3525e9f7c74a8b3f65448fb1904482417ea031b2e735", "0x8b0ebacad283afff5b56349b554f7b1f31197ee779fc15c433b71203d8029cf1", "0x014e2032ab79de698095a3c69ff9c4f076a5223640777cde8bbaedd9aec8025c", "0xe2aad897f868143d332062cf3f74e90ce2c921baab537bf284f7e2843244c351", "0xfc472b9c6a9513886be1c11dd5c82b538612f88b3c22dbf6f6141fa4e889b696"]
+        const amount = ethers.parseEther("50")
+        const proof = [ "0xe41ad7320b930742c351ebb868c87d1a7510eeb8ec01a822d6dde18b7b9ba9b5", "0x94a904f3e8977024e662a40eb21199bc58243c759e6d5360e05840947bf1fd07",
+            "0xe9bdd1d98a22626fd849f50474cb5fadae20e20e3c3e8957035be5b28d7dbc0f"
+        ]
         const userAddress = await tacSAFactory.predictSmartAccountAddress(tvmWalletCaller, await merklProxy.getAddress());
         console.log("userAddress", userAddress);
         const encodedArguments = new ethers.AbiCoder().encode(

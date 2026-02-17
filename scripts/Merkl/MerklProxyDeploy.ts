@@ -5,9 +5,6 @@ import { DeployProxyOptions } from "@openzeppelin/hardhat-upgrades/dist/utils";
 import hre from 'hardhat';
 import { merklTestnetConfig, rEULTestnetConfig } from "./config/TestnetConfigTurinV3";
 import { merklDeployments, merklMainnetConfig, rEULMainnetConfig } from "./config/MainnetConfig";
-import { deployTacSmartAccount } from "../TacSmartAccountFactory/SABlueprintDeploy";
-import { deployTacSAFactory } from "../TacSmartAccountFactory/FactoryDeploy";
-import { tacSAFactoryDeployments } from "../TacSmartAccountFactory/config/mainnetConfig";
 
 const proxyOptsUUPS: DeployProxyOptions = {
     kind: "uups",
