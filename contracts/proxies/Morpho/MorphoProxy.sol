@@ -362,18 +362,17 @@ contract MorphoProxy is
             0,
             abi.encodeWithSelector(IMorphoVault.mint.selector, args.shares, user)
         );
-        uint256 shares = IERC20(args.vault).balanceOf(user);
         uint256 assetsConsumed = abi.decode(returnData, (uint256));
-        require(assetsConsumed.rDivUp(shares) <= args.maxSharePriceE27, Slippage());
+        require(assetsConsumed.rDivUp(args.shares) <= args.maxSharePriceE27, Slippage());
         ITacSmartAccount(user).execute(
             args.vault,
             0,
-            abi.encodeWithSelector(IERC20.transfer.selector, address(this), shares)
+            abi.encodeWithSelector(IERC20.transfer.selector, address(this), args.shares)
         );
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(
             args.vault,
-            shares
+            args.shares
         );
         uint256 dust = IERC20(IMorphoVault(args.vault).asset()).balanceOf(user);
         if (dust > 0) {
@@ -391,7 +390,7 @@ contract MorphoProxy is
             tokensToBridge = _addTokenToBridge(IMorphoVault(args.vault).asset(), tokensToBridge);
         }
         _bridgeTokens(tacHeader, tokensToBridge, "");
-        emit Mint(args.vault, shares, args.shares);
+        emit Mint(args.vault, args.shares, args.shares);
     }
 
     /// @notice Withdraws assets from a vault
