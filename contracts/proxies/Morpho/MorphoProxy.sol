@@ -317,17 +317,19 @@ contract MorphoProxy is
             0,
             abi.encodeWithSelector(IMorphoVault.deposit.selector, args.assets, user)
         );
-        uint256 shares = abi.decode(returnData, (uint256));
+        uint256 mintedShares = abi.decode(returnData, (uint256));
+        require(args.assets.rDivUp(mintedShares) <= args.maxSharePriceE27, Slippage());
+
         ITacSmartAccount(user).execute(
             args.vault,
             0,
-            abi.encodeWithSelector(IERC20.transfer.selector, address(this), shares)
+            abi.encodeWithSelector(IERC20.transfer.selector, address(this), mintedShares)
         );
-        require(args.assets.rDivUp(shares) <= args.maxSharePriceE27, Slippage());
-        emit Deposit(args.vault, args.assets);
+        
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
-        tokensToBridge[0] = TokenAmount(args.vault, shares);
+        tokensToBridge[0] = TokenAmount(args.vault, mintedShares);
         _bridgeTokens(tacHeader, tokensToBridge, "");
+        emit Deposit(args.vault, args.assets);
     }
 
     /// @notice Mints shares in a vault
@@ -339,7 +341,6 @@ contract MorphoProxy is
         bytes calldata arguments
     ) external _onlyCrossChainLayer {
         MintArguments memory args = abi.decode(arguments, (MintArguments));
-        uint256 assets = IMorphoVault(args.vault).previewMint(args.shares);
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user, bool isNewAccount) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
         if (isNewAccount) {
@@ -361,15 +362,14 @@ contract MorphoProxy is
             0,
             abi.encodeWithSelector(IMorphoVault.mint.selector, args.shares, user)
         );
-        uint256 shares = abi.decode(returnData, (uint256));
-        
-        require(assets.rDivUp(shares) <= args.maxSharePriceE27, Slippage());
+        uint256 shares = IERC20(args.vault).balanceOf(user);
+        uint256 assetsConsumed = abi.decode(returnData, (uint256));
+        require(assetsConsumed.rDivUp(shares) <= args.maxSharePriceE27, Slippage());
         ITacSmartAccount(user).execute(
             args.vault,
             0,
             abi.encodeWithSelector(IERC20.transfer.selector, address(this), shares)
         );
-        emit Mint(args.vault, shares, args.shares);
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(
             args.vault,
@@ -391,7 +391,7 @@ contract MorphoProxy is
             tokensToBridge = _addTokenToBridge(IMorphoVault(args.vault).asset(), tokensToBridge);
         }
         _bridgeTokens(tacHeader, tokensToBridge, "");
-        
+        emit Mint(args.vault, shares, args.shares);
     }
 
     /// @notice Withdraws assets from a vault
@@ -423,7 +423,6 @@ contract MorphoProxy is
         );
         uint256 sharesBurned = abi.decode(returnData, (uint256));
         require(args.assets.rDivDown(sharesBurned) >= args.maxSharePriceE27, Slippage());
-        emit Withdraw(args.vault, args.assets, sharesBurned);
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         uint256 balance = IERC20(IMorphoVault(args.vault).asset()).balanceOf(address(this));
         require(balance > 0, InvalidAmount());
@@ -440,6 +439,7 @@ contract MorphoProxy is
             tokensToBridge = _addTokenToBridge(args.vault, tokensToBridge);
         }
         _bridgeTokens(tacHeader, tokensToBridge, "");
+        emit Withdraw(args.vault, args.assets, sharesBurned);
     }
 
     /// @notice Redeems shares from a vault
@@ -468,7 +468,6 @@ contract MorphoProxy is
         );
         uint256 assetsRedeemed = abi.decode(returnData, (uint256));
         require(assetsRedeemed.rDivDown(args.shares) >= args.maxSharePriceE27, Slippage());
-        emit Redeem(args.vault, args.shares, assetsRedeemed);
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         uint256 balance = IERC20(IMorphoVault(args.vault).asset()).balanceOf(address(this));
         require(balance > 0, InvalidAmount());
@@ -477,6 +476,7 @@ contract MorphoProxy is
             balance
         );
         _bridgeTokens(tacHeader, tokensToBridge, "");
+        emit Redeem(args.vault, args.shares, assetsRedeemed);
     }
 
 

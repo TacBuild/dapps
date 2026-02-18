@@ -4,6 +4,7 @@ import "@nomicfoundation/hardhat-chai-matchers";
 import "@nomicfoundation/hardhat-toolbox";
 import "@openzeppelin/hardhat-upgrades";
 import { HardhatUserConfig } from "hardhat/config";
+import "hardhat-contract-sizer";
 dotenv.config();
 
 export const TAC_TESTNET_SPB_URL = process.env.TAC_TESTNET_SPB_URL || "https://spb.rpc.tac.build";

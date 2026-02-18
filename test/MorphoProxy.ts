@@ -3,8 +3,8 @@ import { Signer } from "ethers";
 import { expect } from "chai";
 import {time, reset, setStorageAt, getStorageAt} from "@nomicfoundation/hardhat-network-helpers"
 
-import { deployMorphoProxy } from "../scripts/Morpho/MorphoProxyDeploy";
-import { morphoTestnetConfig } from "../scripts/Morpho/config/testnetConfig";
+import { deployMorphoProxyMainnet } from "../scripts/Morpho/MorphoProxyDeploy";
+import { morphoMainnetConfig } from "../scripts/Morpho/config/mainnetConfig";
 import { deployMockOracle } from "../scripts/Morpho/MockOracleDeploy";
 import { TacLocalTestSdk, TokenMintInfo, TokenUnlockInfo} from "@tonappchain/evm-ccl";
 import { sttonTokenInfo, tacTokenInfo, fakeUSDC } from '../scripts/common/info/tokensInfo';
@@ -46,10 +46,10 @@ describe("MorphoProxy", function () {
         console.log("crossChainLayerAddress", crossChainLayerAddress);
         
         tacSAFactory = new ethers.Contract(testSdk.getSmartAccountFactoryAddress(), hre.artifacts.readArtifactSync('ISAFactory').abi, admin) as unknown as ISAFactory;
-        morphoProxy = await deployMorphoProxy(admin, crossChainLayerAddress, await tacSAFactory.getAddress());
+        morphoProxy = await deployMorphoProxyMainnet(admin, crossChainLayerAddress, await tacSAFactory.getAddress());
         mockOracle = await deployMockOracle(admin);
-        urd = new ethers.Contract(morphoTestnetConfig.urdAddress, hre.artifacts.readArtifactSync('IURD').abi, admin) as unknown as IURD;
-        morpho = new ethers.Contract(morphoTestnetConfig.morphoAddress, hre.artifacts.readArtifactSync('IMorpho').abi, admin) as unknown as IMorpho;
+        urd = new ethers.Contract(morphoMainnetConfig.urdAddress, hre.artifacts.readArtifactSync('IURD').abi, admin) as unknown as IURD;
+        morpho = new ethers.Contract(morphoMainnetConfig.morphoAddress, hre.artifacts.readArtifactSync('IMorpho').abi, admin) as unknown as IMorpho;
         const sttonEVMAddress = testSdk.getEVMJettonAddress(sttonTokenInfo.tvmAddress);
         const tacEVMAddress = testSdk.getEVMJettonAddress(tacTokenInfo.tvmAddress);
         stton = new ethers.Contract(sttonEVMAddress, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;
@@ -73,7 +73,7 @@ describe("MorphoProxy", function () {
                 await stton.getAddress(),
                 await tac.getAddress(),
                 await mockOracle.getAddress(),
-                morphoTestnetConfig.lrmAddress,
+                morphoMainnetConfig.lrmAddress,
                 ethers.parseEther("0.945")
             ]]]
         );
@@ -96,14 +96,14 @@ describe("MorphoProxy", function () {
             loanToken: await stton.getAddress(),
             collateralToken: await tac.getAddress(),
             oracle: await mockOracle.getAddress(),
-            irm: morphoTestnetConfig.lrmAddress,
+            irm: morphoMainnetConfig.lrmAddress,
             lltv: ethers.parseEther("0.945")
         });
         
         expect((await morpho.idToMarketParams(marketParamsId))[0]).to.equal(await stton.getAddress());
         expect((await morpho.idToMarketParams(marketParamsId))[1]).to.equal(await tac.getAddress());
         expect((await morpho.idToMarketParams(marketParamsId))[2]).to.equal(await mockOracle.getAddress());
-        expect((await morpho.idToMarketParams(marketParamsId))[3]).to.equal(morphoTestnetConfig.lrmAddress);
+        expect((await morpho.idToMarketParams(marketParamsId))[3]).to.equal(morphoMainnetConfig.lrmAddress);
         expect((await morpho.idToMarketParams(marketParamsId))[4]).to.equal(ethers.parseEther("0.945"));
     });
 
@@ -123,7 +123,7 @@ describe("MorphoProxy", function () {
                 await stton.getAddress(),
                 await tac.getAddress(),
                 await mockOracle.getAddress(),
-                morphoTestnetConfig.lrmAddress,
+                morphoMainnetConfig.lrmAddress,
                 ethers.parseEther("0.945")
             ],
             ethers.parseEther("1")
@@ -140,7 +140,7 @@ describe("MorphoProxy", function () {
             loanToken: await stton.getAddress(),
             collateralToken: await tac.getAddress(),
             oracle: await mockOracle.getAddress(),
-            irm: morphoTestnetConfig.lrmAddress,
+            irm: morphoMainnetConfig.lrmAddress,
             lltv: ethers.parseEther("0.945")
         });
         
@@ -180,7 +180,7 @@ describe("MorphoProxy", function () {
                 await stton.getAddress(),
                 await tac.getAddress(),
                 await mockOracle.getAddress(),
-                morphoTestnetConfig.lrmAddress,
+                morphoMainnetConfig.lrmAddress,
                 ethers.parseEther("0.945")
             ],
             ethers.parseUnits("1", sttonTokenInfo.decimals),
@@ -199,7 +199,7 @@ describe("MorphoProxy", function () {
             loanToken: await stton.getAddress(),
             collateralToken: await tac.getAddress(),
             oracle: await mockOracle.getAddress(),
-            irm: morphoTestnetConfig.lrmAddress,
+            irm: morphoMainnetConfig.lrmAddress,
             lltv: ethers.parseEther("0.945")
         });
 
@@ -241,7 +241,7 @@ describe("MorphoProxy", function () {
                 await stton.getAddress(),
                 await tac.getAddress(),
                 await mockOracle.getAddress(),
-                morphoTestnetConfig.lrmAddress,
+                morphoMainnetConfig.lrmAddress,
                 ethers.parseEther("0.945")
             ],
             ethers.parseUnits("0.1", sttonTokenInfo.decimals),
@@ -254,7 +254,7 @@ describe("MorphoProxy", function () {
             loanToken: await stton.getAddress(),
             collateralToken: await tac.getAddress(),
             oracle: await mockOracle.getAddress(),
-            irm: morphoTestnetConfig.lrmAddress,
+            irm: morphoMainnetConfig.lrmAddress,
             lltv: ethers.parseEther("0.945")
         });
 
@@ -295,7 +295,7 @@ describe("MorphoProxy", function () {
                 await stton.getAddress(),
                 await tac.getAddress(),
                 await mockOracle.getAddress(),
-                morphoTestnetConfig.lrmAddress,
+                morphoMainnetConfig.lrmAddress,
                 ethers.parseEther("0.945")
             ],
             ethers.parseUnits("0.1", sttonTokenInfo.decimals),
@@ -314,7 +314,7 @@ describe("MorphoProxy", function () {
             loanToken: await stton.getAddress(),
             collateralToken: await tac.getAddress(),
             oracle: await mockOracle.getAddress(),
-            irm: morphoTestnetConfig.lrmAddress,
+            irm: morphoMainnetConfig.lrmAddress,
             lltv: ethers.parseEther("0.945")
         });
 
@@ -355,7 +355,7 @@ describe("MorphoProxy", function () {
                 await stton.getAddress(),
                 await tac.getAddress(),
                 await mockOracle.getAddress(),
-                morphoTestnetConfig.lrmAddress,
+                morphoMainnetConfig.lrmAddress,
                 ethers.parseEther("0.945")
             ],
             ethers.parseUnits("1", tacTokenInfo.decimals),
@@ -366,7 +366,7 @@ describe("MorphoProxy", function () {
             loanToken: await stton.getAddress(),
             collateralToken: await tac.getAddress(),
             oracle: await mockOracle.getAddress(),
-            irm: morphoTestnetConfig.lrmAddress,
+            irm: morphoMainnetConfig.lrmAddress,
             lltv: ethers.parseEther("0.945")
         });
 
@@ -451,7 +451,7 @@ describe("MorphoProxy", function () {
                 loanToken: await stton.getAddress(),
                 collateralToken: await tac.getAddress(),
                 oracle: await mockOracle.getAddress(),
-                irm: morphoTestnetConfig.lrmAddress,
+                irm: morphoMainnetConfig.lrmAddress,
                 lltv: ethers.parseEther("0.945")
             },
             ethers.parseEther("100")
@@ -461,7 +461,7 @@ describe("MorphoProxy", function () {
             loanToken: await stton.getAddress(),
             collateralToken: await tac.getAddress(),
             oracle: await mockOracle.getAddress(),
-            irm: morphoTestnetConfig.lrmAddress,
+            irm: morphoMainnetConfig.lrmAddress,
             lltv: ethers.parseEther("0.945")
         });
 
@@ -470,7 +470,7 @@ describe("MorphoProxy", function () {
                 loanToken: await stton.getAddress(),
                 collateralToken: await tac.getAddress(),
                 oracle: await mockOracle.getAddress(),
-                irm: morphoTestnetConfig.lrmAddress,
+                irm: morphoMainnetConfig.lrmAddress,
                 lltv: ethers.parseEther("0.945")
             }
         );
@@ -616,7 +616,7 @@ describe("MorphoProxy", function () {
             ['tuple(address,uint256,uint256)'],
             [[
                 morphoVaultAddress,
-                1n,
+                ethers.parseUnits("1", sttonTokenInfo.decimals),
                 0
             ]]
         );
@@ -658,7 +658,7 @@ describe("MorphoProxy", function () {
         expect(price4).to.not.equal(price3);
     });
 
-    it.only("Morpho Deposit to VaultV2", async function () {
+    it("Morpho Deposit to VaultV2", async function () {
         const shardsKey = 1n;
         const operationId = ethers.encodeBytes32String("Deposit to Vault");
         const extraData = "0x";
@@ -699,7 +699,7 @@ describe("MorphoProxy", function () {
         expect(outMessage.tokensLocked[0].amount).to.be.gt(0);
     });
 
-    it.only("Morpho Mint to VaultV2", async function () {
+    it("Morpho Mint to VaultV2", async function () {
         const shardsKey = 1n;
         const operationId = ethers.encodeBytes32String("Mint to Vault");
         const extraData = "0x";
@@ -741,7 +741,7 @@ describe("MorphoProxy", function () {
         expect(outMessage.tokensLocked[0].amount).to.be.gt(0);
     });
 
-    it.only("Morpho Withdraw from VaultV2", async function () {
+    it("Morpho Withdraw from VaultV2", async function () {
         const shardsKey = 1n;
         const operationId = ethers.encodeBytes32String("Withdraw from Vault");
         const extraData = "0x";
@@ -788,7 +788,7 @@ describe("MorphoProxy", function () {
         expect(outMessage.tokensLocked[0].amount).to.be.gt(0);
     });
 
-    it.only("Morpho Redeem from VaultV2", async function () {
+    it("Morpho Redeem from VaultV2", async function () {
         const shardsKey = 1n;
         const operationId = ethers.encodeBytes32String("Redeem from Vault");
         const extraData = "0x";
@@ -835,7 +835,7 @@ describe("MorphoProxy", function () {
         expect(outMessage.tokensLocked[0].amount).to.be.gt(0);
     });
 
-    it.only("Morpho upgrade test", async function () {
+    it("Morpho upgrade test", async function () {
         console.log(await getStorageAt(realProxyAddress, ownable2StepStorageSlot));
         const realProxy = await hre.ethers.getContractAt("MorphoProxy", realProxyAddress);
         const morphoAddress = await realProxy.morpho();
