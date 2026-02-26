@@ -15,6 +15,7 @@ import {MarketParamsLib} from "./lib/MarketParamsLib.sol";
 import {ITacSmartAccount} from "@tonappchain/evm-ccl/contracts/smart-account/interfaces/ITacSmartAccount.sol";
 import {IMetaMorphoV1_1Factory} from "./Interface/IMetaMorphoV1_1Factory.sol";
 import {MathRayLib} from "./lib/MathRayLib.sol";
+import {IMetaMorphoV2Factory} from "./Interface/IMetaMorphoV2Factory.sol";
 
 /// @title MorphoProxy
 /// @notice A proxy contract that interfaces with Morpho protocol for lending and borrowing operations
@@ -241,6 +242,14 @@ contract MorphoProxy is
     /// @notice Address of the MetaMorpho V1.1 contract
     IMetaMorphoV1_1Factory public metaMorphoFactoryV1_1;
 
+    error Slippage();
+
+    error InvalidAmount();
+
+    error IllegalVault();
+
+    IMetaMorphoV2Factory public constant META_MORPHO_V2_FACTORY = IMetaMorphoV2Factory(0x0437C5B0CF1edFb8309613E4fEBE2a512D9a735d);
+
     constructor() {
         _disableInitializers();
     }
@@ -293,37 +302,41 @@ contract MorphoProxy is
             arguments,
             (DepositArguments)
         );
+        _isLegalVault(args.vault);
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user, bool isNewAccount) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
         if (isNewAccount) {
             _setAutorization(user);
         }
+        address asset = IMorphoVault(args.vault).asset();
         ITacSmartAccount(user).approve(
-            IMorphoVault(args.vault).asset(),
+            asset,
             args.vault,
             args.assets
         );
         SafeERC20.safeTransfer(
-            IERC20(IMorphoVault(args.vault).asset()),
+            IERC20(asset),
             user,
-            IERC20(IMorphoVault(args.vault).asset()).balanceOf(address(this))
+            args.assets
         );
         bytes memory returnData = ITacSmartAccount(user).execute(
             args.vault,
             0,
             abi.encodeWithSelector(IMorphoVault.deposit.selector, args.assets, user)
         );
-        uint256 shares = abi.decode(returnData, (uint256));
+        uint256 mintedShares = abi.decode(returnData, (uint256));
+        require(args.assets.rDivUp(mintedShares) <= args.maxSharePriceE27, Slippage());
+
         ITacSmartAccount(user).execute(
             args.vault,
             0,
-            abi.encodeWithSelector(IERC20.transfer.selector, address(this), IERC20(args.vault).balanceOf(user))
+            abi.encodeWithSelector(IERC20.transfer.selector, address(this), mintedShares)
         );
-        require(args.assets.rDivUp(shares) <= args.maxSharePriceE27, "Slippage");
-        emit Deposit(args.vault, args.assets);
+        
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
-        tokensToBridge[0] = TokenAmount(args.vault, IERC20(args.vault).balanceOf(address(this)));
+        tokensToBridge[0] = TokenAmount(args.vault, mintedShares);
         _bridgeTokens(tacHeader, tokensToBridge, "");
+        emit Deposit(args.vault, args.assets);
     }
 
     /// @notice Mints shares in a vault
@@ -335,51 +348,58 @@ contract MorphoProxy is
         bytes calldata arguments
     ) external _onlyCrossChainLayer {
         MintArguments memory args = abi.decode(arguments, (MintArguments));
-        uint256 assets = IMorphoVault(args.vault).previewMint(args.shares);
+        _isLegalVault(args.vault);
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user, bool isNewAccount) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
         if (isNewAccount) {
             _setAutorization(user);
         }
+        address asset = IMorphoVault(args.vault).asset();
+        uint256 amount = IERC20(asset).balanceOf(address(this));
         ITacSmartAccount(user).approve(
-            IMorphoVault(args.vault).asset(),
+            asset,
             args.vault,
-            assets
+            amount
         );
         SafeERC20.safeTransfer(
-            IERC20(IMorphoVault(args.vault).asset()),
+            IERC20(asset),
             user,
-            IERC20(IMorphoVault(args.vault).asset()).balanceOf(address(this))
+            amount
         );
         bytes memory returnData = ITacSmartAccount(user).execute(
-            address(IMorphoVault(args.vault)),
+            args.vault,
             0,
-            abi.encodeWithSelector(IMorphoVault.mint.selector, args.shares, address(this))
+            abi.encodeWithSelector(IMorphoVault.mint.selector, args.shares, user)
         );
-        uint256 shares = abi.decode(returnData, (uint256));
-        require(assets.rDivUp(shares) <= args.maxSharePriceE27, "Slippage");
-        emit Mint(args.vault, shares, args.shares);
+        uint256 assetsConsumed = abi.decode(returnData, (uint256));
+        require(assetsConsumed.rDivUp(args.shares) <= args.maxSharePriceE27, Slippage());
+        ITacSmartAccount(user).execute(
+            args.vault,
+            0,
+            abi.encodeWithSelector(IERC20.transfer.selector, address(this), args.shares)
+        );
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(
             args.vault,
-            IERC20(args.vault).balanceOf(address(this))
+            args.shares
         );
-        if (IERC20(IMorphoVault(args.vault).asset()).balanceOf(user) > 0) {
+        uint256 dust = IERC20(asset).balanceOf(user);
+        if (dust > 0) {
             ITacSmartAccount(user).execute(
-                IMorphoVault(args.vault).asset(),
+                asset,
                 0,
-                abi.encodeWithSelector(IERC20.transfer.selector, address(this), IERC20(IMorphoVault(args.vault).asset()).balanceOf(user))
+                abi.encodeWithSelector(IERC20.transfer.selector, address(this), dust)
             );
 
             ITacSmartAccount(user).approve(
-                IMorphoVault(args.vault).asset(),
+                asset,
                 args.vault,
                 0
             );
-            tokensToBridge = _addTokenToBridge(IMorphoVault(args.vault).asset(), tokensToBridge);
+            tokensToBridge = _addTokenToBridge(asset, tokensToBridge);
         }
         _bridgeTokens(tacHeader, tokensToBridge, "");
-        
+        emit Mint(args.vault, args.shares, args.shares);
     }
 
     /// @notice Withdraws assets from a vault
@@ -394,49 +414,7 @@ contract MorphoProxy is
             arguments,
             (WithdrawArguments)
         );
-        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
-        (address user, bool isNewAccount) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
-        if (isNewAccount) {
-            _setAutorization(user);
-        }
-        SafeERC20.safeTransfer(
-            IERC20(args.vault),
-            address(user),
-            IERC20(args.vault).balanceOf(address(this))
-        );
-        bytes memory returnData = ITacSmartAccount(user).execute(
-            address(IMorphoVault(args.vault)),
-            0,
-            abi.encodeWithSelector(IMorphoVault.withdraw.selector, args.assets, address(this), address(user))
-        );
-        uint256 sharesBurned = abi.decode(returnData, (uint256));
-        require(args.assets.rDivDown(sharesBurned) >= args.maxSharePriceE27, "Slippage");
-        emit Withdraw(args.vault, args.assets, sharesBurned);
-        TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
-        tokensToBridge[0] = TokenAmount(
-            IMorphoVault(args.vault).asset(),
-            IERC20(IMorphoVault(args.vault).asset()).balanceOf(address(this))
-        );
-        if (IERC20(args.vault).balanceOf(user) > 0) {
-            ITacSmartAccount(user).execute(
-                args.vault,
-                0,
-                abi.encodeWithSelector(IERC20.transfer.selector, address(this), IERC20(args.vault).balanceOf(user))
-            );
-            tokensToBridge = _addTokenToBridge(args.vault, tokensToBridge);
-        }
-        _bridgeTokens(tacHeader, tokensToBridge, "");
-    }
-
-    /// @notice Redeems shares from a vault
-    /// @param tacHeader TAC header data
-    /// @param arguments Encoded redeem arguments
-    /// @dev Receiver of the assets is the proxy contract, because assets should be bridged to TON
-    function redeem(
-        bytes calldata tacHeader,
-        bytes calldata arguments
-    ) external _onlyCrossChainLayer {
-        RedeemArguments memory args = abi.decode(arguments, (RedeemArguments));
+        _isLegalVault(args.vault);
         TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
         (address user, bool isNewAccount) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
         if (isNewAccount) {
@@ -450,17 +428,66 @@ contract MorphoProxy is
         bytes memory returnData = ITacSmartAccount(user).execute(
             args.vault,
             0,
+            abi.encodeWithSelector(IMorphoVault.withdraw.selector, args.assets, address(this), address(user))
+        );
+        uint256 sharesBurned = abi.decode(returnData, (uint256));
+        require(args.assets.rDivDown(sharesBurned) >= args.maxSharePriceE27, Slippage());
+        TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
+        uint256 balance = IERC20(IMorphoVault(args.vault).asset()).balanceOf(address(this));
+        require(balance > 0, InvalidAmount());
+        tokensToBridge[0] = TokenAmount(
+            IMorphoVault(args.vault).asset(),
+            balance
+        );
+        uint256 userBalance = IERC20(args.vault).balanceOf(user);
+        if (userBalance > 0) {
+            ITacSmartAccount(user).execute(
+                args.vault,
+                0,
+                abi.encodeWithSelector(IERC20.transfer.selector, address(this), userBalance)
+            );
+            tokensToBridge = _addTokenToBridge(args.vault, tokensToBridge);
+        }
+        _bridgeTokens(tacHeader, tokensToBridge, "");
+        emit Withdraw(args.vault, args.assets, sharesBurned);
+    }
+
+    /// @notice Redeems shares from a vault
+    /// @param tacHeader TAC header data
+    /// @param arguments Encoded redeem arguments
+    /// @dev Receiver of the assets is the proxy contract, because assets should be bridged to TON
+    function redeem(
+        bytes calldata tacHeader,
+        bytes calldata arguments
+    ) external _onlyCrossChainLayer {
+        RedeemArguments memory args = abi.decode(arguments, (RedeemArguments));
+        _isLegalVault(args.vault);
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
+        (address user, bool isNewAccount) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
+        if (isNewAccount) {
+            _setAutorization(user);
+        }
+        SafeERC20.safeTransfer(
+            IERC20(args.vault),
+            address(user),
+            args.shares
+        );
+        bytes memory returnData = ITacSmartAccount(user).execute(
+            args.vault,
+            0,
             abi.encodeWithSelector(IMorphoVault.redeem.selector, args.shares, address(this), address(user))
         );
         uint256 assetsRedeemed = abi.decode(returnData, (uint256));
-        require(assetsRedeemed.rDivDown(args.shares) >= args.maxSharePriceE27, "Slippage");
-        emit Redeem(args.vault, args.shares, assetsRedeemed);
+        require(assetsRedeemed.rDivDown(args.shares) >= args.maxSharePriceE27, Slippage());
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
+        uint256 balance = IERC20(IMorphoVault(args.vault).asset()).balanceOf(address(this));
+        require(balance > 0, InvalidAmount());
         tokensToBridge[0] = TokenAmount(
             IMorphoVault(args.vault).asset(),
-            IERC20(IMorphoVault(args.vault).asset()).balanceOf(address(this))
+            balance
         );
         _bridgeTokens(tacHeader, tokensToBridge, "");
+        emit Redeem(args.vault, args.shares, assetsRedeemed);
     }
 
 
@@ -571,7 +598,7 @@ contract MorphoProxy is
             _setAutorization(user);
         }
         (uint256 actualAssets, uint256 actualShares) = morpho.borrow(args.marketParams, args.assets, args.shares, user, address(this));
-        require(actualAssets.rDivDown(actualShares) >= args.minSharePriceE27, "Slippage");
+        require(actualAssets.rDivDown(actualShares) >= args.minSharePriceE27, Slippage());
         emit Borrow(args.marketParams.id(), actualAssets, actualShares, args.assets, args.shares);
         TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
         tokensToBridge[0] = TokenAmount(
@@ -847,6 +874,12 @@ contract MorphoProxy is
         }
         tokensToBridge[oldLength] = TokenAmount(tokenToAdd, IERC20(tokenToAdd).balanceOf(address(this)));
         return tokensToBridge;
+    }
+
+    function _isLegalVault(address vault) internal view {
+        bool isLegalVaultV2 = META_MORPHO_V2_FACTORY.isVaultV2(vault);
+        bool isLegalVaultV1_1 = metaMorphoFactoryV1_1.isMetaMorpho(vault);
+        require(isLegalVaultV2 || isLegalVaultV1_1, IllegalVault());
     }
 
     /// @notice Receives ETH
