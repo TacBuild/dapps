@@ -18,5 +18,3 @@ export async function upgradeMorphoProxy(
 } 
 
 upgradeMorphoProxy();
-
-//impl addr 0xc2850566e05DA2A18d2C3B47fd2046d8744e72E2
