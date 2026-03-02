@@ -1,0 +1,159 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.28;
+
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {OutMessageV1, TokenAmount, TacHeaderV1, NFTAmount} from "@tonappchain/evm-ccl/contracts/core/Structs.sol";
+import {ICrossChainLayer} from "@tonappchain/evm-ccl/contracts/interfaces/ICrossChainLayer.sol";
+import {TacProxyV1Upgradeable} from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {ITacSmartAccount} from "@tonappchain/evm-ccl/contracts/smart-account/interfaces/ITacSmartAccount.sol";
+import {ISAFactory} from "@tonappchain/evm-ccl/contracts/smart-account/interfaces/ISAFactory.sol";
+import {ILucidlyTeller} from "./interface/ILucidlyTeller.sol";
+import {ILucidlyQueue} from "./interface/ILucidlyQueue.sol";
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "hardhat/console.sol";
+
+contract LucidlyVaultProxy is UUPSUpgradeable, Ownable2StepUpgradeable, TacProxyV1Upgradeable {
+
+    address public constant NATIVE_ADDRESS = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+
+    ILucidlyTeller public teller;
+    ILucidlyQueue public queue;
+    IERC20 public lucidlyVault;
+    ISAFactory public tacSAFactory;
+
+    struct DepositArguments {
+        address depositAsset;
+        uint256 depositAmount;
+        uint256 minimumMint;
+    }
+
+    struct WithdrawArguments {
+        address assetOut;
+        uint128 amountOfShares;
+        uint16 discount;
+        uint24 secondsToDeadline;
+    }
+
+    struct WithdrawFundsArguments {
+        address asset;
+    }
+
+    error ExecutionFailed(bytes returnData);
+    error DepositAmountMismatch(uint256 expected, uint256 actual);
+    error TransferFailed();
+
+    event SaExecutedInteraction(address indexed sa, address indexed target, bytes data);
+    event WithdrawRequest(bytes32 indexed requestId, string indexed tvmCaller);
+    event WithdrawFunds(address indexed asset, uint256 amount, address indexed user, string indexed tvmCaller);
+    event Deposit(uint256 amount, string indexed tvmCaller, address indexed user);
+
+    constructor() {
+        _disableInitializers();
+    }
+
+    function initialize(address _crossChainLayer, address _teller, address _queue, address _lucidlyVault, address _tacSAFactory) public initializer {
+        __UUPSUpgradeable_init();
+        __Ownable_init(msg.sender);
+        __Ownable2Step_init();
+        __TacProxyV1Upgradeable_init(_crossChainLayer);
+        teller = ILucidlyTeller(_teller);
+        queue = ILucidlyQueue(_queue);
+        tacSAFactory = ISAFactory(_tacSAFactory);
+        lucidlyVault = IERC20(_lucidlyVault);
+    }
+
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+
+    function deposit(bytes calldata tacHeader, bytes calldata arguments) public payable _onlyCrossChainLayer{
+        DepositArguments memory args = abi.decode(arguments, (DepositArguments));
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
+        (address user,) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
+
+        if(args.depositAsset != NATIVE_ADDRESS){
+            SafeERC20.safeTransfer(IERC20(args.depositAsset), user, args.depositAmount);
+            ITacSmartAccount(payable(user)).approve(args.depositAsset, address(lucidlyVault), args.depositAmount);
+        } else {
+            require(msg.value == args.depositAmount, DepositAmountMismatch(args.depositAmount, msg.value));
+            (bool success,) = payable(user).call{value: msg.value}("");
+            require(success, TransferFailed());
+        }
+        bytes memory data = abi.encodeWithSelector(ILucidlyTeller.deposit.selector, args.depositAsset, args.depositAmount, args.minimumMint);
+        _saExecution(user, address(teller), msg.value, data);
+        
+        emit Deposit(args.depositAmount, header.tvmCaller, user);
+    }
+
+    function withdrawRequest(bytes calldata tacHeader, bytes calldata arguments) public _onlyCrossChainLayer{
+        WithdrawArguments memory args = abi.decode(arguments, (WithdrawArguments));
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
+        (address user,) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
+        SafeERC20.safeTransfer(IERC20(address(lucidlyVault)), user, args.amountOfShares);
+        bytes memory data = abi.encodeWithSelector(ILucidlyQueue.requestOnChainWithdraw.selector, args.assetOut, args.amountOfShares, args.discount, args.secondsToDeadline);
+        ITacSmartAccount(payable(user)).approve(address(lucidlyVault), address(queue), args.amountOfShares);
+        (, bytes memory returnData) = _saExecution(user, address(queue), 0, data);
+        bytes32 requestId = abi.decode(returnData, (bytes32));
+        emit WithdrawRequest(requestId, header.tvmCaller);
+    }
+
+    function withdrawFunds(bytes calldata tacHeader, bytes calldata arguments) public _onlyCrossChainLayer{
+        WithdrawFundsArguments memory args = abi.decode(arguments, (WithdrawFundsArguments));
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
+        (address user,) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
+
+        bytes memory data = abi.encodeWithSelector(IERC20.transfer.selector, address(this), IERC20(args.asset).balanceOf(address(user)));
+        _saExecution(user, address(args.asset), 0, data);
+        TokenAmount[] memory tokens = new TokenAmount[](1);
+        tokens[0] = TokenAmount({
+            evmAddress: address(args.asset),
+            amount: IERC20(args.asset).balanceOf(address(this))
+        });
+        _bridgeTokens(tacHeader, tokens, "");
+        emit WithdrawFunds(args.asset, IERC20(args.asset).balanceOf(address(this)), user, header.tvmCaller);
+    }
+
+    /// @notice Bridges tokens to the cross-chain layer
+    /// @param tacHeader TAC header data
+    /// @param tokens Array of token amounts to bridge
+    /// @param payload Additional payload data
+    function _bridgeTokens(
+        bytes calldata tacHeader,
+        TokenAmount[] memory tokens,
+        string memory payload
+    ) private {
+        for (uint256 i = 0; i < tokens.length; i++) {
+            SafeERC20.forceApprove(
+                IERC20(tokens[i].evmAddress),
+                _getCrossChainLayerAddress(),
+                tokens[i].amount
+            );
+        }
+
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
+        OutMessageV1 memory message = OutMessageV1({
+            shardsKey: header.shardsKey,
+            tvmTarget: header.tvmCaller,
+            tvmPayload: payload,
+            tvmProtocolFee: 0,
+            tvmExecutorFee: 0,
+            tvmValidExecutors: new string[](0),
+            toBridge: tokens,
+            toBridgeNFT: new NFTAmount[](0)
+        });
+
+        _sendMessageV1(message, address(this).balance);
+    }
+
+    function _saExecution(address sa, address target, uint256 value, bytes memory data) internal returns(bool success, bytes memory returnData) {
+        (success, returnData) = ITacSmartAccount(payable(sa)).executeUnsafe(target, value, data);
+        console.log("success", success);
+        console.logBytes(returnData);
+        require(success, ExecutionFailed(returnData));
+        emit SaExecutedInteraction(sa, target, data);   
+    }
+
+    /// @notice Receives ETH
+    receive() external payable {}
+}
