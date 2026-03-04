@@ -6,7 +6,7 @@ import { TacLocalTestSdk, TokenMintInfo, TokenUnlockInfo} from "@tonappchain/evm
 import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types";
 import { LucidlyVaultProxy, ILucidlyTeller, ILucidlyQueue, IBoringVault, ISAFactory, IERC20 } from "../typechain-types";
 import { deployLucidlyVault } from "../scripts/Lucidly/LucidlyVaultDeploy";
-import { reset, setStorageAt } from "@nomicfoundation/hardhat-network-helpers";
+import { reset, setStorageAt, time } from "@nomicfoundation/hardhat-network-helpers";
 import { lucidlyVaultMainnetConfig } from "../scripts/Lucidly/config/LucidlyMainnet.config";
 
 const usdtAddress = "0xAF988C3f7CB2AceAbB15f96b19388a259b6C438f"
@@ -77,7 +77,7 @@ describe("LucidlyVaultProxy", function () {
 
     });
 
-    it("Tac vault withdraw funds", async function () {
+    it("Tac vault withdraw funds that should fail", async function () {
         const shardsKey = 1n;
         const operationId = ethers.encodeBytes32String("Withdraw funds");
         const extraData = "0x";
@@ -94,6 +94,43 @@ describe("LucidlyVaultProxy", function () {
             ]]
         );
 
+        try {
+
+            await testSdk.sendMessage(
+                shardsKey,
+                target,
+                methodName,
+                encodedArguments,
+                tvmWalletCaller,
+                [],
+                [],
+                0n,
+                extraData,
+                operationId,
+                timestamp
+            );
+        } catch (error) {
+            expect((error as Error).message).to.include("0x15fcd675");
+        }
+    });
+
+    it("Tac vault withdraw funds that should pass after 60 seconds lock", async function () {
+        const shardsKey = 1n;
+        const operationId = ethers.encodeBytes32String("Withdraw funds");
+        const extraData = "0x";
+        const timestamp = BigInt(Math.floor(Date.now() / 1000));
+        const tvmWalletCaller = "EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk";
+
+        const target = await lucidlyVaultProxy.getAddress();
+        const methodName = "withdrawFunds(bytes,bytes)";
+
+        const encodedArguments = new ethers.AbiCoder().encode(
+            ['tuple(address)'],
+            [[
+                await lucidlyVault.getAddress(),
+            ]]
+        );
+        await time.increase(60);
         const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
             shardsKey,
             target,

@@ -13,7 +13,6 @@ import {ISAFactory} from "@tonappchain/evm-ccl/contracts/smart-account/interface
 import {ILucidlyTeller} from "./interface/ILucidlyTeller.sol";
 import {ILucidlyQueue} from "./interface/ILucidlyQueue.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "hardhat/console.sol";
 
 contract LucidlyVaultProxy is UUPSUpgradeable, Ownable2StepUpgradeable, TacProxyV1Upgradeable {
 
@@ -148,8 +147,6 @@ contract LucidlyVaultProxy is UUPSUpgradeable, Ownable2StepUpgradeable, TacProxy
 
     function _saExecution(address sa, address target, uint256 value, bytes memory data) internal returns(bool success, bytes memory returnData) {
         (success, returnData) = ITacSmartAccount(payable(sa)).executeUnsafe(target, value, data);
-        console.log("success", success);
-        console.logBytes(returnData);
         require(success, ExecutionFailed(returnData));
         emit SaExecutedInteraction(sa, target, data);   
     }

@@ -29,3 +29,14 @@ export async function deployLucidlyVault(
     await lucidlyVaultProxy.waitForDeployment();
     return lucidlyVaultProxy;
 }
+
+async function main() {
+    const [signer] = await hre.ethers.getSigners();
+    const lucidlyVaultProxy = await deployLucidlyVault(signer, "0x9fee01e948353E0897968A3ea955815aaA49f58d", "0x070820Ed658860f77138d71f74EfbE173775895b");
+    console.log("LucidlyVaultProxy deployed to:", lucidlyVaultProxy.target);
+}
+
+main().catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+});
