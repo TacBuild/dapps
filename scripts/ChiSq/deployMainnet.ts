@@ -28,3 +28,15 @@ export async function deployChiSqProxyMainnet(
     await chiSqProxy.waitForDeployment();
     return chiSqProxy;
 }
+
+async function main() {
+    const [deployer] = await ethers.getSigners();
+    const chiSqProxy = await deployChiSqProxyMainnet(deployer, "0x9fee01e948353E0897968A3ea955815aaA49f58d", "0x070820Ed658860f77138d71f74EfbE173775895b");
+    await chiSqProxy.waitForDeployment();
+    console.log("ChiSqProxy deployed to:", await chiSqProxy.getAddress());
+}
+
+main().catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+});
