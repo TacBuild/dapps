@@ -40,6 +40,13 @@ contract LucidlyVaultProxy is UUPSUpgradeable, Ownable2StepUpgradeable, TacProxy
         address asset;
     }
 
+    struct DepositAndBridgeArguments {
+        address depositAsset;
+        uint256 depositAmount;
+        uint256 minimumMint;
+        address asset;
+    }
+
     error ExecutionFailed(bytes returnData);
     error DepositAmountMismatch(uint256 expected, uint256 actual);
     error TransferFailed();
@@ -83,6 +90,32 @@ contract LucidlyVaultProxy is UUPSUpgradeable, Ownable2StepUpgradeable, TacProxy
         _saExecution(user, address(teller), msg.value, data);
         
         emit Deposit(args.depositAmount, header.tvmCaller, user);
+    }
+
+    function depositAndBridge(bytes calldata tacHeader, bytes calldata arguments) public payable _onlyCrossChainLayer{
+        DepositAndBridgeArguments memory args = abi.decode(arguments, (DepositAndBridgeArguments));
+        TacHeaderV1 memory header = _decodeTacHeader(tacHeader);
+        (address user,) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
+
+        if(args.depositAsset != NATIVE_ADDRESS){
+            SafeERC20.safeTransfer(IERC20(args.depositAsset), user, args.depositAmount);
+            ITacSmartAccount(payable(user)).approve(args.depositAsset, address(lucidlyVault), args.depositAmount);
+        } else {
+            require(msg.value == args.depositAmount, DepositAmountMismatch(args.depositAmount, msg.value));
+            (bool success,) = payable(user).call{value: msg.value}("");
+            require(success, TransferFailed());
+        }
+        bytes memory depositData = abi.encodeWithSelector(ILucidlyTeller.deposit.selector, args.depositAsset, args.depositAmount, args.minimumMint);
+        _saExecution(user, address(teller), msg.value, depositData);
+        bytes memory withdrawData = abi.encodeWithSelector(IERC20.transfer.selector, address(this), IERC20(args.asset).balanceOf(address(user)));
+        _saExecution(user, address(args.asset), 0, withdrawData);
+        TokenAmount[] memory tokens = new TokenAmount[](1);
+        tokens[0] = TokenAmount({
+            evmAddress: address(args.asset),
+            amount: IERC20(args.asset).balanceOf(address(this))
+        });
+        _bridgeTokens(tacHeader, tokens, "");
+        emit WithdrawFunds(args.asset, IERC20(args.asset).balanceOf(address(this)), user, header.tvmCaller);
     }
 
     function withdrawRequest(bytes calldata tacHeader, bytes calldata arguments) public _onlyCrossChainLayer{

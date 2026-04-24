@@ -5,12 +5,13 @@ import { expect } from "chai";
 import { TacLocalTestSdk, TokenMintInfo, TokenUnlockInfo} from "@tonappchain/evm-ccl";
 import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types";
 import { LucidlyVaultProxy, ILucidlyTeller, ILucidlyQueue, IBoringVault, ISAFactory, IERC20 } from "../typechain-types";
-import { deployLucidlyVault } from "../scripts/Lucidly/LucidlyVaultDeploy";
+import { deployLucidlyVaultNewTicker } from "../scripts/Lucidly/LucidlyVaultDeploy";
 import { reset, setStorageAt, time } from "@nomicfoundation/hardhat-network-helpers";
-import { lucidlyVaultMainnetConfig } from "../scripts/Lucidly/config/LucidlyMainnet.config";
+import { lucidlyVaultMainnetConfigNewTicker } from "../scripts/Lucidly/config/LucidlyMainnet.config";
 
 const usdtAddress = "0xAF988C3f7CB2AceAbB15f96b19388a259b6C438f"
 const ownerStorageSlotUsdt = BigInt("2")
+
 
 describe("LucidlyVaultProxy", function () {
     let admin: Signer;
@@ -27,13 +28,13 @@ describe("LucidlyVaultProxy", function () {
         testSdk = new TacLocalTestSdk();
         const crossChainLayerAddress = await testSdk.create(ethers.provider);
         tacSAFactory = new ethers.Contract(testSdk.getSmartAccountFactoryAddress(), hre.artifacts.readArtifactSync('ISAFactory').abi, admin) as unknown as ISAFactory;
-        lucidlyVaultProxy = await deployLucidlyVault(admin, crossChainLayerAddress, await tacSAFactory.getAddress());
+        lucidlyVaultProxy = await deployLucidlyVaultNewTicker(admin, crossChainLayerAddress, await tacSAFactory.getAddress());
         await setStorageAt(usdtAddress, ownerStorageSlotUsdt, await admin.getAddress());
         
         usdt = new ethers.Contract(usdtAddress, ['function mint(address,uint256) external', 'function balanceOf(address) external view returns (uint256)'], admin) as unknown;
-        teller = new ethers.Contract(lucidlyVaultMainnetConfig.teller, hre.artifacts.readArtifactSync('ILucidlyTeller').abi, admin) as unknown as ILucidlyTeller;
-        queue = new ethers.Contract(lucidlyVaultMainnetConfig.queue, hre.artifacts.readArtifactSync('ILucidlyQueue').abi, admin) as unknown as ILucidlyQueue;
-        lucidlyVault = new ethers.Contract(lucidlyVaultMainnetConfig.lucidlyVault, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as IERC20;
+        teller = new ethers.Contract(lucidlyVaultMainnetConfigNewTicker.teller, hre.artifacts.readArtifactSync('ILucidlyTeller').abi, admin) as unknown as ILucidlyTeller;
+        queue = new ethers.Contract(lucidlyVaultMainnetConfigNewTicker.queue, hre.artifacts.readArtifactSync('ILucidlyQueue').abi, admin) as unknown as ILucidlyQueue;
+        lucidlyVault = new ethers.Contract(lucidlyVaultMainnetConfigNewTicker.lucidlyVault, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as IERC20;
         
     });
 
@@ -77,43 +78,6 @@ describe("LucidlyVaultProxy", function () {
 
     });
 
-    // it("Tac vault withdraw funds that should fail", async function () {
-    //     const shardsKey = 1n;
-    //     const operationId = ethers.encodeBytes32String("Withdraw funds");
-    //     const extraData = "0x";
-    //     const timestamp = BigInt(Math.floor(Date.now() / 1000));
-    //     const tvmWalletCaller = "EQB4EHxrOyEfeImrndKemPRLHDLpSkuHUP9BmKn59TGly2Jk";
-
-    //     const target = await lucidlyVaultProxy.getAddress();
-    //     const methodName = "withdrawFunds(bytes,bytes)";
-
-    //     const encodedArguments = new ethers.AbiCoder().encode(
-    //         ['tuple(address)'],
-    //         [[
-    //             await lucidlyVault.getAddress(),
-    //         ]]
-    //     );
-
-    //     try {
-
-    //         await testSdk.sendMessage(
-    //             shardsKey,
-    //             target,
-    //             methodName,
-    //             encodedArguments,
-    //             tvmWalletCaller,
-    //             [],
-    //             [],
-    //             0n,
-    //             extraData,
-    //             operationId,
-    //             timestamp
-    //         );
-    //     } catch (error) {
-    //         expect((error as Error).message).to.include("0x15fcd675");
-    //     }
-    // });
-
     it("Tac vault withdraw funds", async function () {
         const shardsKey = 1n;
         const operationId = ethers.encodeBytes32String("Withdraw funds");
@@ -130,7 +94,6 @@ describe("LucidlyVaultProxy", function () {
                 await lucidlyVault.getAddress(),
             ]]
         );
-        // await time.increase(60);
         const {receipt, deployedTokens, outMessages} = await testSdk.sendMessage(
             shardsKey,
             target,
