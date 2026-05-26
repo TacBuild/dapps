@@ -156,7 +156,7 @@ contract CurveLiteStableswapProxy is TacProxyV1Upgradeable, Ownable2StepUpgradea
             tokensToBridge[i] = tempTokens[i];
         }
 
-        _bridgeTokens(tacHeader, tokensToBridge, "", 0);
+        _bridgeTokens(tacHeader, tokensToBridge, "", nativeTacAmount);
     }
 
     /**
@@ -185,7 +185,7 @@ contract CurveLiteStableswapProxy is TacProxyV1Upgradeable, Ownable2StepUpgradea
         } else {
             TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
             tokensToBridge[0] = TokenAmount(token, amount);
-            _bridgeTokens(tacHeader, new TokenAmount[](0), "", amount);
+            _bridgeTokens(tacHeader, tokensToBridge, "", 0);
         }
     }
 
