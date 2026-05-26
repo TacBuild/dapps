@@ -6,8 +6,12 @@ import { ContractFactory, Signer } from 'ethers';
 import { UniswapV2Proxy } from '../../typechain-types';
 import { IUniswapV2Router02, IUniswapV2Factory } from '../../typechain-types';
 import { deployUpgradable } from '@tonappchain/evm-ccl'
-import { proxyOptsUUPS } from "../utils"
+import { DeployProxyOptions } from "@openzeppelin/hardhat-upgrades/dist/utils";
 
+const proxyOptsUUPS: DeployProxyOptions = {
+    kind: "uups",
+    unsafeAllow: ["constructor"]
+};
 type UniswapContracts = {
     uniswapV2Factory: IUniswapV2Factory,
     uniswapV2Router02: IUniswapV2Router02,
