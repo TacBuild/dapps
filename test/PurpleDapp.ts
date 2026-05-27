@@ -4,7 +4,7 @@ import { expect } from "chai";
 import {reset, setStorageAt, setBalance} from "@nomicfoundation/hardhat-network-helpers"
 
 import { JettonInfo, TacLocalTestSdk, TokenMintInfo, TokenUnlockInfo, } from "@tonappchain/evm-ccl";
-import { tacTokenInfo } from '../scripts/common/info/tokensInfo';
+import { tacTokenInfo } from '../scripts/test/TokensInfo';
 import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types";
 import { PurpleDapp, LpFactory } from "../typechain-types";
 import { deployPurpleDapp } from "../scripts/Purple/deployPurpleDapp";
@@ -29,7 +29,7 @@ describe("PurpleDapp", function () {
     let JFK_TOKEN_INFO: JettonInfo;
     let stton: ERC20;
     before(async function () {
-        await reset(TAC_TESTNET_SPB_URL, 10456198);
+        await reset(TAC_TESTNET_SPB_URL);
         [admin] = await ethers.getSigners();
         testSdk = new TacLocalTestSdk();
         

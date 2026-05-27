@@ -23,7 +23,7 @@ describe("OrbsProxy", function () {
 
     before(async function () {
         //9992809
-        await reset(process.env.TAC_MAINNET_URL || "", 10156990);
+        await reset(process.env.TAC_MAINNET_URL || "");
         [admin] = await ethers.getSigners();
         testSdk = new TacLocalTestSdk();
         const crossChainLayerAddress = await testSdk.create(ethers.provider);

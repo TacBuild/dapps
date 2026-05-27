@@ -161,8 +161,8 @@ describe("ChiSq Proxy", function () {
         expect(event.args.multiplier).to.be.equal(120n);
 
     });
-
-    it("ChiSq claim payout", async function () {
+    // Claim should be prepared from protocol side, so, tested before launch and after, now should be skipped
+    it.skip("ChiSq claim payout", async function () {
         const shardsKey = 1n;
         const operationId = ethers.encodeBytes32String("claim payout");
         const extraData = "0x";

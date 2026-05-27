@@ -7,7 +7,7 @@ import { deployMorphoProxyMainnet } from "../scripts/Morpho/MorphoProxyDeploy";
 import { morphoMainnetConfig } from "../scripts/Morpho/config/mainnetConfig";
 import { deployMockOracle } from "../scripts/Morpho/MockOracleDeploy";
 import { TacLocalTestSdk, TokenMintInfo, TokenUnlockInfo} from "@tonappchain/evm-ccl";
-import { sttonTokenInfo, tacTokenInfo, fakeUSDC } from '../scripts/common/info/tokensInfo';
+import { sttonTokenInfo, tacTokenInfo } from '../scripts/test/TokensInfo';
 import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types";
 import { MorphoProxy, IMorpho, IURD, IMorphoVault, MockOracle, ISAFactory } from "../typechain-types";
 import { DeployProxyOptions } from "@openzeppelin/hardhat-upgrades/dist/utils";
@@ -39,7 +39,7 @@ describe("MorphoProxy", function () {
     let tac: ERC20;
     let v2DepositToken: any;
     before(async function () {
-        await reset(process.env.TAC_MAINNET_URL || "", 14383130n);
+        await reset(process.env.TAC_MAINNET_URL || "");
         [admin] = await ethers.getSigners();
         testSdk = new TacLocalTestSdk();
         const crossChainLayerAddress = await testSdk.create(ethers.provider);

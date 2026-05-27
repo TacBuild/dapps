@@ -5,7 +5,7 @@ import { expect } from "chai";
 
 
 import { TacLocalTestSdk, TokenMintInfo, TokenUnlockInfo} from "@tonappchain/evm-ccl";
-import { sttonTokenInfo, tacTokenInfo } from '../scripts/common/info/tokensInfo';
+import { sttonTokenInfo, tacTokenInfo } from '../scripts/test/TokensInfo';
 import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types";
 import { MerklProxy, CustomMerklProxyEuler, ISAFactory } from "../typechain-types";
 import { deployMerklProxy, deployCustomMerklProxyEuler } from "../scripts/Merkl/MerklProxyDeploy";
