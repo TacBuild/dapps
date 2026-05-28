@@ -13,7 +13,6 @@ import {ISAFactory} from "@tonappchain/evm-ccl/contracts/smart-account/interface
 import {ITacSmartAccount} from "@tonappchain/evm-ccl/contracts/smart-account/interfaces/ITacSmartAccount.sol";
 import {IEthereumVaultConnector} from "./Interface/IEthereumVaultConnector.sol";
 import {OutMessageV1, TokenAmount, TacHeaderV1, NFTAmount} from "@tonappchain/evm-ccl/contracts/core/Structs.sol";
-import "hardhat/console.sol";
 
 contract EulerProxy is
     TacProxyV1Upgradeable,
@@ -99,11 +98,7 @@ contract EulerProxy is
         (address user, ) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
 
         SaHelper.executePreHooks(user, hooks);
-        (bool sucess, bytes memory returnData) = ITacSmartAccount(payable(user)).executeUnsafe(address(eulerVaultConnector), msg.value, abi.encodeWithSelector(IEthereumVaultConnector.batch.selector, items));
-        console.log("sucess", sucess);
-        console.logBytes(returnData);
-        require(sucess, "Batch failed");
-        bytes memory result = returnData;
+        bytes memory result = ITacSmartAccount(payable(user)).execute(address(eulerVaultConnector), msg.value, abi.encodeWithSelector(IEthereumVaultConnector.batch.selector, items));
         SaHelper.executePostHooks(user, hooks);
         if (bridgeBackData.tokensToBridge.length > 0) {
             _constructBridgeAndBridge(bridgeBackData, tacHeader);
