@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.25;
+pragma solidity ^0.8.28;
 
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
@@ -253,16 +253,6 @@ contract CurveLiteStableswapProxy is TacProxyV1Upgradeable, Ownable2StepUpgradea
 
         _sendMessageV1(message, nativeTacAmount);
     }
-
-    function containsToken(address[] memory tokens, address tokenToFind) internal pure returns (bool) {
-        for (uint i = 0; i < tokens.length; i++) {
-            if (tokens[i] == tokenToFind) {
-                return true;
-            }
-        }
-        return false;
-    }
-
 
     receive() external payable {}
 }

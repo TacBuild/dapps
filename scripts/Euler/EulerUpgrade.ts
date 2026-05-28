@@ -16,6 +16,7 @@ export async function upgradeEulerProxy(
     const eulerProxy = await hre.upgrades.upgradeProxy(eulerConfig.eulerProxyMainnetAddress, factory, proxyOptsUUPS);
     await eulerProxy.waitForDeployment();
     console.log("EulerProxy upgraded to:", eulerProxy.target);
+    return eulerProxy;
 } 
 
 upgradeEulerProxy();
