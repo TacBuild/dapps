@@ -3,7 +3,7 @@ pragma solidity ^0.8.28;
 
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {SaHelper} from "./lib/HookLib.sol";
-import {IHooks} from "@tonappchain/evm-ccl/contracts/smart-account/interfaces/IHooks.sol";
+import {IHooks} from "./lib/IHooks.sol";
 import {ICrossChainLayer} from "@tonappchain/evm-ccl/contracts/interfaces/ICrossChainLayer.sol";
 import {TacProxyV1Upgradeable} from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";

@@ -171,9 +171,9 @@ describe("EulerProxy", function () {
         const target = await eulerProxy.getAddress();
         const methodName = "batch(bytes,bytes)";
         const hooks = new SaHooksBuilder()
-        const depositAmount = ethers.parseUnits("100000", 6);
+        const depositAmount = ethers.parseUnits("10000000", 6);
         await usdtMint(await eulerProxy.getAddress(), depositAmount, admin, crossChainLayerAddress, usdt);
-        const amount = ethers.parseUnits("0.01", 18);
+        const amount = ethers.parseUnits("0.01", 9);
 
         hooks.addContractInterface(vaultAddress, [
             'function transfer(address,uint256) external',
@@ -200,7 +200,7 @@ describe("EulerProxy", function () {
 
         console.log("tvmWalletCaller", tvmWalletCaller);
         const userAddress = await tacSAFactory.predictSmartAccountAddress(tvmWalletCaller, await eulerProxy.getAddress())
-        const subAccount1 = getSubAccount(userAddress, 10);
+        const subAccount1 = getSubAccount(userAddress, 1);
         console.log("2")
         const depositData = hooks.getDataForCall(vaultAddress, 'deposit', [depositAmount, subAccount1])
         const borrowData = hooks.getDataForCall(borrowVaultAddress, 'borrow', [amount, userAddress])
