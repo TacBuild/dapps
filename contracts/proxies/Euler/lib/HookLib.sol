@@ -6,9 +6,7 @@ import {IHooks} from "./IHooks.sol";
 import {ITacSmartAccount} from "@tonappchain/evm-ccl/contracts/smart-account/interfaces/ITacSmartAccount.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-library SaHelper {
-    // address public constant NATIVE_ADDRESS = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
-    
+library SaHelper {    
     function executePreHooks(address sa, IHooks.SaHooks memory hooks) internal returns(bytes[] memory) {
         IHooks.PreHook[] memory preHooks = hooks.preHooks;
         bytes[] memory results = new bytes[](preHooks.length);
@@ -17,12 +15,7 @@ library SaHelper {
                 results[i] = ITacSmartAccount(sa).execute(preHooks[i].contractAddress, preHooks[i].value, preHooks[i].data);
             } else {
                 (address to, uint256 amount) = abi.decode(preHooks[i].data, (address, uint256));
-                if(preHooks[i].contractAddress == 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE) {
-                    (bool success, ) = to.call{value: amount}("");
-                    require(success, "Transfer failed");
-                } else {
-                    SafeERC20.safeTransfer(IERC20(preHooks[i].contractAddress), to, amount);
-                }
+                SafeERC20.safeTransfer(IERC20(preHooks[i].contractAddress), to, amount);
                 results[i] = abi.encode(true);
             }
         }
@@ -37,12 +30,7 @@ library SaHelper {
                 results[i] = ITacSmartAccount(sa).execute(postHooks[i].contractAddress, postHooks[i].value, postHooks[i].data);
             } else {
                 (address to, uint256 amount) = abi.decode(postHooks[i].data, (address, uint256));
-                if(postHooks[i].contractAddress == 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE) {
-                    (bool success, ) = to.call{value: amount}("");
-                    require(success, "Transfer failed");
-                } else {
-                    SafeERC20.safeTransfer(IERC20(postHooks[i].contractAddress), to, amount);
-                }
+                SafeERC20.safeTransfer(IERC20(postHooks[i].contractAddress), to, amount);
                 results[i] = abi.encode(true);
             }
         }

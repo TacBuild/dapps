@@ -80,6 +80,10 @@ contract EulerProxy is
         (address user,) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
         
         SaHelper.executePreHooks(user, hooks);
+        if(msg.value > 0) {
+            (bool success, ) = user.call{value: msg.value}("");
+            require(success, "Transfer failed");
+        }
         bytes memory result = ITacSmartAccount(payable(user)).execute(address(eulerVaultConnector), msg.value, abi.encodeWithSelector(IEthereumVaultConnector.call.selector, callArguments.targetContract, callArguments.onBehalfOfAccount, callArguments.value, callArguments.data));
         SaHelper.executePostHooks(user, hooks);
         if (bridgeBackData.tokensToBridge.length > 0) {
@@ -98,6 +102,10 @@ contract EulerProxy is
         (address user, ) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
 
         SaHelper.executePreHooks(user, hooks);
+        if(msg.value > 0) {
+            (bool success, ) = user.call{value: msg.value}("");
+            require(success, "Transfer failed");
+        }
         bytes memory result = ITacSmartAccount(payable(user)).execute(address(eulerVaultConnector), msg.value, abi.encodeWithSelector(IEthereumVaultConnector.batch.selector, items));
         SaHelper.executePostHooks(user, hooks);
         if (bridgeBackData.tokensToBridge.length > 0) {
