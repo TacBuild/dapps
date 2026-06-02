@@ -2,7 +2,7 @@ import hre, { ethers } from "hardhat";
 import { Contract, Signer } from "ethers";
 import { expect } from "chai";
 import { setStorageAt, reset, setBalance } from "@nomicfoundation/hardhat-network-helpers";
-import { upgradeCurveLiteRouterProxy } from "../scripts/CurveLite/deployRouterProxy";
+import { upgradeCurveLiteRouterProxy } from "../scripts/CurveLite/router/deployRouterProxy";
 import { TacLocalTestSdk } from "@tonappchain/evm-ccl";
 import { CurveLiteRouterProxy, ISAFactory } from "../typechain-types";
 

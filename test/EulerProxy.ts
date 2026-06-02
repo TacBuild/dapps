@@ -5,7 +5,7 @@ import { SaHooksBuilder } from "./utils/SaHooksSDK";
 import { TacLocalTestSdk, TokenUnlockInfo} from "@tonappchain/evm-ccl";
 import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types";
 import { upgradeEulerProxy } from "../scripts/Euler/EulerUpgrade";
-import { EulerProxy, ISAFactory  } from "../typechain-types";
+import { EulerProxy, ISAFactory, UUPSUpgradeable  } from "../typechain-types";
 import { EulerLensAbi } from "./abis/EulerLensAbi";
 import { reset, setStorageAt } from "@nomicfoundation/hardhat-network-helpers"
 import { eulerConfig } from "../scripts/Euler/EulerConfig";
@@ -62,7 +62,10 @@ describe("EulerProxy", function () {
         await setStorageAt(PROXY_ADDRESS, PROXY_STORAGE_SLOT_OWNER, await admin.getAddress());
         
         tacSAFactory = new ethers.Contract(TAC_SA_FACTORY_ADDRESS, hre.artifacts.readArtifactSync('ISAFactory').abi, admin) as unknown as ISAFactory;
-        eulerProxy = await upgradeEulerProxy();
+        const eulerProxyImpl = await upgradeEulerProxy();
+        const erc1967Proxy = new ethers.Contract(PROXY_ADDRESS, hre.artifacts.readArtifactSync('UUPSUpgradeable').abi, admin) as unknown as UUPSUpgradeable;
+        await erc1967Proxy.upgradeToAndCall(eulerProxyImpl.toString(), "0x");
+        eulerProxy = new ethers.Contract(PROXY_ADDRESS, hre.artifacts.readArtifactSync('EulerProxy').abi, admin) as unknown as EulerProxy;
         asset = new ethers.Contract(assetAddress, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;
         borrowAsset = new ethers.Contract(borrowAssetAddress, hre.artifacts.readArtifactSync('ERC20').abi, admin) as unknown as ERC20;        
         usdt = new ethers.Contract(assetAddress, ['function mint(address,uint256) external', 'function balanceOf(address) external view returns (uint256)'], admin) as unknown;

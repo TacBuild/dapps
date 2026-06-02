@@ -1,6 +1,6 @@
 import { deploy, loadTacContracts, saveContractAddress } from "@tonappchain/evm-ccl";
 import path from 'path';
-import { CurveLiteRouterProxy } from '../../typechain-types';
+import { CurveLiteRouterProxy } from '../../../typechain-types';
 import hre, { ethers } from 'hardhat';
 import { ContractFactory, Signer } from 'ethers';
 import { deployUpgradable } from '@tonappchain/evm-ccl'

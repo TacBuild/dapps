@@ -13,10 +13,7 @@ export async function upgradeEulerProxy(
 ) {
     const [signer] = await hre.ethers.getSigners();
     const factory = await hre.ethers.getContractFactory("EulerProxy", signer);
-    const eulerProxy = await hre.upgrades.upgradeProxy(eulerConfig.eulerProxyMainnetAddress, factory, proxyOptsUUPS);
-    await eulerProxy.waitForDeployment();
-    console.log("EulerProxy upgraded to:", eulerProxy.target);
-    return eulerProxy;
+    const eulerProxyImpl = await hre.upgrades.deployImplementation(factory, proxyOptsUUPS)
+    console.log("EulerProxy implementation deployed to:", eulerProxyImpl);
+    return eulerProxyImpl;
 } 
-
-upgradeEulerProxy();
