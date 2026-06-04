@@ -14,13 +14,6 @@ export interface PostHook {
     data: string;
 }
 
-export interface MainCallHook {
-    isFromSAPerspective: boolean;
-    contractAddress: string;
-    value: bigint;
-    data: string;
-}
-
 export interface NFTBridgeHook {
     tokenAddress: string;
     tokenId: bigint;
@@ -34,7 +27,6 @@ export interface TokenBridgeHook {
 export interface SaHooks {
     preHooks: PreHook[];
     postHooks: PostHook[];
-    mainCallHook: MainCallHook;
 }
 
 export class SaHooksBuilder {
@@ -45,12 +37,6 @@ export class SaHooksBuilder {
         this.hooks = {
             preHooks: [],
             postHooks: [],
-            mainCallHook: {
-                isFromSAPerspective: false,
-                contractAddress: ethers.ZeroAddress,
-                value: 0n,
-                data: "0x"
-            }
         };
         this.contractInterfaces = {};
     }
@@ -98,15 +84,6 @@ export class SaHooksBuilder {
         });
     }
 
-    private addPreHookFromSelf(contractAddress: string, value: bigint, data: string): SaHooksBuilder {
-        return this.addPreHook({
-            isFromSAPerspective: false,
-            contractAddress,
-            value,
-            data
-        });
-    }
-
     /**
      * Add a pre-hook with function call from SA perspective
      * @param contractAddress Contract address
@@ -126,19 +103,21 @@ export class SaHooksBuilder {
 
     /**
      * Add a pre-hook with function call from self perspective
-     * @param contractAddress Contract address
-     * @param functionName Function name
-     * @param params Function parameters
-     * @param value ETH value to send
+     * @param tokenAddress Token address
+     * @param toAddress To address
+     * @param amount Amount
      */
-    addPreHookCallFromSelf(
-        contractAddress: string,
-        functionName: string,
-        params: any[],
-        value: bigint = 0n
+    addPreHookTransferTo(
+        tokenAddress: string,
+        toAddress: string,
+        amount: bigint
     ): SaHooksBuilder {
-        const data = this.encodeFunctionCall(contractAddress, functionName, params);
-        return this.addPreHookFromSelf(contractAddress, value, data);
+        return this.addPreHook({
+            isFromSAPerspective: false,
+            contractAddress: tokenAddress,
+            value: 0n,
+            data: ethers.AbiCoder.defaultAbiCoder().encode(['address', 'uint256'], [toAddress, amount])
+        });
     }
 
     // Post-hooks methods
@@ -156,14 +135,6 @@ export class SaHooksBuilder {
         });
     }
 
-    private addPostHookFromSelf(contractAddress: string, value: bigint, data: string): SaHooksBuilder {
-        return this.addPostHook({
-            isFromSAPerspective: false,
-            contractAddress,
-            value,
-            data
-        });
-    }
 
     /**
      * Add a post-hook with function call from SA perspective
@@ -184,82 +155,27 @@ export class SaHooksBuilder {
 
     /**
      * Add a post-hook with function call from self perspective
-     * @param contractAddress Contract address
-     * @param functionName Function name
-     * @param params Function parameters
-     * @param value ETH value to send
+     * @param tokenAddress Token address
+     * @param toAddress To address
+     * @param amount Amount
      */
-    addPostHookCallFromSelf(
-        contractAddress: string,
-        functionName: string,
-        params: any[],
-        value: bigint = 0n
+    addPostHookTransferTo(
+        tokenAddress: string,
+        toAddress: string,
+        amount: bigint
     ): SaHooksBuilder {
-        const data = this.encodeFunctionCall(contractAddress, functionName, params);
-        return this.addPostHookFromSelf(contractAddress, value, data);
+        return this.addPostHook({
+            isFromSAPerspective: false,
+            contractAddress: tokenAddress,
+            value: 0n,
+            data: ethers.AbiCoder.defaultAbiCoder().encode(['address', 'uint256'], [toAddress, amount])
+        });
     }
 
     getDataForCall(contractAddress: string, functionName: string, params: any[]): string {
         return this.encodeFunctionCall(contractAddress, functionName, params);
     }
 
-    // Main call hook methods
-    private setMainCallHook(hook: MainCallHook): SaHooksBuilder {
-        this.hooks.mainCallHook = hook;
-        return this;
-    }
-
-    private setMainCallHookFromSA(contractAddress: string, value: bigint, data: string): SaHooksBuilder {
-        return this.setMainCallHook({
-            isFromSAPerspective: true,
-            contractAddress,
-            value,
-            data
-        });
-    }
-
-    private setMainCallHookFromSelf(contractAddress: string, value: bigint, data: string): SaHooksBuilder {
-        return this.setMainCallHook({
-            isFromSAPerspective: false,
-            contractAddress,
-            value,
-            data
-        });
-    }
-
-    /**
-     * Set main call hook with function call from SA perspective
-     * @param contractAddress Contract address
-     * @param functionName Function name
-     * @param params Function parameters
-     * @param value ETH value to send
-     */
-    setMainCallHookCallFromSA(
-        contractAddress: string,
-        functionName: string,
-        params: any[],
-        value: bigint = 0n
-    ): SaHooksBuilder {
-        const data = this.encodeFunctionCall(contractAddress, functionName, params);
-        return this.setMainCallHookFromSA(contractAddress, value, data);
-    }
-
-    /**
-     * Set main call hook with function call from self perspective
-     * @param contractAddress Contract address
-     * @param functionName Function name
-     * @param params Function parameters
-     * @param value ETH value to send
-     */
-    setMainCallHookCallFromSelf(
-        contractAddress: string,
-        functionName: string,
-        params: any[],
-        value: bigint = 0n
-    ): SaHooksBuilder {
-        const data = this.encodeFunctionCall(contractAddress, functionName, params);
-        return this.setMainCallHookFromSelf(contractAddress, value, data);
-    }
 
     // Helper methods for common operations
     addApprovePreHook(tokenAddress: string, spenderAddress: string, amount: bigint): SaHooksBuilder {
@@ -272,22 +188,6 @@ export class SaHooksBuilder {
 
     addTransferPreHook(tokenAddress: string, toAddress: string, amount: bigint): SaHooksBuilder {
         return this.addPreHookCallFromSA(
-            tokenAddress,
-            "transfer",
-            [toAddress, amount]
-        );
-    }
-
-    addApprovePostHook(tokenAddress: string, spenderAddress: string, amount: bigint): SaHooksBuilder {
-        return this.addPostHookCallFromSelf(
-            tokenAddress,
-            "approve",
-            [spenderAddress, amount]
-        );
-    }
-
-    addTransferPostHook(tokenAddress: string, toAddress: string, amount: bigint): SaHooksBuilder {
-        return this.addPostHookCallFromSelf(
             tokenAddress,
             "transfer",
             [toAddress, amount]
@@ -307,7 +207,6 @@ export class SaHooksBuilder {
                 "tuple(" +
                 "tuple(bool isFromSAPerspective, address contractAddress, uint256 value, bytes data)[] preHooks," +
                 "tuple(bool isFromSAPerspective, address contractAddress, uint256 value, bytes data)[] postHooks," +
-                "tuple(bool isFromSAPerspective, address contractAddress, uint256 value, bytes data) mainCallHook" +
             ")"
             ],
             [this.hooks]
@@ -318,7 +217,6 @@ export class SaHooksBuilder {
         return "tuple(" +
         "tuple(bool isFromSAPerspective, address contractAddress, uint256 value, bytes data)[] preHooks," +
         "tuple(bool isFromSAPerspective, address contractAddress, uint256 value, bytes data)[] postHooks," +
-        "tuple(bool isFromSAPerspective, address contractAddress, uint256 value, bytes data) mainCallHook" +
     ")"
     }
 

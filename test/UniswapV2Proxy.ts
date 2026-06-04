@@ -3,7 +3,7 @@ import hre, { ethers } from 'hardhat';
 import { Signer } from 'ethers';
 
 import { deployUniswapV2 } from '../scripts/UniswapV2/deployUniswapV2';
-import { sttonTokenInfo, tacTokenInfo } from '../scripts/common/info/tokensInfo';
+import { sttonTokenInfo, tacTokenInfo } from '../scripts/test/TokensInfo';
 import { JettonInfo, TacLocalTestSdk, TokenMintInfo, TokenUnlockInfo } from '@tonappchain/evm-ccl';
 import { expect } from "chai";
 

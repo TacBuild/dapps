@@ -3,7 +3,7 @@ import { Signer } from "ethers";
 import { expect } from "chai";
 import {time, reset} from "@nomicfoundation/hardhat-network-helpers"
 import { TacLocalTestSdk, TokenMintInfo} from "@tonappchain/evm-ccl";
-import { TONTokenInfo } from '../scripts/common/info/tokensInfo';
+import { TONTokenInfo } from '../scripts/test/TokensInfo';
 import { ERC20 } from "@tonappchain/evm-ccl/dist/typechain-types";
 import { TacBoringVaultProxy, ITellerWithMultiAssetSupport, IBoringOnChainQueue, IBoringVault, ISAFactory } from "../typechain-types";
 import { deployTacVaultMainnet } from "../scripts/TacVault/TacVaultDeploy";

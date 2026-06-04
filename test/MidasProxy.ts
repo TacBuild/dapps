@@ -24,7 +24,7 @@ describe("MidasProxy", function () {
     let mTokenAddress: string;
 
     before(async function () {
-        await reset(TAC_MAINNET_URL, 8629415);
+        await reset(TAC_MAINNET_URL);
         [admin] = await ethers.getSigners();
         testSdk = new TacLocalTestSdk();
         const crossChainLayerAddress = await testSdk.create(ethers.provider);     

@@ -21,7 +21,7 @@
         "@nomicfoundation/ignition-core": "^0.15.7",
         "@openzeppelin/hardhat-upgrades": "^3.9.1",
         "@ton/core": "^0.59.1",
-        "@tonappchain/evm-ccl": "0.9.27",
+        "@tonappchain/evm-ccl": "1.0.1-beta0.1",
         "@typechain/ethers-v6": "^0.5.1",
         "@typechain/hardhat": "^9.1.0",
         "@types/cli-color": "^2.0.6",
@@ -554,7 +554,7 @@
 
     "@tonappchain/adnl": ["@tonappchain/adnl@1.0.4", "", { "dependencies": { "@noble/ed25519": "^1.6.1", "@noble/hashes": "^1.2.0", "aes-js": "^3.1.2", "buffer": "^6.0.3", "events": "^3.3.0", "isomorphic-ws": "^5.0.0", "ws": "^8.8.1" } }, "sha512-0qd25AJsoxXeJ0R5xhv8rLKQ/lWxfuBIaIsSRV79v0r1LpJw/YwHX8TJWaTOhWlJja2xCPpLC8dJwa+je5w4wg=="],
 
-    "@tonappchain/evm-ccl": ["@tonappchain/evm-ccl@0.9.27", "", { "dependencies": { "@nomicfoundation/hardhat-ethers": "^3.0.8", "@nomicfoundation/hardhat-ignition": "^0.15.7", "@nomicfoundation/hardhat-ignition-ethers": "^0.15.7", "@nomicfoundation/hardhat-network-helpers": "^1.0.12", "@nomicfoundation/hardhat-toolbox": "^5.0.0", "@nomicfoundation/ignition-core": "^0.15.7", "@openzeppelin/contracts": "5.1.0", "@openzeppelin/contracts-upgradeable": "5.1.0", "@openzeppelin/hardhat-upgrades": "^3.9.0", "@openzeppelin/merkle-tree": "^1.0.6", "@typechain/ethers-v6": "^0.5.1", "@typechain/hardhat": "^9.1.0", "@types/mocha": "^10.0.9", "@uniswap/lib": "^4.0.1-alpha", "chai": "^4.3.7", "ethers": "^6.13.2", "hardhat": "^2.22.18", "ton-crypto": "^3.2.0", "ts-node": "^10.9.2", "typechain": "^8.3.2", "typescript": "^5.6.3" } }, "sha512-jYH6Tra45UAs9LvkixyYRtC2MMC0F/PHwSjj/RYzbKWL8y7+llrE2e4wCA7d7yIK6XmrzmGiuah+rFHH+zOPHA=="],
+    "@tonappchain/evm-ccl": ["@tonappchain/evm-ccl@1.0.1-beta0.1", "", { "dependencies": { "@nomicfoundation/hardhat-ethers": "^3.1.3", "@nomicfoundation/hardhat-ignition": "^0.15.16", "@nomicfoundation/hardhat-ignition-ethers": "^0.15.17", "@nomicfoundation/hardhat-network-helpers": "^1.1.2", "@nomicfoundation/hardhat-toolbox": "^5.0.0", "@nomicfoundation/ignition-core": "^0.15.15", "@openzeppelin/contracts": "5.4.0", "@openzeppelin/contracts-upgradeable": "5.4.0", "@openzeppelin/hardhat-upgrades": "^3.9.1", "@openzeppelin/merkle-tree": "^1.0.8", "@typechain/ethers-v6": "^0.5.1", "@typechain/hardhat": "^9.1.0", "@types/mocha": "^10.0.10", "chai": "^4.5.0", "ethers": "6.15.0", "hardhat": "^2.28.6", "ton-crypto": "^3.2.0", "ts-node": "^10.9.2", "typechain": "^8.3.2", "typescript": "^5.9.3" } }, "sha512-STl6+FZocsg6GJwx9mu05lJA99icZboL+G0sa4TJftF0j9ghmZ3aB59g6J/PB1BBxV7tXOFoO5mZLWwknDzbQg=="],
 
     "@tonappchain/sdk": ["@tonappchain/sdk@0.7.1", "", { "dependencies": { "@aws-crypto/sha256-js": "^5.2.0", "@orbs-network/ton-access": "^2.3.3", "@ton/ton": "15.1.0", "@tonappchain/ton-lite-client": "3.0.6", "@tonconnect/ui": "^2.0.11", "bn.js": "^5.2.1", "cli-table3": "^0.6.5", "dotenv": "^16.4.7", "ethers": "^6.13.5", "ton-crypto": "^3.2.0" } }, "sha512-hLIa0DIyo1y0+Ok/o7JDfHyOp+nyKpxpQG34FwXzwt1rQrd0qwgx425+2/Xt23zqWZQmulA+EBoob/fnRq4i0w=="],
 
@@ -1946,9 +1946,23 @@
 
     "@tonappchain/adnl/ws": ["ws@8.18.0", "", { "peerDependencies": { "bufferutil": "^4.0.1", "utf-8-validate": ">=5.0.2" }, "optionalPeers": ["bufferutil", "utf-8-validate"] }, "sha512-8VbfWfHLbbwu3+N6OKsOMpBdT4kXPDDB9cJk2bJ6mh9ucxdlnNvH1e+roYkKmN9Nxw2yjz7VzeO9oOz2zJ04Pw=="],
 
-    "@tonappchain/evm-ccl/@openzeppelin/contracts": ["@openzeppelin/contracts@5.1.0", "", {}, "sha512-p1ULhl7BXzjjbha5aqst+QMLY+4/LCWADXOCsmLHRM77AqiPjnd9vvUN9sosUfhL9JGKpZ0TjEGxgvnizmWGSA=="],
+    "@tonappchain/evm-ccl/@nomicfoundation/hardhat-ethers": ["@nomicfoundation/hardhat-ethers@3.1.3", "", { "dependencies": { "debug": "^4.1.1", "lodash.isequal": "^4.5.0" }, "peerDependencies": { "ethers": "^6.14.0", "hardhat": "^2.28.0" } }, "sha512-208JcDeVIl+7Wu3MhFUUtiA8TJ7r2Rn3Wr+lSx9PfsDTKkbsAsWPY6N6wQ4mtzDv0/pB9nIbJhkjoHe1EsgNsA=="],
 
-    "@tonappchain/evm-ccl/@openzeppelin/contracts-upgradeable": ["@openzeppelin/contracts-upgradeable@5.1.0", "", { "peerDependencies": { "@openzeppelin/contracts": "5.1.0" } }, "sha512-AIElwP5Ck+cslNE+Hkemf5SxjJoF4wBvvjxc27Rp+9jaPs/CLIaUBMYe1FNzhdiN0cYuwGRmYaRHmmntuiju4Q=="],
+    "@tonappchain/evm-ccl/@nomicfoundation/hardhat-ignition": ["@nomicfoundation/hardhat-ignition@0.15.16", "", { "dependencies": { "@nomicfoundation/ignition-core": "^0.15.15", "@nomicfoundation/ignition-ui": "^0.15.13", "chalk": "^4.0.0", "debug": "^4.3.2", "fs-extra": "^10.0.0", "json5": "^2.2.3", "prompts": "^2.4.2" }, "peerDependencies": { "@nomicfoundation/hardhat-verify": "^2.1.0", "hardhat": "^2.26.0" } }, "sha512-T0JTnuib7QcpsWkHCPLT7Z6F483EjTdcdjb1e00jqS9zTGCPqinPB66LLtR/duDLdvgoiCVS6K8WxTQkA/xR1Q=="],
+
+    "@tonappchain/evm-ccl/@nomicfoundation/hardhat-ignition-ethers": ["@nomicfoundation/hardhat-ignition-ethers@0.15.17", "", { "peerDependencies": { "@nomicfoundation/hardhat-ethers": "^3.1.0", "@nomicfoundation/hardhat-ignition": "^0.15.16", "@nomicfoundation/ignition-core": "^0.15.15", "ethers": "^6.14.0", "hardhat": "^2.26.0" } }, "sha512-io6Wrp1dUsJ94xEI3pw6qkPfhc9TFA+e6/+o16yQ8pvBTFMjgK5x8wIHKrrIHr9L3bkuTMtmDjyN4doqO2IqFQ=="],
+
+    "@tonappchain/evm-ccl/@nomicfoundation/hardhat-network-helpers": ["@nomicfoundation/hardhat-network-helpers@1.1.2", "", { "dependencies": { "ethereumjs-util": "^7.1.4" }, "peerDependencies": { "hardhat": "^2.26.0" } }, "sha512-p7HaUVDbLj7ikFivQVNhnfMHUBgiHYMwQWvGn9AriieuopGOELIrwj2KjyM2a6z70zai5YKO264Vwz+3UFJZPQ=="],
+
+    "@tonappchain/evm-ccl/@nomicfoundation/ignition-core": ["@nomicfoundation/ignition-core@0.15.15", "", { "dependencies": { "@ethersproject/address": "5.6.1", "@nomicfoundation/solidity-analyzer": "^0.1.1", "cbor": "^9.0.0", "debug": "^4.3.2", "ethers": "^6.14.0", "fs-extra": "^10.0.0", "immer": "10.0.2", "lodash": "4.17.21", "ndjson": "2.0.0" } }, "sha512-JdKFxYknTfOYtFXMN6iFJ1vALJPednuB+9p9OwGIRdoI6HYSh4ZBzyRURgyXtHFyaJ/SF9lBpsYV9/1zEpcYwg=="],
+
+    "@tonappchain/evm-ccl/@openzeppelin/contracts": ["@openzeppelin/contracts@5.4.0", "", {}, "sha512-eCYgWnLg6WO+X52I16TZt8uEjbtdkgLC0SUX/xnAksjjrQI4Xfn4iBRoI5j55dmlOhDv1Y7BoR3cU7e3WWhC6A=="],
+
+    "@tonappchain/evm-ccl/@openzeppelin/contracts-upgradeable": ["@openzeppelin/contracts-upgradeable@5.4.0", "", { "peerDependencies": { "@openzeppelin/contracts": "5.4.0" } }, "sha512-STJKyDzUcYuB35Zub1JpWW58JxvrFFVgQ+Ykdr8A9PGXgtq/obF5uoh07k2XmFyPxfnZdPdBdhkJ/n2YxJ87HQ=="],
+
+    "@tonappchain/evm-ccl/hardhat": ["hardhat@2.28.6", "", { "dependencies": { "@ethereumjs/util": "^9.1.0", "@ethersproject/abi": "^5.1.2", "@nomicfoundation/edr": "0.12.0-next.23", "@nomicfoundation/solidity-analyzer": "^0.1.0", "@sentry/node": "^5.18.1", "adm-zip": "^0.4.16", "aggregate-error": "^3.0.0", "ansi-escapes": "^4.3.0", "boxen": "^5.1.2", "chokidar": "^4.0.0", "ci-info": "^2.0.0", "debug": "^4.1.1", "enquirer": "^2.3.0", "env-paths": "^2.2.0", "ethereum-cryptography": "^1.0.3", "find-up": "^5.0.0", "fp-ts": "1.19.3", "fs-extra": "^7.0.1", "immutable": "^4.0.0-rc.12", "io-ts": "1.10.4", "json-stream-stringify": "^3.1.4", "keccak": "^3.0.2", "lodash": "^4.17.11", "micro-eth-signer": "^0.14.0", "mnemonist": "^0.38.0", "mocha": "^10.0.0", "p-map": "^4.0.0", "picocolors": "^1.1.0", "raw-body": "^2.4.1", "resolve": "1.17.0", "semver": "^6.3.0", "solc": "0.8.26", "source-map-support": "^0.5.13", "stacktrace-parser": "^0.1.10", "tinyglobby": "^0.2.6", "tsort": "0.0.1", "undici": "^5.14.0", "uuid": "^8.3.2", "ws": "^7.4.6" }, "peerDependencies": { "ts-node": "*", "typescript": "*" }, "optionalPeers": ["ts-node", "typescript"], "bin": { "hardhat": "internal/cli/bootstrap.js" } }, "sha512-zQze7qe+8ltwHvhX5NQ8sN1N37WWZGw8L63y+2XcPxGwAjc/SMF829z3NS6o1krX0sryhAsVBK/xrwUqlsot4Q=="],
+
+    "@tonappchain/evm-ccl/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 
     "@tonappchain/ton-lite-client/@ton/ton": ["@ton/ton@15.4.0", "", { "dependencies": { "axios": "^1.6.7", "dataloader": "^2.0.0", "symbol.inspect": "1.0.1", "teslabot": "^1.3.0", "zod": "^3.21.4" }, "peerDependencies": { "@ton/core": ">=0.62.0 <1.0.0", "@ton/crypto": ">=3.2.0" } }, "sha512-f19y2Rez88KZK+lv3CT3ghXi07LcToJtJhlgRSfK+3GzjdIcoW/wbmXG1ffi6fkc8W2LO5z6Q3gZaIEvNGnz6w=="],
 
@@ -2162,6 +2176,18 @@
 
     "@openzeppelin/merkle-tree/ethereum-cryptography/@scure/bip39": ["@scure/bip39@1.6.0", "", { "dependencies": { "@noble/hashes": "~1.8.0", "@scure/base": "~1.2.5" } }, "sha512-+lF0BbLiJNwVlev4eKelw1WWLaiKXw7sSl8T6FvBlWkdX+94aGJ4o8XjUdlyhTCjd8c+B3KT3JfS8P0bLRNU6A=="],
 
+    "@tonappchain/evm-ccl/@nomicfoundation/hardhat-ignition/@nomicfoundation/ignition-ui": ["@nomicfoundation/ignition-ui@0.15.13", "", {}, "sha512-HbTszdN1iDHCkUS9hLeooqnLEW2U45FaqFwFEYT8nIno2prFZhG+n68JEERjmfFCB5u0WgbuJwk3CgLoqtSL7Q=="],
+
+    "@tonappchain/evm-ccl/@nomicfoundation/ignition-core/@ethersproject/address": ["@ethersproject/address@5.6.1", "", { "dependencies": { "@ethersproject/bignumber": "^5.6.2", "@ethersproject/bytes": "^5.6.1", "@ethersproject/keccak256": "^5.6.1", "@ethersproject/logger": "^5.6.0", "@ethersproject/rlp": "^5.6.1" } }, "sha512-uOgF0kS5MJv9ZvCz7x6T2EXJSzotiybApn4XlOgoTX0xdtyVIJ7pF+6cGPxiEq/dpBiTfMiw7Yc81JcwhSYA0Q=="],
+
+    "@tonappchain/evm-ccl/@nomicfoundation/ignition-core/cbor": ["cbor@9.0.2", "", { "dependencies": { "nofilter": "^3.1.0" } }, "sha512-JPypkxsB10s9QOWwa6zwPzqE1Md3vqpPc+cai4sAecuCsRyAtAl/pMyhPlMbT/xtPnm2dznJZYRLui57qiRhaQ=="],
+
+    "@tonappchain/evm-ccl/hardhat/@nomicfoundation/edr": ["@nomicfoundation/edr@0.12.0-next.23", "", { "dependencies": { "@nomicfoundation/edr-darwin-arm64": "0.12.0-next.23", "@nomicfoundation/edr-darwin-x64": "0.12.0-next.23", "@nomicfoundation/edr-linux-arm64-gnu": "0.12.0-next.23", "@nomicfoundation/edr-linux-arm64-musl": "0.12.0-next.23", "@nomicfoundation/edr-linux-x64-gnu": "0.12.0-next.23", "@nomicfoundation/edr-linux-x64-musl": "0.12.0-next.23", "@nomicfoundation/edr-win32-x64-msvc": "0.12.0-next.23" } }, "sha512-F2/6HZh8Q9RsgkOIkRrckldbhPjIZY7d4mT9LYuW68miwGQ5l7CkAgcz9fRRiurA0+YJhtsbx/EyrD9DmX9BOw=="],
+
+    "@tonappchain/evm-ccl/hardhat/fs-extra": ["fs-extra@7.0.1", "", { "dependencies": { "graceful-fs": "^4.1.2", "jsonfile": "^4.0.0", "universalify": "^0.1.0" } }, "sha512-YJDaCJZEnBmcbw13fvdAM9AwNOJwOzrE4pqMqBq5nFiEqXUqHwlK4B+3pUw6JNvfSPtX05xFHtYy/1ni01eGCw=="],
+
+    "@tonappchain/evm-ccl/hardhat/ws": ["ws@7.5.10", "", { "peerDependencies": { "bufferutil": "^4.0.1", "utf-8-validate": "^5.0.2" }, "optionalPeers": ["bufferutil", "utf-8-validate"] }, "sha512-+dbF1tHwZpXcbOJdVOkzLDxZP1ailvSxM6ZweXTegylPny803bFhA+vqBYw4s31NSAk4S2Qz+AKXK9a4wkdjcQ=="],
+
     "amazon-cognito-identity-js/@aws-crypto/sha256-js/@aws-crypto/util": ["@aws-crypto/util@1.2.2", "", { "dependencies": { "@aws-sdk/types": "^3.1.0", "@aws-sdk/util-utf8-browser": "^3.0.0", "tslib": "^1.11.1" } }, "sha512-H8PjG5WJ4wz0UXAFXeJjWCW1vkvIJ3qUUD+rGRwJ2/hj+xT58Qle2MTql/2MGzkU+1JLAFuR6aJpLAjHwhmwwg=="],
 
     "amazon-cognito-identity-js/@aws-crypto/sha256-js/tslib": ["tslib@1.14.1", "", {}, "sha512-Xni35NKzjgMrwevysHTCArtLDpPvye8zV/0E4EyYn43P7/7qvQwPh9BGkHewbMulVntbigmcT7rdX3BNo9wRJg=="],
@@ -2265,6 +2291,24 @@
     "@openzeppelin/merkle-tree/ethereum-cryptography/@scure/bip32/@scure/base": ["@scure/base@1.2.6", "", {}, "sha512-g/nm5FgUa//MCj1gV09zTJTaM6KBAHqLN907YVQqf7zC49+DcO4B1so4ZX07Ef10Twr6nuqYEH9GEggFXA4Fmg=="],
 
     "@openzeppelin/merkle-tree/ethereum-cryptography/@scure/bip39/@scure/base": ["@scure/base@1.2.6", "", {}, "sha512-g/nm5FgUa//MCj1gV09zTJTaM6KBAHqLN907YVQqf7zC49+DcO4B1so4ZX07Ef10Twr6nuqYEH9GEggFXA4Fmg=="],
+
+    "@tonappchain/evm-ccl/hardhat/@nomicfoundation/edr/@nomicfoundation/edr-darwin-arm64": ["@nomicfoundation/edr-darwin-arm64@0.12.0-next.23", "", {}, "sha512-Amh7mRoDzZyJJ4efqoePqdoZOzharmSOttZuJDlVE5yy07BoE8hL6ZRpa5fNYn0LCqn/KoWs8OHANWxhKDGhvQ=="],
+
+    "@tonappchain/evm-ccl/hardhat/@nomicfoundation/edr/@nomicfoundation/edr-darwin-x64": ["@nomicfoundation/edr-darwin-x64@0.12.0-next.23", "", {}, "sha512-9wn489FIQm7m0UCD+HhktjWx6vskZzeZD9oDc2k9ZvbBzdXwPp5tiDqUBJ+eQpByAzCDfteAJwRn2lQCE0U+Iw=="],
+
+    "@tonappchain/evm-ccl/hardhat/@nomicfoundation/edr/@nomicfoundation/edr-linux-arm64-gnu": ["@nomicfoundation/edr-linux-arm64-gnu@0.12.0-next.23", "", {}, "sha512-nlk5EejSzEUfEngv0Jkhqq3/wINIfF2ED9wAofc22w/V1DV99ASh9l3/e/MIHOQFecIZ9MDqt0Em9/oDyB1Uew=="],
+
+    "@tonappchain/evm-ccl/hardhat/@nomicfoundation/edr/@nomicfoundation/edr-linux-arm64-musl": ["@nomicfoundation/edr-linux-arm64-musl@0.12.0-next.23", "", {}, "sha512-SJuPBp3Rc6vM92UtVTUxZQ/QlLhLfwTftt2XUiYohmGKB3RjGzpgduEFMCA0LEnucUckU6UHrJNFHiDm77C4PQ=="],
+
+    "@tonappchain/evm-ccl/hardhat/@nomicfoundation/edr/@nomicfoundation/edr-linux-x64-gnu": ["@nomicfoundation/edr-linux-x64-gnu@0.12.0-next.23", "", {}, "sha512-NU+Qs3u7Qt6t3bJFdmmjd5CsvgI2bPPzO31KifM2Ez96/jsXYho5debtTQnimlb5NAqiHTSlxjh/F8ROcptmeQ=="],
+
+    "@tonappchain/evm-ccl/hardhat/@nomicfoundation/edr/@nomicfoundation/edr-linux-x64-musl": ["@nomicfoundation/edr-linux-x64-musl@0.12.0-next.23", "", {}, "sha512-F78fZA2h6/ssiCSZOovlgIu0dUeI7ItKPsDDF3UUlIibef052GCXmliMinC90jVPbrjUADMd1BUwjfI0Z8OllQ=="],
+
+    "@tonappchain/evm-ccl/hardhat/@nomicfoundation/edr/@nomicfoundation/edr-win32-x64-msvc": ["@nomicfoundation/edr-win32-x64-msvc@0.12.0-next.23", "", {}, "sha512-IfJZQJn7d/YyqhmguBIGoCKjE9dKjbu6V6iNEPApfwf5JyyjHYyyfkLU4rf7hygj57bfH4sl1jtQ6r8HnT62lw=="],
+
+    "@tonappchain/evm-ccl/hardhat/fs-extra/jsonfile": ["jsonfile@4.0.0", "", { "optionalDependencies": { "graceful-fs": "^4.1.6" } }, "sha512-m6F1R3z8jjlf2imQHS2Qez5sjKWQzbuuhuJ/FKYFRZvPE3PuHcSMVZzfsLhGVOkfd20obL5SWEBew5ShlquNxg=="],
+
+    "@tonappchain/evm-ccl/hardhat/fs-extra/universalify": ["universalify@0.1.2", "", {}, "sha512-rBJeI5CXAlmy1pV+617WB9J63U6XcazHHF2f2dbJix4XzpUF0RS3Zbj0FGIOCAva5P/d/GBOYaACQ1w+0azUkg=="],
 
     "command-line-usage/chalk/ansi-styles/color-convert": ["color-convert@1.9.3", "", { "dependencies": { "color-name": "1.1.3" } }, "sha512-QfAUtd+vFdAtFQcC8CCyYt1fYWxSqAiK2cSD6zDB8N3cpsEBAvRxp9zOGg6G/SHHJYAT88/az/IuDGALsNVbGg=="],
 

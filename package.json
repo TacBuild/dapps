@@ -37,7 +37,7 @@
     "@nomicfoundation/ignition-core": "^0.15.7",
     "@openzeppelin/hardhat-upgrades": "^3.9.1",
     "@ton/core": "^0.59.1",
-    "@tonappchain/evm-ccl": "0.9.27",
+    "@tonappchain/evm-ccl": "1.0.1-beta0.1",
     "@typechain/ethers-v6": "^0.5.1",
     "@typechain/hardhat": "^9.1.0",
     "@types/cli-color": "^2.0.6",

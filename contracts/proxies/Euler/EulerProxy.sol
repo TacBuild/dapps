@@ -2,8 +2,8 @@
 pragma solidity ^0.8.28;
 
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {SaHelper} from "@tonappchain/evm-ccl/contracts/smart-account/libs/SaHelper.sol";
-import {IHooks} from "@tonappchain/evm-ccl/contracts/smart-account/interfaces/IHooks.sol";
+import {SaHelper} from "./lib/HookLib.sol";
+import {IHooks} from "./lib/IHooks.sol";
 import {ICrossChainLayer} from "@tonappchain/evm-ccl/contracts/interfaces/ICrossChainLayer.sol";
 import {TacProxyV1Upgradeable} from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
@@ -80,6 +80,10 @@ contract EulerProxy is
         (address user,) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
         
         SaHelper.executePreHooks(user, hooks);
+        if(msg.value > 0) {
+            (bool success, ) = user.call{value: msg.value}("");
+            require(success, "Transfer failed");
+        }
         bytes memory result = ITacSmartAccount(payable(user)).execute(address(eulerVaultConnector), msg.value, abi.encodeWithSelector(IEthereumVaultConnector.call.selector, callArguments.targetContract, callArguments.onBehalfOfAccount, callArguments.value, callArguments.data));
         SaHelper.executePostHooks(user, hooks);
         if (bridgeBackData.tokensToBridge.length > 0) {
@@ -98,7 +102,11 @@ contract EulerProxy is
         (address user, ) = tacSAFactory.getOrCreateSmartAccount(header.tvmCaller);
 
         SaHelper.executePreHooks(user, hooks);
-        (bytes memory result) = ITacSmartAccount(payable(user)).execute(address(eulerVaultConnector), msg.value, abi.encodeWithSelector(IEthereumVaultConnector.batch.selector, items));
+        if(msg.value > 0) {
+            (bool success, ) = user.call{value: msg.value}("");
+            require(success, "Transfer failed");
+        }
+        bytes memory result = ITacSmartAccount(payable(user)).execute(address(eulerVaultConnector), msg.value, abi.encodeWithSelector(IEthereumVaultConnector.batch.selector, items));
         SaHelper.executePostHooks(user, hooks);
         if (bridgeBackData.tokensToBridge.length > 0) {
             _constructBridgeAndBridge(bridgeBackData, tacHeader);

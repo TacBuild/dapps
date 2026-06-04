@@ -27,3 +27,10 @@ export const TONTokenInfo: JettonInfo  = {
     symbol: "TON",
     decimals: 9n
 };
+
+export const usdtTokenInfo: JettonInfo  = {
+    tvmAddress: "EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs",
+    name: "USDT",
+    symbol: "USDT",
+    decimals: 6n
+};

@@ -90,6 +90,10 @@ struct SwapExactTokensForETHArguments {
 contract UniswapV2Proxy is TacProxyV1Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
     // State variables
     address internal _appAddress;
+
+    constructor() {
+        _disableInitializers();
+    }
     
     /**
      * @dev Initialize the contract.

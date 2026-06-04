@@ -7,11 +7,10 @@ import { Ownable2StepUpgradeable } from "@openzeppelin/contracts-upgradeable/acc
 
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ITacSmartAccount} from "@tonappchain/evm-ccl/contracts/smart-account/interfaces/ITacSmartAccount.sol";
 import {ISAFactory} from "@tonappchain/evm-ccl/contracts/smart-account/interfaces/ISAFactory.sol";
 
-import { TransferHelper } from 'contracts/helpers/TransferHelper.sol';
 import { TacProxyV1Upgradeable } from "@tonappchain/evm-ccl/contracts/proxies/TacProxyV1Upgradeable.sol";
 import { OutMessageV1, TokenAmount, NFTAmount, TacHeaderV1 } from "@tonappchain/evm-ccl/contracts/core/Structs.sol";
 import { IWTAC } from "@tonappchain/evm-ccl/contracts/interfaces/IWTAC.sol";
@@ -28,6 +27,10 @@ contract CurveLiteTwocryptoswapProxy is TacProxyV1Upgradeable, Ownable2StepUpgra
 
     address internal _tacSAFactoryAddress;
     address internal wtacAddress;
+
+    constructor() {
+        _disableInitializers();
+    }
 
     /**
      * @dev Initialize the contract.
@@ -80,27 +83,11 @@ contract CurveLiteTwocryptoswapProxy is TacProxyV1Upgradeable, Ownable2StepUpgra
 
         address tokenLiquidity = pool;
 
-        TransferHelper.safeTransfer(tokenA, user, amounts[0]);
-        ITacSmartAccount(user).execute(
-            tokenA,
-            0,
-            abi.encodeWithSelector(
-                IERC20(tokenA).approve.selector,
-                pool,
-                amounts[0]
-            )
-        );
-
-        TransferHelper.safeTransfer(tokenB, user, amounts[1]);
-        ITacSmartAccount(user).execute(
-            tokenB,
-            0,
-            abi.encodeWithSelector(
-                IERC20(tokenB).approve.selector,
-                pool,
-                amounts[1]
-            )
-        );
+        SafeERC20.safeTransfer(IERC20(tokenA), user, amounts[0]);
+        ITacSmartAccount(user).approve(tokenA, pool, amounts[0]);
+        
+        SafeERC20.safeTransfer(IERC20(tokenB), user, amounts[1]);
+        ITacSmartAccount(user).approve(tokenB, pool, amounts[1]);
 
         ITacSmartAccount(user).execute(
             pool,
@@ -147,16 +134,8 @@ contract CurveLiteTwocryptoswapProxy is TacProxyV1Upgradeable, Ownable2StepUpgra
         address tokenB = ITwocryptoswapPool(pool).coins(1);
         address tokenLiquidity = pool;
 
-        TransferHelper.safeTransfer(tokenLiquidity, user, amount);
-        ITacSmartAccount(user).execute(
-            tokenLiquidity,
-            0,
-            abi.encodeWithSelector(
-                IERC20(tokenLiquidity).approve.selector,
-                pool,
-                amount
-            )
-        );
+        SafeERC20.safeTransfer(IERC20(tokenLiquidity), user, amount);
+        ITacSmartAccount(user).approve(tokenLiquidity, pool, amount);
 
         ITacSmartAccount(user).execute(
             pool,
@@ -226,16 +205,8 @@ contract CurveLiteTwocryptoswapProxy is TacProxyV1Upgradeable, Ownable2StepUpgra
         address token = ITwocryptoswapPool(pool).coins(i);
         address tokenLiquidity = pool;
 
-        TransferHelper.safeTransfer(tokenLiquidity, user, tokenAmount);
-        ITacSmartAccount(user).execute(
-            tokenLiquidity,
-            0,
-            abi.encodeWithSelector(
-                IERC20(tokenLiquidity).approve.selector,
-                pool,
-                tokenAmount
-            )
-        );
+        SafeERC20.safeTransfer(IERC20(tokenLiquidity), user, tokenAmount);
+        ITacSmartAccount(user).approve(tokenLiquidity, pool, tokenAmount);
 
         ITacSmartAccount(user).execute(
             pool,
@@ -259,10 +230,6 @@ contract CurveLiteTwocryptoswapProxy is TacProxyV1Upgradeable, Ownable2StepUpgra
                 returnTokenAmount
             )
         );
-
-        // bridge tokens to TON
-        TokenAmount[] memory tokensToBridge = new TokenAmount[](1);
-        tokensToBridge[0] = TokenAmount(token, returnTokenAmount);
 
         if (token == wtacAddress) {
             IWTAC(wtacAddress).withdraw(returnTokenAmount);
@@ -300,16 +267,8 @@ contract CurveLiteTwocryptoswapProxy is TacProxyV1Upgradeable, Ownable2StepUpgra
             }
         }
 
-        TransferHelper.safeTransfer(tokenIn, user, dx);
-        ITacSmartAccount(user).execute(
-            tokenIn,
-            0,
-            abi.encodeWithSelector(
-                IERC20(tokenIn).approve.selector,
-                pool,
-                dx
-            )
-        );
+        SafeERC20.safeTransfer(IERC20(tokenIn), user, dx);
+        ITacSmartAccount(user).approve(tokenIn, pool, dx);
 
         ITacSmartAccount(user).execute(
             pool,
@@ -389,8 +348,8 @@ contract CurveLiteTwocryptoswapProxy is TacProxyV1Upgradeable, Ownable2StepUpgra
         uint256 tacAmount
     ) private {
         for (uint256 i = 0; i < tokens.length; i++) {
-            TransferHelper.safeApprove(
-                tokens[i].evmAddress,
+            SafeERC20.forceApprove(
+                IERC20(tokens[i].evmAddress),
                 _getCrossChainLayerAddress(),
                 tokens[i].amount
             );
